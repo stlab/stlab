@@ -6,17 +6,17 @@
 
 /**************************************************************************************************/
 
+#define DOCTEST_CONFIG_IMPLEMENT
+#include <doctest/doctest.h>
+
 #include <stlab/pre_exit.hpp>
 
-#define BOOST_TEST_MODULE stlab_libraries_tests
-#include <boost/test/unit_test.hpp>
-
-namespace stlab_test {
-
-struct pre_exit_fixture {
-    void teardown() { stlab::pre_exit(); }
-};
-
-BOOST_TEST_GLOBAL_FIXTURE(pre_exit_fixture);
-
-} // namespace stlab_test
+int main(int argc, char** argv) {
+    doctest::Context ctx;
+    ctx.applyCommandLine(argc, argv);
+    int res = ctx.run();
+    if (ctx.shouldExit())
+        return res;
+    stlab::pre_exit();
+    return res;
+}

@@ -16,7 +16,7 @@
 #include <tuple>
 #include <vector>
 
-#include <boost/test/unit_test.hpp>
+#include <doctest/doctest.h>
 
 #include <stlab/concurrency/await.hpp>
 #include <stlab/concurrency/channel.hpp>
@@ -29,11 +29,7 @@ using namespace stlab;
 
 using channel_test_fixture_int_1 = channel_test_helper::channel_test_fixture<int, 1>;
 
-BOOST_FIXTURE_TEST_SUITE(int_channel_process_void_functor, channel_test_fixture_int_1)
-
-BOOST_AUTO_TEST_CASE(int_channel_process_with_one_step) {
-    BOOST_TEST_MESSAGE("int channel process with one step");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_channel_process_with_one_step") {
     std::atomic_int index{0};
     std::vector<int> results(10, 0);
 
@@ -50,13 +46,11 @@ BOOST_AUTO_TEST_CASE(int_channel_process_with_one_step) {
     wait_until_done([&] { return index == 10; });
 
     for (auto i = 0; i < 10; ++i) {
-        BOOST_REQUIRE_EQUAL(i, results[i]);
+        REQUIRE(results[i] == i);
     }
 }
 
-BOOST_AUTO_TEST_CASE(int_channel_process_with_one_step_async) {
-    BOOST_TEST_MESSAGE("int channel process with one step asynchronously");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_channel_process_with_one_step_async") {
     std::atomic_int index{0};
     std::vector<int> results(10, 0);
 
@@ -74,13 +68,11 @@ BOOST_AUTO_TEST_CASE(int_channel_process_with_one_step_async) {
     wait_until_done([&] { return index == 10; });
 
     for (auto i = 0; i < 10; ++i) {
-        BOOST_REQUIRE_EQUAL(true, std::find(results.begin(), results.end(), i) != results.end());
+        REQUIRE(std::find(results.begin(), results.end(), i) != results.end());
     }
 }
 
-BOOST_AUTO_TEST_CASE(int_channel_process_with_two_steps) {
-    BOOST_TEST_MESSAGE("int channel process with two steps");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_channel_process_with_two_steps") {
     std::atomic_int index{0};
     std::vector<int> results(5, 0);
 
@@ -98,13 +90,11 @@ BOOST_AUTO_TEST_CASE(int_channel_process_with_two_steps) {
 
     std::array expectation{1, 5, 9, 13, 17};
     for (auto i = 0; i < 5; ++i) {
-        BOOST_REQUIRE_EQUAL(expectation[i], results[i]);
+        REQUIRE(results[i] == expectation[i]);
     }
 }
 
-BOOST_AUTO_TEST_CASE(int_channel_process_with_two_steps_async) {
-    BOOST_TEST_MESSAGE("int channel process with two steps asynchronously");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_channel_process_with_two_steps_async") {
     std::atomic_int index{0};
     std::vector<std::vector<int>> results;
 
@@ -123,21 +113,19 @@ BOOST_AUTO_TEST_CASE(int_channel_process_with_two_steps_async) {
     wait_until_done([&] { return index == 5; });
 
     std::vector<int> expectations = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    BOOST_REQUIRE_EQUAL(std::size_t(5), results.size());
+    REQUIRE(results.size() == std::size_t(5));
 
     for (const auto& c : results) {
-        BOOST_REQUIRE_EQUAL(std::size_t(2), c.size());
+        REQUIRE(c.size() == std::size_t(2));
         for (auto i : c) {
             auto it = std::find(expectations.begin(), expectations.end(), i);
-            BOOST_REQUIRE_EQUAL(true, it != expectations.end());
+            REQUIRE(it != expectations.end());
             expectations.erase(it);
         }
     }
 }
 
-BOOST_AUTO_TEST_CASE(int_channel_process_with_many_steps) {
-    BOOST_TEST_MESSAGE("int channel process with many steps");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_channel_process_with_many_steps") {
     std::atomic_int result{0};
 
     auto check = _receive[0] | channel_test_helper::sum<10>() | [&](int x) { result = x; };
@@ -149,12 +137,10 @@ BOOST_AUTO_TEST_CASE(int_channel_process_with_many_steps) {
 
     wait_until_done([&] { return result != 0; });
 
-    BOOST_REQUIRE_EQUAL(45, result);
+    REQUIRE(result == 45);
 }
 
-BOOST_AUTO_TEST_CASE(int_channel_process_with_many_steps_async) {
-    BOOST_TEST_MESSAGE("int channel process with many steps asynchronously");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_channel_process_with_many_steps_async") {
     std::atomic_int result{0};
 
     auto check = _receive[0] | channel_test_helper::sum<10>() | [&](int x) { result = x; };
@@ -167,12 +153,10 @@ BOOST_AUTO_TEST_CASE(int_channel_process_with_many_steps_async) {
 
     wait_until_done([&] { return result != 0; });
 
-    BOOST_REQUIRE_EQUAL(45, result);
+    REQUIRE(result == 45);
 }
 
-BOOST_AUTO_TEST_CASE(int_channel_split_process_one_step) {
-    BOOST_TEST_MESSAGE("int channel split process one step");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_channel_split_process_one_step") {
     std::atomic_int index1{0};
     std::vector<int> results1(10, 0);
     std::atomic_int index2{0};
@@ -197,14 +181,12 @@ BOOST_AUTO_TEST_CASE(int_channel_split_process_one_step) {
     wait_until_done([&] { return index1 == 10 && index2 == 10; });
 
     for (auto i = 0; i < 10; ++i) {
-        BOOST_REQUIRE_EQUAL(i, results1[i]);
-        BOOST_REQUIRE_EQUAL(i, results2[i]);
+        REQUIRE(results1[i] == i);
+        REQUIRE(results2[i] == i);
     }
 }
 
-BOOST_AUTO_TEST_CASE(int_channel_split_process_two_steps) {
-    BOOST_TEST_MESSAGE("int channel split process two steps");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_channel_split_process_two_steps") {
     std::atomic_int index1{0};
     std::vector<int> results1(5);
     std::atomic_int index2{0};
@@ -230,14 +212,12 @@ BOOST_AUTO_TEST_CASE(int_channel_split_process_two_steps) {
 
     const std::array expectation{1, 5, 9, 13, 17};
     for (auto i = 0; i < 5; ++i) {
-        BOOST_REQUIRE_EQUAL(expectation[i], results1[i]);
-        BOOST_REQUIRE_EQUAL(expectation[i], results2[i]);
+        REQUIRE(results1[i] == expectation[i]);
+        REQUIRE(results2[i] == expectation[i]);
     }
 }
 
-BOOST_AUTO_TEST_CASE(int_channel_split_process_many_steps) {
-    BOOST_TEST_MESSAGE("int channel split process many steps");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_channel_split_process_many_steps") {
     std::atomic_int result1{0};
     std::atomic_int result2{0};
 
@@ -253,14 +233,11 @@ BOOST_AUTO_TEST_CASE(int_channel_split_process_many_steps) {
 
     wait_until_done([&] { return result1 != 0 && result2 != 0; });
 
-    BOOST_REQUIRE_EQUAL(45, result1);
-    BOOST_REQUIRE_EQUAL(45, result2);
+    REQUIRE(result1 == 45);
+    REQUIRE(result2 == 45);
 }
-BOOST_AUTO_TEST_SUITE_END()
 
-BOOST_AUTO_TEST_CASE(int_channel_process_with_two_steps_timed) {
-    BOOST_TEST_MESSAGE("int channel process with two steps timed");
-
+TEST_CASE("int_channel_process_with_two_steps_timed") {
     std::atomic_int result{0};
     stlab::sender<int> send;
     stlab::receiver<int> receive;
@@ -287,12 +264,11 @@ BOOST_AUTO_TEST_CASE(int_channel_process_with_two_steps_timed) {
         invoke_waiting([] { std::this_thread::sleep_for(std::chrono::milliseconds(10)); });
     }
 
-    BOOST_REQUIRE_EQUAL(42, result);
+    REQUIRE(result == 42);
 }
 
-BOOST_AUTO_TEST_CASE(int_channel_process_with_two_steps_timed_wo_timeout) {
-    BOOST_TEST_MESSAGE("int channel process with two steps timed w/o timeout");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_1,
+                  "int_channel_process_with_two_steps_timed_wo_timeout") {
     std::atomic_int result{0};
     stlab::sender<int> send;
     stlab::receiver<int> receive;
@@ -314,7 +290,7 @@ BOOST_AUTO_TEST_CASE(int_channel_process_with_two_steps_timed_wo_timeout) {
         invoke_waiting([] { std::this_thread::sleep_for(std::chrono::milliseconds(10)); });
     }
 
-    BOOST_REQUIRE_EQUAL(85, result);
+    REQUIRE(result == 85);
 }
 
 namespace {
@@ -336,9 +312,7 @@ bool always_true{true}; // used to avoid unused variable warning
 
 } // namespace
 
-BOOST_AUTO_TEST_CASE(int_channel_process_set_error_is_called_on_upstream_error) {
-    BOOST_TEST_MESSAGE("int channel process set_error is called on upstream error");
-
+TEST_CASE("int_channel_process_set_error_is_called_on_upstream_error") {
     std::atomic_bool check{false};
     stlab::sender<int> send;
     stlab::receiver<int> receive;
@@ -359,7 +333,7 @@ BOOST_AUTO_TEST_CASE(int_channel_process_set_error_is_called_on_upstream_error) 
         invoke_waiting([] { std::this_thread::sleep_for(std::chrono::milliseconds(10)); });
     }
 
-    BOOST_REQUIRE_EQUAL(true, check.load());
+    REQUIRE(check.load());
 }
 
 namespace {
@@ -378,9 +352,7 @@ struct process_with_close {
 };
 } // namespace
 
-BOOST_AUTO_TEST_CASE(int_channel_process_close_is_called_on_upstream_error) {
-    BOOST_TEST_MESSAGE("int channel process close is called when an upstream eeror happened");
-
+TEST_CASE("int_channel_process_close_is_called_on_upstream_error") {
     std::atomic_bool check{false};
     stlab::sender<int> send;
     stlab::receiver<int> receive;
@@ -401,5 +373,5 @@ BOOST_AUTO_TEST_CASE(int_channel_process_close_is_called_on_upstream_error) {
         invoke_waiting([] { std::this_thread::sleep_for(std::chrono::milliseconds(10)); });
     }
 
-    BOOST_REQUIRE_EQUAL(true, check.load());
+    REQUIRE(check.load());
 }

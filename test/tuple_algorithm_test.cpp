@@ -8,7 +8,7 @@
 
 #include <stlab/concurrency/tuple_algorithm.hpp>
 
-#include <boost/test/unit_test.hpp>
+#include <doctest/doctest.h>
 
 #include <cstddef>
 #include <list>
@@ -17,56 +17,45 @@
 
 using namespace stlab;
 
-BOOST_AUTO_TEST_SUITE(tuple_find_test)
-
-BOOST_AUTO_TEST_CASE(empty_tuple) {
+TEST_CASE("tuple_find_empty_tuple") {
     std::tuple<> t;
-    BOOST_REQUIRE_EQUAL(std::size_t(1), stlab::tuple_find(t, [](const auto&) { return false; }));
+    REQUIRE(stlab::tuple_find(t, [](const auto&) { return false; }) == std::size_t(1));
 }
 
-BOOST_AUTO_TEST_CASE(one_element_tuple_that_fails) {
+TEST_CASE("tuple_find_one_element_tuple_that_fails") {
     std::tuple<std::vector<int>> t;
-    BOOST_REQUIRE_EQUAL(std::size_t(1),
-                        stlab::tuple_find(t, [](const auto& t) { return !t.empty(); }));
+    REQUIRE(stlab::tuple_find(t, [](const auto& t) { return !t.empty(); }) == std::size_t(1));
 }
 
-BOOST_AUTO_TEST_CASE(one_element_tuple_that_succeeds) {
+TEST_CASE("tuple_find_one_element_tuple_that_succeeds") {
     std::tuple<std::vector<int>> t;
-    BOOST_REQUIRE_EQUAL(std::size_t(0),
-                        stlab::tuple_find(t, [](const auto& t) { return t.empty(); }));
+    REQUIRE(stlab::tuple_find(t, [](const auto& t) { return t.empty(); }) == std::size_t(0));
 }
 
-BOOST_AUTO_TEST_CASE(two_element_tuple_that_fails) {
+TEST_CASE("tuple_find_two_element_tuple_that_fails") {
     std::tuple<std::vector<int>, std::list<double>> t;
-    BOOST_REQUIRE_EQUAL(std::size_t(2),
-                        stlab::tuple_find(t, [](const auto& t) { return !t.empty(); }));
+    REQUIRE(stlab::tuple_find(t, [](const auto& t) { return !t.empty(); }) == std::size_t(2));
 }
 
-BOOST_AUTO_TEST_CASE(two_element_tuple_first_succeeds) {
+TEST_CASE("tuple_find_two_element_tuple_first_succeeds") {
     std::tuple<std::vector<int>, std::list<double>> t;
-    BOOST_REQUIRE_EQUAL(std::size_t(0),
-                        stlab::tuple_find(t, [](const auto& t) { return t.empty(); }));
+    REQUIRE(stlab::tuple_find(t, [](const auto& t) { return t.empty(); }) == std::size_t(0));
 }
 
-BOOST_AUTO_TEST_CASE(two_element_tuple_second_succeeds) {
+TEST_CASE("tuple_find_two_element_tuple_second_succeeds") {
     std::tuple<std::vector<int>, std::list<double>> t;
     std::get<0>(t).push_back(0);
-    BOOST_REQUIRE_EQUAL(std::size_t(1),
-                        stlab::tuple_find(t, [](const auto& t) { return t.empty(); }));
+    REQUIRE(stlab::tuple_find(t, [](const auto& t) { return t.empty(); }) == std::size_t(1));
 }
 
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_AUTO_TEST_SUITE(tuple_for_each_test)
-
-BOOST_AUTO_TEST_CASE(empty_tuple) {
+TEST_CASE("tuple_for_each_empty_tuple") {
     std::tuple<> t;
     std::size_t count = 0;
     stlab::tuple_for_each(t, [&count](auto&) { ++count; });
-    BOOST_REQUIRE_EQUAL(std::size_t(0), count);
+    REQUIRE(count == std::size_t(0));
 }
 
-BOOST_AUTO_TEST_CASE(one_element_tuple) {
+TEST_CASE("tuple_for_each_one_element_tuple") {
     std::tuple<std::vector<int>> t;
     std::get<0>(t) = {
         1, 2}; // workaround for gcc 5 missing capability to support initializer lists for tuples
@@ -75,11 +64,11 @@ BOOST_AUTO_TEST_CASE(one_element_tuple) {
         ++count;
         c.pop_back();
     });
-    BOOST_REQUIRE_EQUAL(std::size_t(1), std::get<0>(t).size());
-    BOOST_REQUIRE_EQUAL(std::size_t(1), count);
+    REQUIRE(std::get<0>(t).size() == std::size_t(1));
+    REQUIRE(count == std::size_t(1));
 }
 
-BOOST_AUTO_TEST_CASE(two_element_tuple) {
+TEST_CASE("tuple_for_each_two_element_tuple") {
     std::tuple<std::vector<int>, std::list<double>> t;
     std::get<0>(t) = {
         1, 2}; // workaround for gcc 5 missing capability to support initializer lists for tuples
@@ -90,9 +79,7 @@ BOOST_AUTO_TEST_CASE(two_element_tuple) {
         ++count;
         c.pop_back();
     });
-    BOOST_REQUIRE_EQUAL(std::size_t(1), std::get<0>(t).size());
-    BOOST_REQUIRE_EQUAL(std::size_t(1), std::get<1>(t).size());
-    BOOST_REQUIRE_EQUAL(std::size_t(2), count);
+    REQUIRE(std::get<0>(t).size() == std::size_t(1));
+    REQUIRE(std::get<1>(t).size() == std::size_t(1));
+    REQUIRE(count == std::size_t(2));
 }
-
-BOOST_AUTO_TEST_SUITE_END()

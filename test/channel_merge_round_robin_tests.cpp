@@ -11,7 +11,7 @@
 #include <utility>
 #include <vector>
 
-#include <boost/test/unit_test.hpp>
+#include <doctest/doctest.h>
 
 #include <stlab/concurrency/channel.hpp>
 #include <stlab/concurrency/default_executor.hpp>
@@ -21,10 +21,8 @@
 
 using channel_test_fixture_int_1 = channel_test_helper::channel_test_fixture<int, 1>;
 
-BOOST_FIXTURE_TEST_CASE(int_merge_round_robin_channel_void_functor_one_value,
-                        channel_test_fixture_int_1) {
-    BOOST_TEST_MESSAGE("int merge round robin channel void functor one value one value");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_1,
+                  "int_merge_round_robin_channel_void_functor_one_value") {
     std::atomic_int result{0};
 
     auto check = stlab::merge_channel<stlab::round_robin_t>(
@@ -35,13 +33,11 @@ BOOST_FIXTURE_TEST_CASE(int_merge_round_robin_channel_void_functor_one_value,
 
     wait_until_done([&] { return result != 0; });
 
-    BOOST_REQUIRE_EQUAL(1, result);
+    REQUIRE(1 == result);
 }
 
-BOOST_FIXTURE_TEST_CASE(int_merge_round_robin_channel_void_functor_one_value_async,
-                        channel_test_fixture_int_1) {
-    BOOST_TEST_MESSAGE("int merge round robin channel void functor one value asynchronously");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_1,
+                  "int_merge_round_robin_channel_void_functor_one_value_async") {
     std::atomic_int result{0};
 
     auto check = stlab::merge_channel<stlab::round_robin_t>(
@@ -52,13 +48,11 @@ BOOST_FIXTURE_TEST_CASE(int_merge_round_robin_channel_void_functor_one_value_asy
 
     wait_until_done([&]() { return result != 0; });
 
-    BOOST_REQUIRE_EQUAL(1, result);
+    REQUIRE(1 == result);
 }
 
-BOOST_FIXTURE_TEST_CASE(int_merge_round_robin_channel_void_functor_many_values,
-                        channel_test_fixture_int_1) {
-    BOOST_TEST_MESSAGE("int merge round robin channel void functor many values");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_1,
+                  "int_merge_round_robin_channel_void_functor_many_values") {
     std::atomic_int result{0};
 
     auto check = stlab::merge_channel<stlab::round_robin_t>(
@@ -73,13 +67,11 @@ BOOST_FIXTURE_TEST_CASE(int_merge_round_robin_channel_void_functor_many_values,
 
     wait_until_done([&] { return result >= expected; });
 
-    BOOST_REQUIRE_EQUAL(expected, result);
+    REQUIRE(expected == result);
 }
 
-BOOST_FIXTURE_TEST_CASE(int_merge_round_robin_channel_void_functor_many_values_async,
-                        channel_test_fixture_int_1) {
-    BOOST_TEST_MESSAGE("int merge round robin channel void functor many values asynchronously");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_1,
+                  "int_merge_round_robin_channel_void_functor_many_values_async") {
     std::atomic_int result{0};
 
     auto check = stlab::merge_channel<stlab::round_robin_t>(
@@ -94,15 +86,13 @@ BOOST_FIXTURE_TEST_CASE(int_merge_round_robin_channel_void_functor_many_values_a
     auto expected = 100 * (100 + 1) / 2;
     wait_until_done([&] { return result >= expected; });
 
-    BOOST_REQUIRE_EQUAL(expected, result);
+    REQUIRE(expected == result);
 }
 
 using channel_test_fixture_int_2 = channel_test_helper::channel_test_fixture<int, 2>;
 
-BOOST_FIXTURE_TEST_CASE(int_merge_round_robin_channel_same_type_void_functor_one_value,
-                        channel_test_fixture_int_2) {
-    BOOST_TEST_MESSAGE("int merge round robin channel same type void functor oane value");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_2,
+                  "int_merge_round_robin_channel_same_type_void_functor_one_value") {
     std::atomic_int result{0};
     int incrementer{1};
     auto check = stlab::merge_channel<stlab::round_robin_t>(
@@ -121,14 +111,11 @@ BOOST_FIXTURE_TEST_CASE(int_merge_round_robin_channel_same_type_void_functor_one
     auto expectation = 2 + 2 * 3;
     wait_until_done([&] { return result >= expectation; });
 
-    BOOST_REQUIRE_EQUAL(expectation, result);
+    REQUIRE(expectation == result);
 }
 
-BOOST_FIXTURE_TEST_CASE(int_merge_round_robin_channel_same_type_void_functor_one_value_async,
-                        channel_test_fixture_int_2) {
-    BOOST_TEST_MESSAGE(
-        "int merge round robin channel same type void functor one value asynchronously");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_2,
+                  "int_merge_round_robin_channel_same_type_void_functor_one_value_async") {
     std::atomic_int result{0};
     int incrementer{1};
     auto check = stlab::merge_channel<stlab::round_robin_t>(
@@ -150,13 +137,11 @@ BOOST_FIXTURE_TEST_CASE(int_merge_round_robin_channel_same_type_void_functor_one
     auto expectation = 2 + 2 * 3;
     wait_until_done([&] { return result >= expectation; });
 
-    BOOST_REQUIRE_EQUAL(expectation, result);
+    REQUIRE(expectation == result);
 }
 
-BOOST_FIXTURE_TEST_CASE(int_merge_round_robin_channel_same_type_void_functor_many_values,
-                        channel_test_fixture_int_2) {
-    BOOST_TEST_MESSAGE("int merge round robin channel same type void functor many values");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_2,
+                  "int_merge_round_robin_channel_same_type_void_functor_many_values") {
     std::atomic_int result{0};
     int incrementer{1};
     auto check = stlab::merge_channel<stlab::round_robin_t>(
@@ -179,17 +164,14 @@ BOOST_FIXTURE_TEST_CASE(int_merge_round_robin_channel_same_type_void_functor_man
                        9 * 18 + 9 * 19 + 10 * 20;
     wait_until_done([&] { return result >= expectation; });
 
-    BOOST_REQUIRE_EQUAL(expectation, result);
+    REQUIRE(expectation == result);
 }
 
 using channel_test_fixture_pair_2 =
     channel_test_helper::channel_test_fixture<std::pair<int, std::size_t>, 5>;
 
-BOOST_FIXTURE_TEST_CASE(int_merge_round_robin_channel_same_type_void_functor_many_values_async,
-                        channel_test_fixture_pair_2) {
-    BOOST_TEST_MESSAGE(
-        "int merge round robin channel same type void functor many values asynchronously");
-
+TEST_CASE_FIXTURE(channel_test_fixture_pair_2,
+                  "int_merge_round_robin_channel_same_type_void_functor_many_values_async") {
     std::atomic_int result{0};
     std::atomic_bool zipped_ok{true};
     std::size_t expected_input{0};
@@ -219,16 +201,14 @@ BOOST_FIXTURE_TEST_CASE(int_merge_round_robin_channel_same_type_void_functor_man
 
     wait_until_done([&] { return result >= expectation; });
 
-    BOOST_REQUIRE_EQUAL(true, zipped_ok);
-    BOOST_REQUIRE_EQUAL(expectation, result);
+    REQUIRE(zipped_ok);
+    REQUIRE(expectation == result);
 }
 
 using channel_test_fixture_int_5 = channel_test_helper::channel_test_fixture<int, 5>;
 
-BOOST_FIXTURE_TEST_CASE(int_merge_round_robin_channel_same_type_void_functor,
-                        channel_test_fixture_int_5) {
-    BOOST_TEST_MESSAGE("int merge round robin channel same type void functor");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_5,
+                  "int_merge_round_robin_channel_same_type_void_functor") {
     std::atomic_int result{0};
     std::atomic_int incrementer{1};
 
@@ -252,13 +232,11 @@ BOOST_FIXTURE_TEST_CASE(int_merge_round_robin_channel_same_type_void_functor,
     const auto expected = 2 * 1 + 3 * 2 + 4 * 3 + 5 * 4 + 6 * 5;
     wait_until_done([&] { return result >= expected; });
 
-    BOOST_REQUIRE_EQUAL(expected, result);
+    REQUIRE(expected == result);
 }
 
-BOOST_FIXTURE_TEST_CASE(int_merge_round_robin_channel_same_type_void_functor_async,
-                        channel_test_fixture_int_5) {
-    BOOST_TEST_MESSAGE("int merge round robin channel same type void functor asynchronous");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_5,
+                  "int_merge_round_robin_channel_same_type_void_functor_async") {
     std::atomic_int result{0};
     std::atomic_int incrementer{1};
 
@@ -283,5 +261,5 @@ BOOST_FIXTURE_TEST_CASE(int_merge_round_robin_channel_same_type_void_functor_asy
     const auto expected = 2 * 1 + 3 * 2 + 4 * 3 + 5 * 4 + 6 * 5;
     wait_until_done([&] { return result >= expected; });
 
-    BOOST_REQUIRE_EQUAL(expected, result);
+    REQUIRE(expected == result);
 }

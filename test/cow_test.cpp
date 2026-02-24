@@ -14,7 +14,7 @@
 #include <tuple>
 #include <utility>
 
-#include <boost/test/unit_test.hpp>
+#include <doctest/doctest.h>
 // #include <adobe/test/check_regular.hpp>
 // #include <adobe/test/check_less_than_comparable.hpp>
 // #include <adobe/test/check_null.hpp>
@@ -72,15 +72,15 @@ void test_copy_on_write() {
 
         CowType value_test(mv(1)); // allocation
 
-        BOOST_CHECK_MESSAGE(value_1 == value_test, "equality of non-identical values");
-        BOOST_CHECK_MESSAGE(value_2 != value_test, "equality of non-identical values");
+        REQUIRE(value_1 == value_test);
+        REQUIRE(value_2 != value_test);
 
-        BOOST_CHECK(value_test.unique());
+        REQUIRE(value_test.unique());
 
         value_test = value_2; // deallocation
 
-        BOOST_CHECK(!value_test.unique());
-        BOOST_CHECK(value_test.identity(value_2));
+        REQUIRE(!value_test.unique());
+        REQUIRE(value_test.identity(value_2));
     }
 
     // Test basic move semantics
@@ -89,12 +89,12 @@ void test_copy_on_write() {
         CowType value_2(mv(21)); // allocation
         CowType value_move(std::move(value_1));
 
-        // BOOST_CHECK_MESSAGE(value_move != value_1, "move failure");
+        // REQUIRE(value_move != value_1, "move failure");
 
         value_move = std::move(value_2); // deallocation
 
-        // BOOST_CHECK_MESSAGE(value_move != value_2, "move failure");
-        // BOOST_CHECK_MESSAGE(value_1 == value_2, "move failure"); // both should be object_m == 0
+        // REQUIRE(value_move != value_2, "move failure");
+        // REQUIRE(value_1 == value_2, "move failure"); // both should be object_m == 0
     }
 
     // Test copy-assignment using null object_m
@@ -110,12 +110,12 @@ void test_copy_on_write() {
         CowType foo(mv(5)); // allocation
         CowType bar(foo);
 
-        BOOST_CHECK(bar.identity(foo));
+        REQUIRE(bar.identity(foo));
 
         bar = mv(6); // allocation
 
-        BOOST_CHECK(bar.unique());
-        BOOST_CHECK(foo.unique());
+        REQUIRE(bar.unique());
+        REQUIRE(foo.unique());
     }
 
     // Test move-assignment using null object_m
@@ -163,13 +163,11 @@ void test_copy_on_write() {
     {
         CowType foo(mv(1)); // allocation
 
-        BOOST_CHECK_MESSAGE(foo.read() == typename CowType::value_type(mv(1)), "read error");
-        BOOST_CHECK_MESSAGE(static_cast<typename CowType::value_type>(foo) ==
-                                typename CowType::value_type(mv(1)),
-                            "read error");
-        BOOST_CHECK_MESSAGE(*foo == typename CowType::value_type(mv(1)), "read error");
-        BOOST_CHECK_MESSAGE(*(foo.operator->()) == typename CowType::value_type(mv(1)),
-                            "read error");
+        REQUIRE(foo.read() == typename CowType::value_type(mv(1)));
+        REQUIRE(static_cast<typename CowType::value_type>(foo) ==
+                typename CowType::value_type(mv(1)));
+        REQUIRE(*foo == typename CowType::value_type(mv(1)));
+        REQUIRE(*(foo.operator->()) == typename CowType::value_type(mv(1)));
     }
 
     // Test swap
@@ -179,8 +177,8 @@ void test_copy_on_write() {
 
         swap(foo, bar);
 
-        BOOST_CHECK_MESSAGE(foo.read() == typename CowType::value_type(mv(2)), "swap error");
-        BOOST_CHECK_MESSAGE(bar.read() == typename CowType::value_type(mv(1)), "swap error");
+        REQUIRE(foo.read() == typename CowType::value_type(mv(2)));
+        REQUIRE(bar.read() == typename CowType::value_type(mv(1)));
     }
 }
 
@@ -190,7 +188,7 @@ void test_copy_on_write() {
 
 /**************************************************************************************************/
 
-BOOST_AUTO_TEST_CASE(copy_on_write_interface) {
+TEST_CASE("copy_on_write_interface") {
     using namespace stlab;
 
     {
@@ -205,7 +203,7 @@ BOOST_AUTO_TEST_CASE(copy_on_write_interface) {
                       "Default c'tor should be noexcept if the type is noexcept.");
         static_assert(!noexcept(copy_on_write<not_noexcept_ctor>()),
                       "Default c'tor shouldn't be noexcept if the type's c'tor isn't.");
-        BOOST_CHECK_THROW([] { copy_on_write<not_noexcept_ctor> ctor_will_throw; }(),
+        REQUIRE_THROWS_AS(([] { copy_on_write<not_noexcept_ctor> ctor_will_throw; }()),
                           std::exception);
     }
 
@@ -214,8 +212,8 @@ BOOST_AUTO_TEST_CASE(copy_on_write_interface) {
         copy_on_write<int> a;
         copy_on_write<int> b;
 
-        BOOST_CHECK_MESSAGE(a.identity(b), "default construction error");
-        BOOST_CHECK_MESSAGE(a == 0, "default construction error");
+        REQUIRE(a.identity(b));
+        REQUIRE(a == 0);
     }
 
     {
@@ -224,17 +222,17 @@ BOOST_AUTO_TEST_CASE(copy_on_write_interface) {
         copy_on_write<std::pair<int, int>> b(10, 20);
         copy_on_write<std::tuple<int, int, int>> c(10, 20, 30);
 
-        BOOST_CHECK_MESSAGE(a == 10, "value construction error");
-        BOOST_CHECK_MESSAGE((b == std::make_pair(10, 20)), "value construction error");
-        BOOST_CHECK_MESSAGE((c == std::make_tuple(10, 20, 30)), "value construction error");
+        REQUIRE(a == 10);
+        REQUIRE((b == std::make_pair(10, 20)));
+        REQUIRE((c == std::make_tuple(10, 20, 30)));
     }
 
     {
         // copy construction
         copy_on_write<int> a = 3;
         auto b = copy(a);
-        BOOST_CHECK_MESSAGE(a.identity(b), "copy construction error");
-        BOOST_CHECK_MESSAGE(b == 3, "copy construction error");
+        REQUIRE(a.identity(b));
+        REQUIRE(b == 3);
     }
 
     {
@@ -242,9 +240,9 @@ BOOST_AUTO_TEST_CASE(copy_on_write_interface) {
         copy_on_write<int> a = 3;
         copy_on_write<int> b = std::move(a);
         a = 0;
-        BOOST_CHECK_MESSAGE(!a.identity(b), "move construction error");
-        BOOST_CHECK_MESSAGE(b == 3, "move construction error");
-        BOOST_CHECK_MESSAGE(a == 0, "move construction error");
+        REQUIRE(!a.identity(b));
+        REQUIRE(b == 3);
+        REQUIRE(a == 0);
     }
 
     {
@@ -252,8 +250,8 @@ BOOST_AUTO_TEST_CASE(copy_on_write_interface) {
         copy_on_write<int> a = 3;
         copy_on_write<int> b;
         b = a;
-        BOOST_CHECK_MESSAGE(a.identity(b), "copy assignment error");
-        BOOST_CHECK_MESSAGE(b == 3, "copy assignment error");
+        REQUIRE(a.identity(b));
+        REQUIRE(b == 3);
     }
 
     {
@@ -262,58 +260,58 @@ BOOST_AUTO_TEST_CASE(copy_on_write_interface) {
         copy_on_write<int> b;
         b = std::move(a);
         a = 0;
-        BOOST_CHECK_MESSAGE(!a.identity(b), "move assignment error");
-        BOOST_CHECK_MESSAGE(b == 3, "move assignment error");
-        BOOST_CHECK_MESSAGE(a == 0, "move assignment error");
+        REQUIRE(!a.identity(b));
+        REQUIRE(b == 3);
+        REQUIRE(a == 0);
     }
 
     {
         // value assignment
         copy_on_write<int> a;
         a = 3;
-        BOOST_CHECK_MESSAGE(a == 3, "value assignment error");
+        REQUIRE(a == 3);
     }
 
     {
         // write
         copy_on_write<std::pair<int, int>> a(1, 2);
         copy_on_write<std::pair<int, int>> b = a;
-        BOOST_CHECK(a.identity(b));
+        REQUIRE(a.identity(b));
         a.write().first = 3;
-        BOOST_CHECK(!a.identity(b));
-        BOOST_CHECK(a == std::make_pair(3, 2));
-        BOOST_CHECK(b == std::make_pair(1, 2));
+        REQUIRE(!a.identity(b));
+        REQUIRE(a == std::make_pair(3, 2));
+        REQUIRE(b == std::make_pair(1, 2));
     }
 
     {
         // read
         copy_on_write<std::pair<int, int>> a(1, 2);
-        BOOST_CHECK(a.read().first == 1 && a.read().second == 2);
+        REQUIRE((a.read().first == 1 && a.read().second == 2));
     }
 
     {
         // implicit conversion
         copy_on_write<std::pair<int, int>> a(1, 2);
         std::pair<int, int> b = a;
-        BOOST_CHECK(b == std::make_pair(1, 2));
+        REQUIRE(b == std::make_pair(1, 2));
     }
 
     {
         // operator * and ->
         copy_on_write<std::pair<int, int>> a(1, 2);
-        BOOST_CHECK(a->first == 1 && a->second == 2);
-        BOOST_CHECK((*a).first == 1 && (*a).second == 2);
+        REQUIRE((a->first == 1 && a->second == 2));
+        REQUIRE(((*a).first == 1 && (*a).second == 2));
     }
 
     {
         // unique
         copy_on_write<std::pair<int, int>> a(1, 2);
-        BOOST_CHECK(a.unique());
+        REQUIRE(a.unique());
         {
             auto b = copy(a);
-            BOOST_CHECK(!a.unique() && !b.unique());
+            REQUIRE((!a.unique() && !b.unique()));
         }
-        BOOST_CHECK(a.unique());
+        REQUIRE(a.unique());
     }
 
     // identity (tested above)
@@ -323,7 +321,7 @@ BOOST_AUTO_TEST_CASE(copy_on_write_interface) {
         copy_on_write<int> a(1);
         copy_on_write<int> b(2);
         swap(a, b);
-        BOOST_CHECK((a == 2) && (b == 1));
+        REQUIRE(((a == 2) && (b == 1)));
     }
 
     // comparisons
@@ -332,31 +330,31 @@ BOOST_AUTO_TEST_CASE(copy_on_write_interface) {
         copy_on_write<int> b(1);
         copy_on_write<int> c(2);
 
-        BOOST_CHECK((a == b) && (a != c) && !(a == c) && !(a != b));
-        BOOST_CHECK((a == 1) && (a != 2) && !(a == 2) && !(a != 1));
-        BOOST_CHECK((1 == b) && (1 != c) && !(1 == c) && !(1 != b));
+        REQUIRE(((a == b) && (a != c) && !(a == c) && !(a != b)));
+        REQUIRE(((a == 1) && (a != 2) && !(a == 2) && !(a != 1)));
+        REQUIRE(((1 == b) && (1 != c) && !(1 == c) && !(1 != b)));
 
-        BOOST_CHECK(!(a < b) && (a < c));
-        BOOST_CHECK(!(a < 1) && (a < 2));
-        BOOST_CHECK(!(1 < 1) && (1 < 2));
+        REQUIRE((!(a < b) && (a < c)));
+        REQUIRE((!(a < 1) && (a < 2)));
+        REQUIRE((!(1 < 1) && (1 < 2)));
 
-        BOOST_CHECK(!(a > b) && (c > a));
-        BOOST_CHECK(!(a > 1) && (c > 1));
-        BOOST_CHECK(!(1 > b) && (2 > a));
+        REQUIRE((!(a > b) && (c > a)));
+        REQUIRE((!(a > 1) && (c > 1)));
+        REQUIRE((!(1 > b) && (2 > a)));
 
-        BOOST_CHECK((a <= b) && !(c <= a));
-        BOOST_CHECK((a <= 1) && !(c <= 1));
-        BOOST_CHECK((1 <= b) && !(2 <= a));
+        REQUIRE(((a <= b) && !(c <= a)));
+        REQUIRE(((a <= 1) && !(c <= 1)));
+        REQUIRE(((1 <= b) && !(2 <= a)));
 
-        BOOST_CHECK((a >= b) && !(a >= c));
-        BOOST_CHECK((a >= 1) && !(a >= 2));
-        BOOST_CHECK((1 >= b) && !(1 >= c));
+        REQUIRE(((a >= b) && !(a >= c)));
+        REQUIRE(((a >= 1) && !(a >= 2)));
+        REQUIRE(((1 >= b) && !(1 >= c)));
     }
 }
 
 /**************************************************************************************************/
 
-BOOST_AUTO_TEST_CASE(copy_on_write_test) {
+TEST_CASE("copy_on_write_test") {
     // test nonmovable type with capture_allocator
     test_copy_on_write<stlab::copy_on_write<int>>();
 

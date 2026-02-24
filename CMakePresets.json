@@ -145,6 +145,26 @@
     ],
     "buildPresets": [
         {
+            "name": "debug-cpp20",
+            "configurePreset": "debug-cpp20"
+        },
+        {
+            "name": "debug-cpp17",
+            "configurePreset": "debug-cpp17"
+        },
+        {
+            "name": "debug-sanitizer",
+            "configurePreset": "debug-sanitizer"
+        },
+        {
+            "name": "debug-portable",
+            "configurePreset": "debug-portable"
+        },
+        {
+            "name": "debug-asan",
+            "configurePreset": "debug-asan"
+        },
+        {
             "name": "clang-tidy-fix",
             "configurePreset": "clang-tidy-fix",
             "jobs": 1
@@ -160,6 +180,11 @@
         }
     ],
     "testPresets": [
+        {
+            "name": "debug-cpp20",
+            "description": "Run tests with debug-cpp20 build",
+            "configurePreset": "debug-cpp20"
+        },
         {
             "name": "debug-sanitizer-verbose",
             "description": "Run tests with sanitizers and verbose output",

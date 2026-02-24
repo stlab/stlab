@@ -12,7 +12,7 @@
 #include <utility>
 
 // boost
-#include <boost/test/unit_test.hpp>
+#include <doctest/doctest.h>
 
 #include <stlab/test/model.hpp>
 
@@ -43,17 +43,17 @@ using namespace stlab;
 
 /**************************************************************************************************/
 
-BOOST_AUTO_TEST_CASE(copy_test) {
+TEST_CASE("copy_test") {
     annotate_counters counters;
     annotate a{counters};
     a = sink_only(std::move(a));
-    BOOST_CHECK(counters._copy_ctor == 0);
-    BOOST_CHECK(counters._copy_assign_lhs == 0);
-    BOOST_CHECK(counters._copy_assign_rhs == 0);
+    REQUIRE(counters._copy_ctor == 0);
+    REQUIRE(counters._copy_assign_lhs == 0);
+    REQUIRE(counters._copy_assign_rhs == 0);
     a = sink_only(stlab::copy(a));
-    BOOST_CHECK(counters._copy_ctor == 1);
-    BOOST_CHECK(counters._copy_assign_lhs == 0);
-    BOOST_CHECK(counters._copy_assign_rhs == 0);
+    REQUIRE(counters._copy_ctor == 1);
+    REQUIRE(counters._copy_assign_lhs == 0);
+    REQUIRE(counters._copy_assign_rhs == 0);
 }
 
 /**************************************************************************************************/

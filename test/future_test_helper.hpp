@@ -19,7 +19,7 @@
 #include <string>
 #include <thread>
 
-#include <boost/test/unit_test.hpp>
+#include <doctest/doctest.h>
 
 using lock_t = std::unique_lock<std::mutex>;
 
@@ -30,17 +30,15 @@ void check_failure(F& f, const char* message) {
 #if 1
     try {
         (void)f.get_try();
-        BOOST_FAIL("Expected exception was not thrown");
+        FAIL("Expected exception was not thrown");
 
     } catch (const std::exception& e) {
-        BOOST_REQUIRE(typeid(E) == typeid(e));
-        BOOST_REQUIRE_EQUAL(std::string(message), std::string(e.what()));
+        REQUIRE(typeid(E) == typeid(e));
+        REQUIRE(std::string(message) == std::string(e.what()));
     }
 #else
     // This version fails in CI with the XCode 16.4 runner. It appears to be a compiler bug.
-    BOOST_REQUIRE_EXCEPTION((void)f.get_try(), E, ([_m = message](const auto& e) {
-                                return std::string(_m) == std::string(e.what());
-                            }));
+    REQUIRE_THROWS_AS((void)f.get_try(), E);
 #endif
 }
 
@@ -120,11 +118,11 @@ struct test_fixture {
 
     void check_valid_future() {}
 
-    void check_valid_future(const stlab::future<T>& f) { BOOST_REQUIRE(f.valid() == true); }
+    void check_valid_future(const stlab::future<T>& f) { REQUIRE(f.valid() == true); }
 
     template <typename F, typename... FS>
     void check_valid_future(const F& f, const FS&... fs) {
-        BOOST_REQUIRE(f.valid() == true);
+        REQUIRE(f.valid() == true);
         check_valid_future(fs...);
     }
 
@@ -155,7 +153,7 @@ private:
             (void)stlab::await(std::forward<F>(f));
         } catch (const E&) {
         } catch (...) {
-            BOOST_FAIL("Unexpected exception thrown in wait_until_this_future_fails");
+            FAIL("Unexpected exception thrown in wait_until_this_future_fails");
         }
     }
 };

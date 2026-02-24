@@ -16,7 +16,7 @@
 #include <thread>
 #include <vector>
 
-#include <boost/test/unit_test.hpp>
+#include <doctest/doctest.h>
 
 using namespace stlab;
 using namespace std;
@@ -25,9 +25,7 @@ namespace {
 void rest() { std::this_thread::sleep_for(std::chrono::milliseconds(1)); }
 } // namespace
 
-BOOST_AUTO_TEST_CASE(all_low_prio_tasks_are_executed) {
-    BOOST_TEST_MESSAGE("All low priority tasks are executed");
-
+TEST_CASE("all_low_prio_tasks_are_executed") {
     serial_queue_t queue(low_executor);
     mutex m;
     vector<int> results;
@@ -46,13 +44,11 @@ BOOST_AUTO_TEST_CASE(all_low_prio_tasks_are_executed) {
     }
 
     for (auto i = 0; i < 10; ++i) {
-        BOOST_REQUIRE_EQUAL(i, results[i]);
+        REQUIRE(results[i] == i);
     }
 }
 
-BOOST_AUTO_TEST_CASE(all_default_prio_tasks_get_executed) {
-    BOOST_TEST_MESSAGE("All default priority tasks are executed");
-
+TEST_CASE("all_default_prio_tasks_get_executed") {
     serial_queue_t queue(default_executor);
     mutex m;
     vector<int> results;
@@ -71,13 +67,11 @@ BOOST_AUTO_TEST_CASE(all_default_prio_tasks_get_executed) {
     }
 
     for (auto i = 0; i < 10; ++i) {
-        BOOST_REQUIRE_EQUAL(i, results[i]);
+        REQUIRE(results[i] == i);
     }
 }
 
-BOOST_AUTO_TEST_CASE(all_high_prio_tasks_get_executed) {
-    BOOST_TEST_MESSAGE("All high priority tasks are executed");
-
+TEST_CASE("all_high_prio_tasks_get_executed") {
     serial_queue_t queue(high_executor);
     mutex m;
     vector<int> results;
@@ -96,13 +90,11 @@ BOOST_AUTO_TEST_CASE(all_high_prio_tasks_get_executed) {
     }
 
     for (auto i = 0; i < 10; ++i) {
-        BOOST_REQUIRE_EQUAL(i, results[i]);
+        REQUIRE(results[i] == i);
     }
 }
 
-BOOST_AUTO_TEST_CASE(task_system_restarts_after_it_went_pending) {
-    BOOST_TEST_MESSAGE("The task system restarts after it went to pending");
-
+TEST_CASE("task_system_restarts_after_it_went_pending") {
     bool done{false};
     mutex m;
     condition_variable cv;
@@ -135,7 +127,7 @@ BOOST_AUTO_TEST_CASE(task_system_restarts_after_it_went_pending) {
         invoke_waiting([&] { cv.wait(block, [&] { return !done; }); });
     }
 
-    BOOST_REQUIRE(!done);
+    REQUIRE(!done);
 }
 
 // REVISIT (sean-parent) - These tests is disabled because boost multi-precision is generated
@@ -213,9 +205,7 @@ struct check_task {
 };
 } // namespace
 
-BOOST_AUTO_TEST_CASE(all_tasks_will_be_executed_according_to_their_prio) {
-    BOOST_TEST_MESSAGE("All tasks will be executed according to their prio");
-
+TEST_CASE("all_tasks_will_be_executed_according_to_their_prio") {
     auto start = chrono::high_resolution_clock::now();
 
     for (auto i = 0; i < startCount; ++i) {
@@ -241,7 +231,7 @@ BOOST_AUTO_TEST_CASE(all_tasks_will_be_executed_according_to_their_prio) {
          << static_cast<double>(correctHigh.load()) / iterations * 100.0 << "%\n";
 }
 
-BOOST_AUTO_TEST_CASE(MeasureTiming) {
+TEST_CASE("MeasureTiming") {
     std::vector<int> results;
     const auto iterations = 10'000;
     results.resize(iterations * 3);

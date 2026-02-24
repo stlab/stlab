@@ -11,7 +11,7 @@
 #include <tuple>
 #include <vector>
 
-#include <boost/test/unit_test.hpp>
+#include <doctest/doctest.h>
 
 #include <stlab/concurrency/channel.hpp>
 #include <stlab/concurrency/default_executor.hpp>
@@ -21,9 +21,7 @@
 
 using channel_test_fixture_int_1 = channel_test_helper::channel_test_fixture<int, 1>;
 
-BOOST_FIXTURE_TEST_CASE(int_zip_with_channel_void_functor_one_value, channel_test_fixture_int_1) {
-    BOOST_TEST_MESSAGE("int zip_with channel void functor one value one value");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_zip_with_channel_void_functor_one_value") {
     std::atomic_int result{0};
 
     auto check = zip_with(stlab::default_executor, [&](int x) { result = x; }, _receive[0]);
@@ -33,13 +31,11 @@ BOOST_FIXTURE_TEST_CASE(int_zip_with_channel_void_functor_one_value, channel_tes
 
     wait_until_done([&]() { return result != 0; });
 
-    BOOST_REQUIRE_EQUAL(1, result);
+    REQUIRE(result == 1);
 }
 
-BOOST_FIXTURE_TEST_CASE(int_zip_with_channel_void_functor_one_value_async,
-                        channel_test_fixture_int_1) {
-    BOOST_TEST_MESSAGE("int zip_with channel void functor one value asynchronously");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_1,
+                  "int_zip_with_channel_void_functor_one_value_async") {
     std::atomic_int result{0};
 
     auto check = stlab::zip_with(stlab::default_executor, [&](int x) { result = x; }, _receive[0]);
@@ -49,13 +45,11 @@ BOOST_FIXTURE_TEST_CASE(int_zip_with_channel_void_functor_one_value_async,
 
     wait_until_done([&]() { return result != 0; });
 
-    BOOST_REQUIRE_EQUAL(1, result);
+    REQUIRE(result == 1);
 }
 
-BOOST_FIXTURE_TEST_CASE(int_zip_width_channel_void_functor_many_values,
-                        channel_test_fixture_int_1) {
-    BOOST_TEST_MESSAGE("int zip_with channel void functor many values");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_1,
+                  "int_zip_width_channel_void_functor_many_values") {
     std::atomic_int result{0};
 
     auto check = stlab::zip_with(stlab::default_executor, [&](int x) { result += x; }, _receive[0]);
@@ -69,13 +63,11 @@ BOOST_FIXTURE_TEST_CASE(int_zip_width_channel_void_functor_many_values,
 
     wait_until_done([&]() { return result >= expected; });
 
-    BOOST_REQUIRE_EQUAL(expected, result);
+    REQUIRE(result == expected);
 }
 
-BOOST_FIXTURE_TEST_CASE(int_zip_width_channel_void_functor_many_values_async,
-                        channel_test_fixture_int_1) {
-    BOOST_TEST_MESSAGE("int zip_with channel void functor many values asynchronously");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_1,
+                  "int_zip_width_channel_void_functor_many_values_async") {
     std::atomic_int result{0};
 
     auto check = stlab::zip_with(stlab::default_executor, [&](int x) { result += x; }, _receive[0]);
@@ -90,15 +82,13 @@ BOOST_FIXTURE_TEST_CASE(int_zip_width_channel_void_functor_many_values_async,
     auto expected = 100 * (100 + 1) / 2;
     wait_until_done([&]() { return result >= expected; });
 
-    BOOST_REQUIRE_EQUAL(expected, result);
+    REQUIRE(result == expected);
 }
 
 using channel_test_fixture_int_2 = channel_test_helper::channel_test_fixture<int, 2>;
 
-BOOST_FIXTURE_TEST_CASE(int_zip_width_channel_same_type_void_functor_one_value,
-                        channel_test_fixture_int_2) {
-    BOOST_TEST_MESSAGE("int zip_with channel same type void functor oane value");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_2,
+                  "int_zip_width_channel_same_type_void_functor_one_value") {
     std::atomic_int result{0};
 
     auto check = stlab::zip_with(
@@ -112,13 +102,11 @@ BOOST_FIXTURE_TEST_CASE(int_zip_width_channel_same_type_void_functor_one_value,
 
     wait_until_done([&]() { return result != 0; });
 
-    BOOST_REQUIRE_EQUAL(13, result);
+    REQUIRE(result == 13);
 }
 
-BOOST_FIXTURE_TEST_CASE(int_zip_width_channel_same_type_void_functor_one_value_async,
-                        channel_test_fixture_int_2) {
-    BOOST_TEST_MESSAGE("int zip_with channel same type void functor one value asynchronously");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_2,
+                  "int_zip_width_channel_same_type_void_functor_one_value_async") {
     std::atomic_int result{0};
 
     auto check = stlab::zip_with(
@@ -135,13 +123,11 @@ BOOST_FIXTURE_TEST_CASE(int_zip_width_channel_same_type_void_functor_one_value_a
 
     wait_until_done([&]() { return result != 0; });
 
-    BOOST_REQUIRE_EQUAL(13, result);
+    REQUIRE(result == 13);
 }
 
-BOOST_FIXTURE_TEST_CASE(int_zip_width_channel_same_type_void_functor_many_values,
-                        channel_test_fixture_int_2) {
-    BOOST_TEST_MESSAGE("int zip_with channel same type void functor many values");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_2,
+                  "int_zip_width_channel_same_type_void_functor_many_values") {
     std::atomic_int result{0};
 
     auto check = stlab::zip_with(
@@ -157,15 +143,13 @@ BOOST_FIXTURE_TEST_CASE(int_zip_width_channel_same_type_void_functor_many_values
 
     wait_until_done([&]() { return result >= 255; });
 
-    BOOST_REQUIRE_EQUAL(3 + 2 + 6 + 4 + 9 + 6 + 12 + 8 + 15 + 10 + 18 + 12 + 21 + 14 + 24 + 16 +
-                            27 + 18 + 30,
-                        result);
+    const auto expected_result =
+        3 + 2 + 6 + 4 + 9 + 6 + 12 + 8 + 15 + 10 + 18 + 12 + 21 + 14 + 24 + 16 + 27 + 18 + 30;
+    REQUIRE(result == expected_result);
 }
 
-BOOST_FIXTURE_TEST_CASE(int_zip_width_channel_same_type_void_functor_many_values_async,
-                        channel_test_fixture_int_2) {
-    BOOST_TEST_MESSAGE("int zip_with channel same type void functor many values asynchronously");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_2,
+                  "int_zip_width_channel_same_type_void_functor_many_values_async") {
     std::atomic_int result{0};
 
     auto check = zip_with(
@@ -186,13 +170,12 @@ BOOST_FIXTURE_TEST_CASE(int_zip_width_channel_same_type_void_functor_many_values
         3 + 2 + 6 + 4 + 9 + 6 + 12 + 8 + 15 + 10 + 18 + 12 + 21 + 14 + 24 + 16 + 27 + 18 + 30;
     wait_until_done([&]() { return result >= expected; });
 
-    BOOST_REQUIRE_EQUAL(expected, result);
+    REQUIRE(result == expected);
 }
 
 using channel_test_fixture_int_5 = channel_test_helper::channel_test_fixture<int, 5>;
-BOOST_FIXTURE_TEST_CASE(int_zip_width_channel_same_type_void_functor, channel_test_fixture_int_5) {
-    BOOST_TEST_MESSAGE("int zip_with channel same type void functor");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_5,
+                  "int_zip_width_channel_same_type_void_functor") {
     std::atomic_int result{0};
 
     auto check = zip_with(
@@ -212,13 +195,11 @@ BOOST_FIXTURE_TEST_CASE(int_zip_width_channel_same_type_void_functor, channel_te
     const auto expectation = 4 + 9 + 16 + 25 + 36;
     wait_until_done([&]() { return result != 0; });
 
-    BOOST_REQUIRE_EQUAL(expectation, result);
+    REQUIRE(result == expectation);
 }
 
-BOOST_FIXTURE_TEST_CASE(int_zip_width_channel_same_type_void_functor_async,
-                        channel_test_fixture_int_5) {
-    BOOST_TEST_MESSAGE("int zip_with channel same type void functor asynchronous");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_5,
+                  "int_zip_width_channel_same_type_void_functor_async") {
     std::atomic_int result{0};
 
     auto check = stlab::zip_with(
@@ -239,16 +220,14 @@ BOOST_FIXTURE_TEST_CASE(int_zip_width_channel_same_type_void_functor_async,
     wait_until_done([&]() { return result != 0; });
     auto expected = 4 + 9 + 16 + 25 + 36;
 
-    BOOST_REQUIRE_EQUAL(expected, result);
+    REQUIRE(result == expected);
 }
 
 using channel_types_test_fixture_int_string =
     channel_test_helper::channel_types_test_fixture<int, std::string>;
 
-BOOST_FIXTURE_TEST_CASE(int_zip_width_channel_different_type_void_functor,
-                        channel_types_test_fixture_int_string) {
-    BOOST_TEST_MESSAGE("int zip_with channel different type void functor");
-
+TEST_CASE_FIXTURE(channel_types_test_fixture_int_string,
+                  "int_zip_width_channel_different_type_void_functor") {
     std::atomic_int result{0};
 
     auto check = stlab::zip_with(
@@ -263,13 +242,11 @@ BOOST_FIXTURE_TEST_CASE(int_zip_width_channel_different_type_void_functor,
 
     wait_until_done([&]() { return result != 0; });
 
-    BOOST_REQUIRE_EQUAL(5, result);
+    REQUIRE(result == 5);
 }
 
-BOOST_FIXTURE_TEST_CASE(int_zip_width_channel_2_join_different_type_void_functor_async,
-                        channel_types_test_fixture_int_string) {
-    BOOST_TEST_MESSAGE("int zip_with channel 2 join different type void functor asynchronous");
-
+TEST_CASE_FIXTURE(channel_types_test_fixture_int_string,
+                  "int_zip_width_channel_2_join_different_type_void_functor_async") {
     std::atomic_int result{0};
 
     auto check = stlab::zip_with(
@@ -284,13 +261,11 @@ BOOST_FIXTURE_TEST_CASE(int_zip_width_channel_2_join_different_type_void_functor
 
     wait_until_done([&]() { return result != 0; });
 
-    BOOST_REQUIRE_EQUAL(5, result);
+    REQUIRE(result == 5);
 }
 
-BOOST_FIXTURE_TEST_CASE(int_zip_with_channel_2_different_type_void_functor_async,
-                        channel_types_test_fixture_int_string) {
-    BOOST_TEST_MESSAGE("int zip 2 channels different type void functor asynchronous");
-
+TEST_CASE_FIXTURE(channel_types_test_fixture_int_string,
+                  "int_zip_with_channel_2_different_type_void_functor_async") {
     std::atomic_int result{0};
 
     auto check = stlab::zip(stlab::default_executor, receive<0>(), receive<1>()) |
@@ -305,5 +280,5 @@ BOOST_FIXTURE_TEST_CASE(int_zip_with_channel_2_different_type_void_functor_async
 
     wait_until_done([&]() { return result != 0; });
 
-    BOOST_REQUIRE_EQUAL(5, result);
+    REQUIRE(result == 5);
 }

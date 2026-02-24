@@ -15,6 +15,11 @@ include(${cpp-library_SOURCE_DIR}/cpp-library.cmake)
 # Enable dependency tracking BEFORE project()
 cpp_library_enable_dependency_tracking()
 
+# Set the default C++ language version BEFORE project() so it is applied
+set(CMAKE_CXX_STANDARD 20 CACHE STRING "The C++ standard to use")
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 ########################################################
 # Project declaration without hardcoded version
 project(stlab LANGUAGES CXX)
@@ -27,11 +32,6 @@ add_library(stlab)
 add_library(stlab::stlab ALIAS stlab)
 
 ########################################################
-
-# Set the default C++ language version
-set(CMAKE_CXX_STANDARD 20 CACHE STRING "The C++ standard to use")
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Set the default build type to Release
 if(NOT CMAKE_BUILD_TYPE)
@@ -177,6 +177,7 @@ message(STATUS "stlab: Task System: ${STLAB_TASK_SYSTEM}")
 message(STATUS "stlab: Main Executor: ${STLAB_MAIN_EXECUTOR}")
 
 if(PROJECT_IS_TOP_LEVEL AND BUILD_TESTING)
+  CPMAddPackage("gh:doctest/doctest@2.4.12")
   add_subdirectory(test)
 endif()
 

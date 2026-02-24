@@ -6,7 +6,7 @@ Copyright 2019 Adobe
 
 /**************************************************************************************************/
 
-#include <boost/test/unit_test.hpp>
+#include <doctest/doctest.h>
 
 #include <stlab/concurrency/traits.hpp>
 #include <stlab/test/model.hpp>
@@ -15,25 +15,22 @@ Copyright 2019 Adobe
 
 using namespace stlab;
 
-namespace stlab
-{
+namespace stlab {
 
-template<template<typename> class test, typename T, typename A>
+template <template <typename> class test, typename T, typename A>
 struct smart_test<test, std::vector<T, A>> : test<T> {};
 
-template<template<typename> class test, typename T, typename A>
+template <template <typename> class test, typename T, typename A>
 struct smart_test<test, std::vector<std::vector<T, A>>> : test<T> {};
 
-}
+} // namespace stlab
 
-BOOST_AUTO_TEST_CASE(check_smart_is_copy_constructible_v) {
-    BOOST_TEST_MESSAGE("Check smart_is_copy_constructible_v");
+TEST_CASE("check_smart_is_copy_constructible_v") {
+    REQUIRE(smart_is_copy_constructible_v<int> == true);
+    REQUIRE(smart_is_copy_constructible_v<std::vector<int>> == true);
+    REQUIRE(smart_is_copy_constructible_v<std::vector<annotate>> == true);
 
-    BOOST_REQUIRE(smart_is_copy_constructible_v<int> == true);
-    BOOST_REQUIRE(smart_is_copy_constructible_v<std::vector<int>> == true);
-    BOOST_REQUIRE(smart_is_copy_constructible_v<std::vector<annotate>> == true);
-
-    BOOST_REQUIRE(smart_is_copy_constructible_v<move_only> == false);
-    BOOST_REQUIRE(smart_is_copy_constructible_v<std::vector<move_only>> == false);
-    BOOST_REQUIRE(smart_is_copy_constructible_v<std::vector<std::vector<move_only>>> == false);
+    REQUIRE(smart_is_copy_constructible_v<move_only> == false);
+    REQUIRE(smart_is_copy_constructible_v<std::vector<move_only>> == false);
+    REQUIRE(smart_is_copy_constructible_v<std::vector<std::vector<move_only>>> == false);
 }

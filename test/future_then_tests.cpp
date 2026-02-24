@@ -12,7 +12,7 @@
 #include <utility>
 #include <vector>
 
-#include <boost/test/unit_test.hpp>
+#include <doctest/doctest.h>
 
 #include <stlab/concurrency/await.hpp>
 #include <stlab/concurrency/default_executor.hpp>
@@ -29,11 +29,7 @@ using namespace std;
 using namespace stlab;
 using namespace future_test_helper;
 
-BOOST_FIXTURE_TEST_SUITE(future_then_void, test_fixture<void>)
-
-BOOST_AUTO_TEST_CASE(future_void_single_task) {
-    BOOST_TEST_MESSAGE("running future void single task");
-
+TEST_CASE_FIXTURE(test_fixture<void>, "future_void_single_task") {
     int p = 0;
 
     sut = async(make_executor<0>(), [&_p = p] { _p = 42; });
@@ -41,13 +37,11 @@ BOOST_AUTO_TEST_CASE(future_void_single_task) {
     check_valid_future(sut);
     wait_until_future_completed(std::move(sut));
 
-    BOOST_REQUIRE_EQUAL(42, p);
-    BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
+    REQUIRE(p == 42);
+    REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
 }
 
-BOOST_AUTO_TEST_CASE(future_void_single_task_detached) {
-    BOOST_TEST_MESSAGE("running future void single task detached");
-
+TEST_CASE_FIXTURE(test_fixture<void>, "future_void_single_task_detached") {
     atomic_int p{0};
     {
         auto detached = async(make_executor<0>(), [&_p = p] { _p = 42; });
@@ -57,9 +51,7 @@ BOOST_AUTO_TEST_CASE(future_void_single_task_detached) {
     }
 }
 
-BOOST_AUTO_TEST_CASE(future_void_two_tasks_with_same_scheduler_then_on_rvalue) {
-    BOOST_TEST_MESSAGE("running future void with two task on same scheduler, then on r-value");
-
+TEST_CASE_FIXTURE(test_fixture<void>, "future_void_two_tasks_with_same_scheduler_then_on_rvalue") {
     /* because of a gcc version < 6 bug, it is not possible to use the following
     using task_t = function<void()>;
     using op_t = future<void>(future<void>::*)(task_t&&)&&;
@@ -77,8 +69,8 @@ BOOST_AUTO_TEST_CASE(future_void_two_tasks_with_same_scheduler_then_on_rvalue) {
         check_valid_future(sut);
         wait_until_future_completed(std::move(sut));
 
-        BOOST_REQUIRE_EQUAL(42 + 42, p);
-        BOOST_REQUIRE_LE(2, custom_scheduler<0>::usage_counter());
+        REQUIRE(p == 42 + 42);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 2);
     }
     {
         atomic_int p{0};
@@ -88,14 +80,12 @@ BOOST_AUTO_TEST_CASE(future_void_two_tasks_with_same_scheduler_then_on_rvalue) {
         check_valid_future(sut);
         wait_until_future_completed(std::move(sut));
 
-        BOOST_REQUIRE_EQUAL(42 + 42, p);
-        BOOST_REQUIRE_LE(2, custom_scheduler<0>::usage_counter());
+        REQUIRE(p == 42 + 42);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 2);
     }
 }
 
-BOOST_AUTO_TEST_CASE(future_void_two_tasks_with_same_scheduler_then_on_lvalue) {
-    BOOST_TEST_MESSAGE("running future void with two task on same scheduler, then on l-value");
-
+TEST_CASE_FIXTURE(test_fixture<void>, "future_void_two_tasks_with_same_scheduler_then_on_lvalue") {
     {
         atomic_int p{0};
         auto interim = async(make_executor<0>(), [&_p = p] { _p = 42; });
@@ -105,8 +95,8 @@ BOOST_AUTO_TEST_CASE(future_void_two_tasks_with_same_scheduler_then_on_lvalue) {
         check_valid_future(sut);
         wait_until_future_completed(std::move(sut));
 
-        BOOST_REQUIRE_EQUAL(42 + 42, p);
-        BOOST_REQUIRE_LE(2, custom_scheduler<0>::usage_counter());
+        REQUIRE(p == 42 + 42);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 2);
     }
     {
         atomic_int p{0};
@@ -117,14 +107,12 @@ BOOST_AUTO_TEST_CASE(future_void_two_tasks_with_same_scheduler_then_on_lvalue) {
         check_valid_future(sut);
         wait_until_future_completed(std::move(sut));
 
-        BOOST_REQUIRE_EQUAL(42 + 42, p);
-        BOOST_REQUIRE_LE(2, custom_scheduler<0>::usage_counter());
+        REQUIRE(p == 42 + 42);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 2);
     }
 }
 
-BOOST_AUTO_TEST_CASE(future_int_void_two_tasks_with_same_scheduler) {
-    BOOST_TEST_MESSAGE("running future int void tasks with same scheduler");
-
+TEST_CASE_FIXTURE(test_fixture<void>, "future_int_void_two_tasks_with_same_scheduler") {
     {
         atomic_int p{0};
 
@@ -133,8 +121,8 @@ BOOST_AUTO_TEST_CASE(future_int_void_two_tasks_with_same_scheduler) {
 
         wait_until_future_completed(std::move(sut));
 
-        BOOST_REQUIRE_EQUAL(42 + 42, p);
-        BOOST_REQUIRE_LE(2, custom_scheduler<0>::usage_counter());
+        REQUIRE(p == 42 + 42);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 2);
     }
     {
         atomic_int p{0};
@@ -144,14 +132,12 @@ BOOST_AUTO_TEST_CASE(future_int_void_two_tasks_with_same_scheduler) {
 
         wait_until_future_completed(std::move(sut));
 
-        BOOST_REQUIRE_EQUAL(42 + 42, p);
-        BOOST_REQUIRE_LE(2, custom_scheduler<0>::usage_counter());
+        REQUIRE(p == 42 + 42);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 2);
     }
 }
 
-BOOST_AUTO_TEST_CASE(future_int_void_two_tasks_with_different_scheduler) {
-    BOOST_TEST_MESSAGE("running future int void tasks with different schedulers");
-
+TEST_CASE_FIXTURE(test_fixture<void>, "future_int_void_two_tasks_with_different_scheduler") {
     {
         atomic_int p{0};
 
@@ -162,9 +148,9 @@ BOOST_AUTO_TEST_CASE(future_int_void_two_tasks_with_different_scheduler) {
 
         wait_until_future_completed(std::move(sut));
 
-        BOOST_REQUIRE_EQUAL(42 + 42, p);
-        BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
-        BOOST_REQUIRE_LE(1, custom_scheduler<1>::usage_counter());
+        REQUIRE(p == 42 + 42);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
+        REQUIRE(custom_scheduler<1>::usage_counter() >= 1);
     }
     {
         atomic_int p{0};
@@ -176,15 +162,13 @@ BOOST_AUTO_TEST_CASE(future_int_void_two_tasks_with_different_scheduler) {
 
         wait_until_future_completed(std::move(sut));
 
-        BOOST_REQUIRE_EQUAL(42 + 42, p);
-        BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
-        BOOST_REQUIRE_LE(1, custom_scheduler<1>::usage_counter());
+        REQUIRE(p == 42 + 42);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
+        REQUIRE(custom_scheduler<1>::usage_counter() >= 1);
     }
 }
 
-BOOST_AUTO_TEST_CASE(future_void_two_tasks_with_different_scheduler) {
-    BOOST_TEST_MESSAGE("running future void two tasks with different schedulers");
-
+TEST_CASE_FIXTURE(test_fixture<void>, "future_void_two_tasks_with_different_scheduler") {
     {
         atomic_int p{0};
 
@@ -195,9 +179,9 @@ BOOST_AUTO_TEST_CASE(future_void_two_tasks_with_different_scheduler) {
 
         wait_until_future_completed(std::move(sut));
 
-        BOOST_REQUIRE_EQUAL(42 + 42, p);
-        BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
-        BOOST_REQUIRE_LE(1, custom_scheduler<1>::usage_counter());
+        REQUIRE(p == 42 + 42);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
+        REQUIRE(custom_scheduler<1>::usage_counter() >= 1);
     }
 
     custom_scheduler<0>::reset();
@@ -213,9 +197,9 @@ BOOST_AUTO_TEST_CASE(future_void_two_tasks_with_different_scheduler) {
 
         wait_until_future_completed(std::move(sut));
 
-        BOOST_REQUIRE_EQUAL(42 + 42, p);
-        BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
-        BOOST_REQUIRE_LE(1, custom_scheduler<1>::usage_counter());
+        REQUIRE(p == 42 + 42);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
+        REQUIRE(custom_scheduler<1>::usage_counter() >= 1);
     }
 }
 
@@ -226,9 +210,7 @@ BOOST_AUTO_TEST_CASE(future_void_two_tasks_with_different_scheduler) {
        \
         f2
 */
-BOOST_AUTO_TEST_CASE(future_void_Y_formation_tasks_with_same_scheduler) {
-    BOOST_TEST_MESSAGE("running future void with Y formation with same scheduler");
-
+TEST_CASE_FIXTURE(test_fixture<void>, "future_void_Y_formation_tasks_with_same_scheduler") {
     {
         atomic_int p{0};
         int r1 = 0;
@@ -241,9 +223,9 @@ BOOST_AUTO_TEST_CASE(future_void_Y_formation_tasks_with_same_scheduler) {
         check_valid_future(sut, f1, f2);
         wait_until_future_completed(std::move(f1), std::move(f2));
 
-        BOOST_REQUIRE_EQUAL(42 + 42, r1);
-        BOOST_REQUIRE_EQUAL(42 + 4711, r2);
-        BOOST_REQUIRE_LE(3, custom_scheduler<0>::usage_counter());
+        REQUIRE(r1 == 42 + 42);
+        REQUIRE(r2 == 42 + 4711);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 3);
     }
     {
         atomic_int p{0};
@@ -257,15 +239,13 @@ BOOST_AUTO_TEST_CASE(future_void_Y_formation_tasks_with_same_scheduler) {
         check_valid_future(sut, f1, f2);
         wait_until_future_completed(std::move(f1), std::move(f2));
 
-        BOOST_REQUIRE_EQUAL(42 + 42, r1);
-        BOOST_REQUIRE_EQUAL(42 + 4711, r2);
-        BOOST_REQUIRE_LE(3, custom_scheduler<0>::usage_counter());
+        REQUIRE(r1 == 42 + 42);
+        REQUIRE(r2 == 42 + 4711);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 3);
     }
 }
 
-BOOST_AUTO_TEST_CASE(reduction_future_void) {
-    BOOST_TEST_MESSAGE("running future reduction void to void");
-
+TEST_CASE_FIXTURE(test_fixture<void>, "reduction_future_void") {
     {
         bool first{false};
         bool second{false};
@@ -276,8 +256,8 @@ BOOST_AUTO_TEST_CASE(reduction_future_void) {
 
         wait_until_future_completed(std::move(sut));
 
-        BOOST_REQUIRE(first);
-        BOOST_REQUIRE(second);
+        REQUIRE(first);
+        REQUIRE(second);
     }
     {
         bool first{false};
@@ -288,14 +268,12 @@ BOOST_AUTO_TEST_CASE(reduction_future_void) {
 
         wait_until_future_completed(std::move(sut));
 
-        BOOST_REQUIRE(first);
-        BOOST_REQUIRE(second);
+        REQUIRE(first);
+        REQUIRE(second);
     }
 }
 
-BOOST_AUTO_TEST_CASE(reduction_future_int_to_void) {
-    BOOST_TEST_MESSAGE("running future reduction int to void");
-
+TEST_CASE_FIXTURE(test_fixture<void>, "reduction_future_int_to_void") {
     {
         atomic_bool first{false};
         atomic_bool second{false};
@@ -316,9 +294,9 @@ BOOST_AUTO_TEST_CASE(reduction_future_int_to_void) {
 
         wait_until_future_completed(std::move(sut));
 
-        BOOST_REQUIRE(first);
-        BOOST_REQUIRE(second);
-        BOOST_REQUIRE_EQUAL(84, result);
+        REQUIRE(first);
+        REQUIRE(second);
+        REQUIRE(result == 84);
     }
     {
         atomic_bool first{false};
@@ -342,14 +320,13 @@ BOOST_AUTO_TEST_CASE(reduction_future_int_to_void) {
 
         wait_until_future_completed(std::move(sut));
 
-        BOOST_REQUIRE(first);
-        BOOST_REQUIRE(second);
-        BOOST_REQUIRE_EQUAL(84, result);
+        REQUIRE(first);
+        REQUIRE(second);
+        REQUIRE(result == 84);
     }
 }
 
-BOOST_AUTO_TEST_CASE(reduction_future_move_only_to_void) {
-    BOOST_TEST_MESSAGE("running future reduction move-only to void");
+TEST_CASE_FIXTURE(test_fixture<void>, "reduction_future_move_only_to_void") {
     {
         atomic_bool first{false};
         move_only result;
@@ -365,8 +342,8 @@ BOOST_AUTO_TEST_CASE(reduction_future_move_only_to_void) {
 
         wait_until_future_completed(std::move(sut));
 
-        BOOST_REQUIRE(first);
-        BOOST_REQUIRE_EQUAL(42, result.member());
+        REQUIRE(first);
+        REQUIRE(result.member() == 42);
     }
     {
         bool first{false};
@@ -382,30 +359,24 @@ BOOST_AUTO_TEST_CASE(reduction_future_move_only_to_void) {
                 std::forward<move_only>(x));
         });
 
-        BOOST_REQUIRE(sut.get_try());
+        REQUIRE(sut.get_try());
 
-        BOOST_REQUIRE(first);
-        BOOST_REQUIRE_EQUAL(42, result.member());
+        REQUIRE(first);
+        REQUIRE(result.member() == 42);
     }
 }
 
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_FIXTURE_TEST_SUITE(future_then_non_copyable, test_fixture<move_only>)
-BOOST_AUTO_TEST_CASE(future_non_copyable_single_task) {
-    BOOST_TEST_MESSAGE("running future non copyable single task");
-
+TEST_CASE_FIXTURE(test_fixture<stlab::move_only>, "future_non_copyable_single_task") {
     sut = async(make_executor<0>(), [] { return move_only(42); });
 
     check_valid_future(sut);
     auto result = await(std::move(sut));
 
-    BOOST_REQUIRE_EQUAL(42, result.member());
-    BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
+    REQUIRE(result.member() == 42);
+    REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
 }
 
-BOOST_AUTO_TEST_CASE(future_then_non_copyable_detach) {
-    BOOST_TEST_MESSAGE("running future non copyable, detached");
+TEST_CASE_FIXTURE(test_fixture<void>, "future_then_non_copyable_detach") {
     atomic_bool check{false};
     {
         async(make_executor<0>(), [&_check = check] {
@@ -418,9 +389,7 @@ BOOST_AUTO_TEST_CASE(future_then_non_copyable_detach) {
     }
 }
 
-BOOST_AUTO_TEST_CASE(future_non_copyable_capture) {
-    BOOST_TEST_MESSAGE("running future non copyable capture");
-
+TEST_CASE_FIXTURE(test_fixture<stlab::move_only>, "future_non_copyable_capture") {
     move_only m{42};
 
     sut = async(make_executor<0>(), [&_m = m] { return move_only(_m.member()); });
@@ -428,15 +397,13 @@ BOOST_AUTO_TEST_CASE(future_non_copyable_capture) {
     check_valid_future(sut);
     auto result = await(std::move(sut));
 
-    BOOST_REQUIRE_EQUAL(42, result.member());
-    BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
+    REQUIRE(result.member() == 42);
+    REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
 }
 
-BOOST_AUTO_TEST_CASE(
-    future_copyable_with_non_copyable_as_continuation_with_same_scheduler_then_on_rvalue) {
-    BOOST_TEST_MESSAGE(
-        "running future copyable with non copyable as contination with same scheduler, then on r-value");
-
+TEST_CASE_FIXTURE(
+    test_fixture<stlab::move_only>,
+    "future_copyable_with_non_copyable_as_continuation_with_same_scheduler_then_on_rvalue") {
     {
         sut =
             async(make_executor<0>(), [] { return 42; }).then([](auto x) { return move_only(x); });
@@ -444,8 +411,8 @@ BOOST_AUTO_TEST_CASE(
         check_valid_future(sut);
         auto result = await(std::move(sut));
 
-        BOOST_REQUIRE_EQUAL(42, result.member());
-        BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
+        REQUIRE(result.member() == 42);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
     }
     {
         sut = async(make_executor<0>(), [] { return 42; }) | [](auto x) { return move_only(x); };
@@ -453,16 +420,14 @@ BOOST_AUTO_TEST_CASE(
         check_valid_future(sut);
         auto result = await(std::move(sut));
 
-        BOOST_REQUIRE_EQUAL(42, result.member());
-        BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
+        REQUIRE(result.member() == 42);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
     }
 }
 
-BOOST_AUTO_TEST_CASE(
-    future_copyable_with_non_copyable_as_continuation_with_different_scheduler_then_on_rvalue) {
-    BOOST_TEST_MESSAGE(
-        "running future copyable with non copyable as contination with different scheduler, then on r-value");
-
+TEST_CASE_FIXTURE(
+    test_fixture<stlab::move_only>,
+    "future_copyable_with_non_copyable_as_continuation_with_different_scheduler_then_on_rvalue") {
     {
         sut = async(make_executor<0>(), [] { return 42; }).then(make_executor<1>(), [](auto x) {
             return move_only(x);
@@ -471,9 +436,9 @@ BOOST_AUTO_TEST_CASE(
         check_valid_future(sut);
         auto result = await(std::move(sut));
 
-        BOOST_REQUIRE_EQUAL(42, result.member());
-        BOOST_REQUIRE_EQUAL(1, custom_scheduler<0>::usage_counter());
-        BOOST_REQUIRE_EQUAL(1, custom_scheduler<1>::usage_counter());
+        REQUIRE(result.member() == 42);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
+        REQUIRE(custom_scheduler<1>::usage_counter() >= 1);
     }
 
     custom_scheduler<0>::reset();
@@ -486,17 +451,15 @@ BOOST_AUTO_TEST_CASE(
         check_valid_future(sut);
         auto result = await(std::move(sut));
 
-        BOOST_REQUIRE_EQUAL(42, result.member());
-        BOOST_REQUIRE_EQUAL(1, custom_scheduler<0>::usage_counter());
-        BOOST_REQUIRE_EQUAL(1, custom_scheduler<1>::usage_counter());
+        REQUIRE(result.member() == 42);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
+        REQUIRE(custom_scheduler<1>::usage_counter() >= 1);
     }
 }
 
-BOOST_AUTO_TEST_CASE(
-    future_copyable_with_non_copyable_as_continuation_with_same_scheduler_then_on_lvalue) {
-    BOOST_TEST_MESSAGE(
-        "running future copyable with non copyable as contination with same scheduler, then on l-value");
-
+TEST_CASE_FIXTURE(
+    test_fixture<stlab::move_only>,
+    "future_copyable_with_non_copyable_as_continuation_with_same_scheduler_then_on_lvalue") {
     {
         auto interim = async(make_executor<0>(), [] { return 42; });
 
@@ -505,8 +468,8 @@ BOOST_AUTO_TEST_CASE(
         check_valid_future(sut);
         auto result = await(std::move(sut));
 
-        BOOST_REQUIRE_EQUAL(42, result.member());
-        BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
+        REQUIRE(result.member() == 42);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
     }
     {
         auto interim = async(make_executor<0>(), [] { return 42; });
@@ -516,15 +479,14 @@ BOOST_AUTO_TEST_CASE(
         check_valid_future(sut);
         auto result = await(std::move(sut));
 
-        BOOST_REQUIRE_EQUAL(42, result.member());
-        BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
+        REQUIRE(result.member() == 42);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
     }
 }
 
-BOOST_AUTO_TEST_CASE(
-    future_copyable_with_non_copyable_as_continuation_with_different_scheduler_then_on_lvalue) {
-    BOOST_TEST_MESSAGE(
-        "running future copyable with non copyable as contination with different scheduler, then on l-value");
+TEST_CASE_FIXTURE(
+    test_fixture<stlab::move_only>,
+    "future_copyable_with_non_copyable_as_continuation_with_different_scheduler_then_on_lvalue") {
     {
         auto interim = async(make_executor<0>(), [] { return 42; });
 
@@ -533,9 +495,9 @@ BOOST_AUTO_TEST_CASE(
         check_valid_future(sut);
         auto result = await(std::move(sut));
 
-        BOOST_REQUIRE_EQUAL(42, result.member());
-        BOOST_REQUIRE_EQUAL(1, custom_scheduler<0>::usage_counter());
-        BOOST_REQUIRE_EQUAL(1, custom_scheduler<1>::usage_counter());
+        REQUIRE(result.member() == 42);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
+        REQUIRE(custom_scheduler<1>::usage_counter() >= 1);
     }
     custom_scheduler<0>::reset();
     custom_scheduler<1>::reset();
@@ -547,16 +509,14 @@ BOOST_AUTO_TEST_CASE(
         check_valid_future(sut);
         auto result = await(std::move(sut));
 
-        BOOST_REQUIRE_EQUAL(42, result.member());
-        BOOST_REQUIRE_EQUAL(1, custom_scheduler<0>::usage_counter());
-        BOOST_REQUIRE_EQUAL(1, custom_scheduler<1>::usage_counter());
+        REQUIRE(result.member() == 42);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
+        REQUIRE(custom_scheduler<1>::usage_counter() >= 1);
     }
 }
 
-BOOST_AUTO_TEST_CASE(future_non_copyable_as_continuation_with_same_scheduler_then_on_rvalue) {
-    BOOST_TEST_MESSAGE(
-        "running future non copyable as contination with same scheduler, then on r-value");
-
+TEST_CASE_FIXTURE(test_fixture<stlab::move_only>,
+                  "future_non_copyable_as_continuation_with_same_scheduler_then_on_rvalue") {
     {
         sut = async(make_executor<0>(), [] { return move_only(42); }).then([](auto&& x) {
             return move_only(x.member() * 2);
@@ -565,8 +525,8 @@ BOOST_AUTO_TEST_CASE(future_non_copyable_as_continuation_with_same_scheduler_the
         check_valid_future(sut);
         auto result = await(std::move(sut));
 
-        BOOST_REQUIRE_EQUAL(42 * 2, result.member());
-        BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
+        REQUIRE(result.member() == 42 * 2);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
     }
     {
         sut = async(make_executor<0>(), [] { return move_only(42); }) |
@@ -575,14 +535,13 @@ BOOST_AUTO_TEST_CASE(future_non_copyable_as_continuation_with_same_scheduler_the
         check_valid_future(sut);
         auto result = await(std::move(sut));
 
-        BOOST_REQUIRE_EQUAL(42 * 2, result.member());
-        BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
+        REQUIRE(result.member() == 42 * 2);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
     }
 }
 
-BOOST_AUTO_TEST_CASE(future_non_copyable_as_continuation_with_different_scheduler_then_on_rvalue) {
-    BOOST_TEST_MESSAGE(
-        "running future non copyable as contination with different scheduler, then on r-value");
+TEST_CASE_FIXTURE(test_fixture<stlab::move_only>,
+                  "future_non_copyable_as_continuation_with_different_scheduler_then_on_rvalue") {
     {
         sut = async(make_executor<0>(), [] {
                   return move_only(42);
@@ -591,9 +550,9 @@ BOOST_AUTO_TEST_CASE(future_non_copyable_as_continuation_with_different_schedule
         check_valid_future(sut);
         auto result = await(std::move(sut));
 
-        BOOST_REQUIRE_EQUAL(42 * 2, result.member());
-        BOOST_REQUIRE_EQUAL(1, custom_scheduler<0>::usage_counter());
-        BOOST_REQUIRE_EQUAL(1, custom_scheduler<1>::usage_counter());
+        REQUIRE(result.member() == 42 * 2);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
+        REQUIRE(custom_scheduler<1>::usage_counter() >= 1);
     }
 
     custom_scheduler<0>::reset();
@@ -606,19 +565,14 @@ BOOST_AUTO_TEST_CASE(future_non_copyable_as_continuation_with_different_schedule
         check_valid_future(sut);
         auto result = await(std::move(sut));
 
-        BOOST_REQUIRE_EQUAL(42 * 2, result.member());
-        BOOST_REQUIRE_EQUAL(1, custom_scheduler<0>::usage_counter());
-        BOOST_REQUIRE_EQUAL(1, custom_scheduler<1>::usage_counter());
+        REQUIRE(result.member() == 42 * 2);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
+        REQUIRE(custom_scheduler<1>::usage_counter() >= 1);
     }
 }
 
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_FIXTURE_TEST_SUITE(future_then_move_only, test_fixture<move_only>)
-
-BOOST_AUTO_TEST_CASE(future_async_move_only_move_captured_to_result) {
-    BOOST_TEST_MESSAGE("running future move only move to result");
-
+TEST_CASE_FIXTURE(test_fixture<stlab::move_only>,
+                  "future_async_move_only_move_captured_to_result") {
     {
         sut =
             async(make_executor<0>(), [] { return move_only{42}; }).then([](auto x) { return x; });
@@ -626,8 +580,8 @@ BOOST_AUTO_TEST_CASE(future_async_move_only_move_captured_to_result) {
         check_valid_future(sut);
         auto result = await(std::move(sut));
 
-        BOOST_REQUIRE_EQUAL(42, result.member());
-        BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
+        REQUIRE(result.member() == 42);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
     }
     {
         sut = async(make_executor<0>(), [] { return move_only{42}; }) | [](auto x) { return x; };
@@ -635,14 +589,13 @@ BOOST_AUTO_TEST_CASE(future_async_move_only_move_captured_to_result) {
         check_valid_future(sut);
         auto result = await(std::move(sut));
 
-        BOOST_REQUIRE_EQUAL(42, result.member());
-        BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
+        REQUIRE(result.member() == 42);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
     }
 }
 
-BOOST_AUTO_TEST_CASE(future_async_moving_move_only_capture_to_result) {
-    BOOST_TEST_MESSAGE("moving move_only capture to result");
-
+TEST_CASE_FIXTURE(test_fixture<stlab::move_only>,
+                  "future_async_moving_move_only_capture_to_result") {
     move_only m{42};
 
     sut = async(make_executor<0>(), [&_m = m] { return std::move(_m); });
@@ -650,13 +603,12 @@ BOOST_AUTO_TEST_CASE(future_async_moving_move_only_capture_to_result) {
     check_valid_future(sut);
     auto result = await(std::move(sut));
 
-    BOOST_REQUIRE_EQUAL(42, result.member());
-    BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
+    REQUIRE(result.member() == 42);
+    REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
 }
 
-BOOST_AUTO_TEST_CASE(future_async_mutable_move_move_only_capture_to_result) {
-    BOOST_TEST_MESSAGE("moving move_only capture to result in task");
-
+TEST_CASE_FIXTURE(test_fixture<stlab::move_only>,
+                  "future_async_mutable_move_move_only_capture_to_result") {
     move_only m{42};
 
     sut = async(make_executor<0>(), [&_m = m]() { return std::move(_m); });
@@ -664,13 +616,12 @@ BOOST_AUTO_TEST_CASE(future_async_mutable_move_move_only_capture_to_result) {
     check_valid_future(sut);
     auto result = await(std::move(sut));
 
-    BOOST_REQUIRE_EQUAL(42, result.member());
-    BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
+    REQUIRE(result.member() == 42);
+    REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
 }
 
-BOOST_AUTO_TEST_CASE(future_continuation_moving_move_only_capture_to_result) {
-    BOOST_TEST_MESSAGE("moving move_only capture to result");
-
+TEST_CASE_FIXTURE(test_fixture<stlab::move_only>,
+                  "future_continuation_moving_move_only_capture_to_result") {
     move_only m{42};
 
     sut = async(make_executor<0>(), [] { return move_only{10}; }).then([&_m = m](auto) {
@@ -680,13 +631,12 @@ BOOST_AUTO_TEST_CASE(future_continuation_moving_move_only_capture_to_result) {
     check_valid_future(sut);
     auto result = await(std::move(sut));
 
-    BOOST_REQUIRE_EQUAL(42, result.member());
-    BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
+    REQUIRE(result.member() == 42);
+    REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
 }
 
-BOOST_AUTO_TEST_CASE(future_continuation_async_mutable_move_move_only_capture_to_result) {
-    BOOST_TEST_MESSAGE("moving move_only capture to result in task");
-
+TEST_CASE_FIXTURE(test_fixture<stlab::move_only>,
+                  "future_continuation_async_mutable_move_move_only_capture_to_result") {
     {
         move_only m{42};
 
@@ -697,8 +647,8 @@ BOOST_AUTO_TEST_CASE(future_continuation_async_mutable_move_move_only_capture_to
         check_valid_future(sut);
         auto result = await(std::move(sut));
 
-        BOOST_REQUIRE_EQUAL(42, result.member());
-        BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
+        REQUIRE(result.member() == 42);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
     }
     {
         move_only m{42};
@@ -709,13 +659,12 @@ BOOST_AUTO_TEST_CASE(future_continuation_async_mutable_move_move_only_capture_to
         check_valid_future(sut);
         auto result = await(std::move(sut));
 
-        BOOST_REQUIRE_EQUAL(42, result.member());
-        BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
+        REQUIRE(result.member() == 42);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
     }
 }
 
-BOOST_AUTO_TEST_CASE(reduction_future_move_only_to_move_only) {
-    BOOST_TEST_MESSAGE("running future reduction move-only to move-only");
+TEST_CASE_FIXTURE(test_fixture<stlab::move_only>, "reduction_future_move_only_to_move_only") {
     {
         atomic_bool first{false};
         atomic_bool second{false};
@@ -735,9 +684,9 @@ BOOST_AUTO_TEST_CASE(reduction_future_move_only_to_move_only) {
 
         auto result = await(std::move(sut));
 
-        BOOST_REQUIRE(first);
-        BOOST_REQUIRE(second);
-        BOOST_REQUIRE_EQUAL(42, result.member());
+        REQUIRE(first);
+        REQUIRE(second);
+        REQUIRE(result.member() == 42);
     }
     {
         bool first{false};
@@ -758,13 +707,11 @@ BOOST_AUTO_TEST_CASE(reduction_future_move_only_to_move_only) {
 
         auto result = await(std::move(sut));
 
-        BOOST_REQUIRE(first);
-        BOOST_REQUIRE(second);
-        BOOST_REQUIRE_EQUAL(42, result.member());
+        REQUIRE(first);
+        REQUIRE(second);
+        REQUIRE(result.member() == 42);
     }
 }
-
-BOOST_AUTO_TEST_SUITE_END()
 
 namespace stlab {
 
@@ -775,11 +722,8 @@ struct smart_test<test, std::vector<T, A>> : test<T> {};
 
 } // namespace stlab
 
-BOOST_FIXTURE_TEST_SUITE(future_then_move_only_container, test_fixture<std::vector<move_only>>)
-
-BOOST_AUTO_TEST_CASE(future_continuation_async_move_only_container) {
-    BOOST_TEST_MESSAGE("moving move_only move only container");
-
+TEST_CASE_FIXTURE(test_fixture<std::vector<stlab::move_only>>,
+                  "future_continuation_async_move_only_container") {
     {
         sut = async(make_executor<0>(), []() {
                   std::vector<move_only> result;
@@ -795,11 +739,11 @@ BOOST_AUTO_TEST_CASE(future_continuation_async_move_only_container) {
         check_valid_future(sut);
         auto result = stlab::await(std::move(sut));
 
-        BOOST_REQUIRE_EQUAL(3u, result.size());
-        BOOST_REQUIRE_EQUAL(10, result[0].member());
-        BOOST_REQUIRE_EQUAL(42, result[1].member());
-        BOOST_REQUIRE_EQUAL(50, result[2].member());
-        BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
+        REQUIRE(result.size() == 3u);
+        REQUIRE(result[0].member() == 10);
+        REQUIRE(result[1].member() == 42);
+        REQUIRE(result[2].member() == 50);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
     }
     {
         sut = async(make_executor<0>(),
@@ -818,33 +762,25 @@ BOOST_AUTO_TEST_CASE(future_continuation_async_move_only_container) {
         check_valid_future(sut);
         auto result = stlab::await(std::move(sut));
 
-        BOOST_REQUIRE_EQUAL(3u, result.size());
-        BOOST_REQUIRE_EQUAL(10, result[0].member());
-        BOOST_REQUIRE_EQUAL(42, result[1].member());
-        BOOST_REQUIRE_EQUAL(50, result[2].member());
-        BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
+        REQUIRE(result.size() == 3u);
+        REQUIRE(result[0].member() == 10);
+        REQUIRE(result[1].member() == 42);
+        REQUIRE(result[2].member() == 50);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
     }
 }
 
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_FIXTURE_TEST_SUITE(future_then_int, test_fixture<int>)
-
-BOOST_AUTO_TEST_CASE(future_int_single_task) {
-    BOOST_TEST_MESSAGE("running future int single tasks");
-
+TEST_CASE_FIXTURE(test_fixture<int>, "future_int_single_task") {
     sut = async(make_executor<0>(), [] { return 42; });
 
     check_valid_future(sut);
     wait_until_future_completed(copy(sut));
 
-    BOOST_REQUIRE_EQUAL(42, *sut.get_try());
-    BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
+    REQUIRE((*sut.get_try() == 42));
+    REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
 }
 
-BOOST_AUTO_TEST_CASE(future_int_single_task_get_try_on_rvalue) {
-    BOOST_TEST_MESSAGE("running future int single tasks, get_try on r-value");
-
+TEST_CASE_FIXTURE(test_fixture<int>, "future_int_single_task_get_try_on_rvalue") {
     sut = async(make_executor<0>(), [] { return 42; });
 
     auto test_result_1 = std::move(sut).get_try(); // test for r-value implementation
@@ -852,13 +788,12 @@ BOOST_AUTO_TEST_CASE(future_int_single_task_get_try_on_rvalue) {
     wait_until_future_completed(copy(sut));
     auto test_result_2 = std::move(sut).get_try();
 
-    BOOST_REQUIRE_EQUAL(42, *sut.get_try());
-    BOOST_REQUIRE_EQUAL(42, *test_result_2);
-    BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
+    REQUIRE((*sut.get_try() == 42));
+    REQUIRE((*test_result_2 == 42));
+    REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
 }
 
-BOOST_AUTO_TEST_CASE(future_int_single_task_detached) {
-    BOOST_TEST_MESSAGE("running future int single tasks, detached");
+TEST_CASE_FIXTURE(test_fixture<void>, "future_int_single_task_detached") {
     atomic_bool check{false};
     {
         auto detached = async(make_executor<0>(), [&_check = check] {
@@ -872,17 +807,15 @@ BOOST_AUTO_TEST_CASE(future_int_single_task_detached) {
     }
 }
 
-BOOST_AUTO_TEST_CASE(future_int_two_tasks_with_same_scheduler_then_on_rvalue) {
-    BOOST_TEST_MESSAGE("running future int two tasks with same scheduler, then on r-value");
-
+TEST_CASE_FIXTURE(test_fixture<int>, "future_int_two_tasks_with_same_scheduler_then_on_rvalue") {
     {
         sut = async(make_executor<0>(), [] { return 42; }).then([](auto x) { return x + 42; });
 
         check_valid_future(sut);
         wait_until_future_completed(copy(sut));
 
-        BOOST_REQUIRE_EQUAL(42 + 42, *sut.get_try());
-        BOOST_REQUIRE_LE(2, custom_scheduler<0>::usage_counter());
+        REQUIRE((*sut.get_try() == 42 + 42));
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 2);
     }
     {
         sut = async(make_executor<0>(), [] { return 42; }) | [](auto x) { return x + 42; };
@@ -890,14 +823,12 @@ BOOST_AUTO_TEST_CASE(future_int_two_tasks_with_same_scheduler_then_on_rvalue) {
         check_valid_future(sut);
         wait_until_future_completed(copy(sut));
 
-        BOOST_REQUIRE_EQUAL(42 + 42, *sut.get_try());
-        BOOST_REQUIRE_LE(2, custom_scheduler<0>::usage_counter());
+        REQUIRE((*sut.get_try() == 42 + 42));
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 2);
     }
 }
 
-BOOST_AUTO_TEST_CASE(future_int_two_tasks_with_same_scheduler_then_on_lvalue) {
-    BOOST_TEST_MESSAGE("running future int two tasks with same scheduler, then on l-value");
-
+TEST_CASE_FIXTURE(test_fixture<int>, "future_int_two_tasks_with_same_scheduler_then_on_lvalue") {
     {
         auto interim = async(make_executor<0>(), [] { return 42; });
 
@@ -906,8 +837,8 @@ BOOST_AUTO_TEST_CASE(future_int_two_tasks_with_same_scheduler_then_on_lvalue) {
         check_valid_future(sut);
         wait_until_future_completed(copy(sut));
 
-        BOOST_REQUIRE_EQUAL(42 + 42, *sut.get_try());
-        BOOST_REQUIRE_LE(2, custom_scheduler<0>::usage_counter());
+        REQUIRE((*sut.get_try() == 42 + 42));
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 2);
     }
     {
         auto interim = async(make_executor<0>(), [] { return 42; });
@@ -917,14 +848,12 @@ BOOST_AUTO_TEST_CASE(future_int_two_tasks_with_same_scheduler_then_on_lvalue) {
         check_valid_future(sut);
         wait_until_future_completed(copy(sut));
 
-        BOOST_REQUIRE_EQUAL(42 + 42, *sut.get_try());
-        BOOST_REQUIRE_LE(2, custom_scheduler<0>::usage_counter());
+        REQUIRE((*sut.get_try() == 42 + 42));
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 2);
     }
 }
 
-BOOST_AUTO_TEST_CASE(future_int_two_tasks_with_different_scheduler) {
-    BOOST_TEST_MESSAGE("running future int two tasks with different scheduler");
-
+TEST_CASE_FIXTURE(test_fixture<int>, "future_int_two_tasks_with_different_scheduler") {
     sut = async(make_executor<0>(), [] { return 42; }).then(make_executor<1>(), [](auto x) {
         return x + 42;
     });
@@ -932,14 +861,12 @@ BOOST_AUTO_TEST_CASE(future_int_two_tasks_with_different_scheduler) {
     check_valid_future(sut);
     wait_until_future_completed(copy(sut));
 
-    BOOST_REQUIRE_EQUAL(42 + 42, *sut.get_try());
-    BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
-    BOOST_REQUIRE_LE(1, custom_scheduler<1>::usage_counter());
+    REQUIRE((*sut.get_try() == 42 + 42));
+    REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
+    REQUIRE(custom_scheduler<1>::usage_counter() >= 1);
 }
 
-BOOST_AUTO_TEST_CASE(future_void_int_two_tasks_with_same_scheduler) {
-    BOOST_TEST_MESSAGE("running future void int tasks with same scheduler");
-
+TEST_CASE_FIXTURE(test_fixture<int>, "future_void_int_two_tasks_with_same_scheduler") {
     {
         atomic_int p{0};
 
@@ -951,8 +878,8 @@ BOOST_AUTO_TEST_CASE(future_void_int_two_tasks_with_same_scheduler) {
         check_valid_future(sut);
         wait_until_future_completed(std::move(sut));
 
-        BOOST_REQUIRE_EQUAL(42 + 42, p);
-        BOOST_REQUIRE_LE(2, custom_scheduler<0>::usage_counter());
+        REQUIRE(p == 42 + 42);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 2);
     }
     {
         atomic_int p{0};
@@ -965,14 +892,12 @@ BOOST_AUTO_TEST_CASE(future_void_int_two_tasks_with_same_scheduler) {
         check_valid_future(sut);
         wait_until_future_completed(copy(sut));
 
-        BOOST_REQUIRE_EQUAL(42 + 42, p);
-        BOOST_REQUIRE_LE(2, custom_scheduler<0>::usage_counter());
+        REQUIRE(p == 42 + 42);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 2);
     }
 }
 
-BOOST_AUTO_TEST_CASE(future_void_int_two_tasks_with_different_scheduler) {
-    BOOST_TEST_MESSAGE("running future void int tasks with different schedulers");
-
+TEST_CASE_FIXTURE(test_fixture<int>, "future_void_int_two_tasks_with_different_scheduler") {
     atomic_int p{0};
 
     sut = async(make_executor<0>(), [&_p = p] { _p = 42; }).then(make_executor<1>(), [&_p = p] {
@@ -983,17 +908,15 @@ BOOST_AUTO_TEST_CASE(future_void_int_two_tasks_with_different_scheduler) {
     check_valid_future(sut);
     wait_until_future_completed(copy(sut));
 
-    BOOST_REQUIRE_EQUAL(42 + 42, p);
-    BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
-    BOOST_REQUIRE_LE(1, custom_scheduler<1>::usage_counter());
+    REQUIRE(p == 42 + 42);
+    REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
+    REQUIRE(custom_scheduler<1>::usage_counter() >= 1);
 }
 
 /*
     sut - f - f
 */
-BOOST_AUTO_TEST_CASE(future_int_three_tasks_with_same_scheduler) {
-    BOOST_TEST_MESSAGE("running future int with three tasks with same scheduler");
-
+TEST_CASE_FIXTURE(test_fixture<int>, "future_int_three_tasks_with_same_scheduler") {
     {
         sut = async(make_executor<0>(), [] {
                   return 42;
@@ -1004,8 +927,8 @@ BOOST_AUTO_TEST_CASE(future_int_three_tasks_with_same_scheduler) {
         check_valid_future(sut);
         wait_until_future_completed(copy(sut));
 
-        BOOST_REQUIRE_EQUAL(42 + 42 + 42, *sut.get_try());
-        BOOST_REQUIRE_LE(3, custom_scheduler<0>::usage_counter());
+        REQUIRE((*sut.get_try() == 42 + 42 + 42));
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 3);
     }
     {
         sut = async(make_executor<0>(), [] { return 42; }) | [](auto x) { return x + 42; } |
@@ -1014,8 +937,8 @@ BOOST_AUTO_TEST_CASE(future_int_three_tasks_with_same_scheduler) {
         check_valid_future(sut);
         wait_until_future_completed(copy(sut));
 
-        BOOST_REQUIRE_EQUAL(42 + 42 + 42, *sut.get_try());
-        BOOST_REQUIRE_LE(3, custom_scheduler<0>::usage_counter());
+        REQUIRE((*sut.get_try() == 42 + 42 + 42));
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 3);
     }
 }
 
@@ -1026,9 +949,7 @@ BOOST_AUTO_TEST_CASE(future_int_three_tasks_with_same_scheduler) {
        \
         f2
 */
-BOOST_AUTO_TEST_CASE(future_int_Y_formation_tasks_with_same_scheduler) {
-    BOOST_TEST_MESSAGE("running future int Y formation tasks with same scheduler");
-
+TEST_CASE_FIXTURE(test_fixture<int>, "future_int_Y_formation_tasks_with_same_scheduler") {
     {
         sut = async(make_executor<0>(), [] { return 42; });
         auto f1 = sut.then([](auto x) { return x + 42; });
@@ -1037,9 +958,9 @@ BOOST_AUTO_TEST_CASE(future_int_Y_formation_tasks_with_same_scheduler) {
         check_valid_future(sut, f1, f2);
         wait_until_future_completed(copy(f1), copy(f2));
 
-        BOOST_REQUIRE_EQUAL(42 + 42, *f1.get_try());
-        BOOST_REQUIRE_EQUAL(42 + 4177, *f2.get_try());
-        BOOST_REQUIRE_LE(3, custom_scheduler<0>::usage_counter());
+        REQUIRE(*f1.get_try() == 42 + 42);
+        REQUIRE(*f2.get_try() == 42 + 4177);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 3);
     }
     {
         sut = async(make_executor<0>(), [] { return 42; });
@@ -1049,15 +970,13 @@ BOOST_AUTO_TEST_CASE(future_int_Y_formation_tasks_with_same_scheduler) {
         check_valid_future(sut, f1, f2);
         wait_until_future_completed(copy(f1), copy(f2));
 
-        BOOST_REQUIRE_EQUAL(42 + 42, *f1.get_try());
-        BOOST_REQUIRE_EQUAL(42 + 4177, *f2.get_try());
-        BOOST_REQUIRE_LE(3, custom_scheduler<0>::usage_counter());
+        REQUIRE(*f1.get_try() == 42 + 42);
+        REQUIRE(*f2.get_try() == 42 + 4177);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 3);
     }
 }
 
-BOOST_AUTO_TEST_CASE(reduction_future_void_to_int) {
-    BOOST_TEST_MESSAGE("running future reduction void to int");
-
+TEST_CASE_FIXTURE(test_fixture<int>, "reduction_future_void_to_int") {
     {
         atomic_bool first{false};
         atomic_bool second{false};
@@ -1071,9 +990,9 @@ BOOST_AUTO_TEST_CASE(reduction_future_void_to_int) {
 
         wait_until_future_completed(copy(sut));
 
-        BOOST_REQUIRE(first);
-        BOOST_REQUIRE(second);
-        BOOST_REQUIRE_EQUAL(42, *sut.get_try());
+        REQUIRE(first);
+        REQUIRE(second);
+        REQUIRE((*sut.get_try() == 42));
     }
     {
         atomic_bool first{false};
@@ -1088,15 +1007,13 @@ BOOST_AUTO_TEST_CASE(reduction_future_void_to_int) {
 
         wait_until_future_completed(copy(sut));
 
-        BOOST_REQUIRE(first);
-        BOOST_REQUIRE(second);
-        BOOST_REQUIRE_EQUAL(42, *sut.get_try());
+        REQUIRE(first);
+        REQUIRE(second);
+        REQUIRE((*sut.get_try() == 42));
     }
 }
 
-BOOST_AUTO_TEST_CASE(reduction_future_int_to_int) {
-    BOOST_TEST_MESSAGE("running future reduction int to int");
-
+TEST_CASE_FIXTURE(test_fixture<int>, "reduction_future_int_to_int") {
     {
         atomic_bool first{false};
         atomic_bool second{false};
@@ -1116,9 +1033,9 @@ BOOST_AUTO_TEST_CASE(reduction_future_int_to_int) {
 
         wait_until_future_completed(copy(sut));
 
-        BOOST_REQUIRE(first);
-        BOOST_REQUIRE(second);
-        BOOST_REQUIRE_EQUAL(84, *sut.get_try());
+        REQUIRE(first);
+        REQUIRE(second);
+        REQUIRE((*sut.get_try() == 84));
     }
     {
         atomic_bool first{false};
@@ -1141,32 +1058,26 @@ BOOST_AUTO_TEST_CASE(reduction_future_int_to_int) {
 
         wait_until_future_completed(copy(sut));
 
-        BOOST_REQUIRE(first);
-        BOOST_REQUIRE(second);
-        BOOST_REQUIRE_EQUAL(84, *sut.get_try());
+        REQUIRE(first);
+        REQUIRE(second);
+        REQUIRE((*sut.get_try() == 84));
     }
 }
-BOOST_AUTO_TEST_SUITE_END()
 
 // ----------------------------------------------------------------------------
 //                             Error cases
 // ----------------------------------------------------------------------------
 
-BOOST_FIXTURE_TEST_SUITE(future_void_then_error, test_fixture<void>)
-
-BOOST_AUTO_TEST_CASE(future_void_single_task_error) {
-    BOOST_TEST_MESSAGE("running future void with single tasks that fails");
-
+TEST_CASE_FIXTURE(test_fixture<void>, "future_void_single_task_error") {
     sut = async(make_executor<0>(), [] { throw test_exception("failure"); });
 
     wait_until_future_fails<test_exception>(copy(sut));
     check_failure<test_exception>(sut, "failure");
-    BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
+    REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
 }
 
-BOOST_AUTO_TEST_CASE(future_void_two_tasks_error_in_1st_task_with_same_scheduler) {
-    BOOST_TEST_MESSAGE("running future void with two tasks which first fails");
-
+TEST_CASE_FIXTURE(test_fixture<void>,
+                  "future_void_two_tasks_error_in_1st_task_with_same_scheduler") {
     {
         atomic_int p{0};
 
@@ -1176,8 +1087,8 @@ BOOST_AUTO_TEST_CASE(future_void_two_tasks_error_in_1st_task_with_same_scheduler
 
         wait_until_future_fails<test_exception>(copy(sut));
         check_failure<test_exception>(sut, "failure");
-        BOOST_REQUIRE_EQUAL(0, p);
-        BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
+        REQUIRE(p == 0);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
     }
     {
         atomic_int p{0};
@@ -1187,14 +1098,13 @@ BOOST_AUTO_TEST_CASE(future_void_two_tasks_error_in_1st_task_with_same_scheduler
 
         wait_until_future_fails<test_exception>(copy(sut));
         check_failure<test_exception>(sut, "failure");
-        BOOST_REQUIRE_EQUAL(0, p);
-        BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
+        REQUIRE(p == 0);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
     }
 }
 
-BOOST_AUTO_TEST_CASE(future_void_two_tasks_error_in_2nd_task_with_same_scheduler) {
-    BOOST_TEST_MESSAGE("running future void with two tasks which second fails");
-
+TEST_CASE_FIXTURE(test_fixture<void>,
+                  "future_void_two_tasks_error_in_2nd_task_with_same_scheduler") {
     {
         atomic_int p{0};
 
@@ -1206,8 +1116,8 @@ BOOST_AUTO_TEST_CASE(future_void_two_tasks_error_in_2nd_task_with_same_scheduler
         wait_until_future_fails<test_exception>(copy(sut));
 
         check_failure<test_exception>(sut, "failure");
-        BOOST_REQUIRE_EQUAL(42, p);
-        BOOST_REQUIRE_LE(2, custom_scheduler<0>::usage_counter());
+        REQUIRE(p == 42);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 2);
     }
     {
         atomic_int p{0};
@@ -1220,14 +1130,12 @@ BOOST_AUTO_TEST_CASE(future_void_two_tasks_error_in_2nd_task_with_same_scheduler
         wait_until_future_fails<test_exception>(copy(sut));
 
         check_failure<test_exception>(sut, "failure");
-        BOOST_REQUIRE_EQUAL(42, p);
-        BOOST_REQUIRE_LE(2, custom_scheduler<0>::usage_counter());
+        REQUIRE(p == 42);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 2);
     }
 }
 
-BOOST_AUTO_TEST_CASE(reduction_future_void_to_void_error) {
-    BOOST_TEST_MESSAGE("running future reduction void to void where the inner future fails");
-
+TEST_CASE_FIXTURE(test_fixture<void>, "reduction_future_void_to_void_error") {
     {
         atomic_bool first{false};
         atomic_bool second{false};
@@ -1241,8 +1149,8 @@ BOOST_AUTO_TEST_CASE(reduction_future_void_to_void_error) {
 
         wait_until_future_fails<test_exception>(std::move(sut));
 
-        BOOST_REQUIRE(first);
-        BOOST_REQUIRE(second);
+        REQUIRE(first);
+        REQUIRE(second);
     }
     {
         atomic_bool first{false};
@@ -1257,13 +1165,13 @@ BOOST_AUTO_TEST_CASE(reduction_future_void_to_void_error) {
 
         wait_until_future_fails<test_exception>(std::move(sut));
 
-        BOOST_REQUIRE(first);
-        BOOST_REQUIRE(second);
+        REQUIRE(first);
+        REQUIRE(second);
     }
 }
 
-BOOST_AUTO_TEST_CASE(reduction_future_move_only_to_void_when_inner_future_fails) {
-    BOOST_TEST_MESSAGE("running future reduction move-only to void when inner future fails");
+TEST_CASE_FIXTURE(test_fixture<void>,
+                  "reduction_future_move_only_to_void_when_inner_future_fails") {
     {
         atomic_bool first{false};
         atomic_bool second{false};
@@ -1283,8 +1191,8 @@ BOOST_AUTO_TEST_CASE(reduction_future_move_only_to_void_when_inner_future_fails)
 
         wait_until_future_fails<test_exception>(std::move(sut));
 
-        BOOST_REQUIRE(first);
-        BOOST_REQUIRE(second);
+        REQUIRE(first);
+        REQUIRE(second);
     }
     {
         bool first{false};
@@ -1305,28 +1213,20 @@ BOOST_AUTO_TEST_CASE(reduction_future_move_only_to_void_when_inner_future_fails)
 
         wait_until_future_fails<test_exception>(std::move(sut));
 
-        BOOST_REQUIRE(first);
-        BOOST_REQUIRE(second);
+        REQUIRE(first);
+        REQUIRE(second);
     }
 }
 
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_FIXTURE_TEST_SUITE(future_then_int_error, test_fixture<int>)
-
-BOOST_AUTO_TEST_CASE(future_int_single_task_error) {
-    BOOST_TEST_MESSAGE("running future int with single tasks that fails");
-
+TEST_CASE_FIXTURE(test_fixture<int>, "future_int_single_task_error") {
     sut = async(make_executor<0>(), []() -> int { throw test_exception("failure"); });
     wait_until_future_fails<test_exception>(copy(sut));
 
     check_failure<test_exception>(sut, "failure");
-    BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
+    REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
 }
 
-BOOST_AUTO_TEST_CASE(future_int_two_tasks_error_in_1st_task_with_same_scheduler) {
-    BOOST_TEST_MESSAGE("running future int with two tasks which first fails");
-
+TEST_CASE_FIXTURE(test_fixture<int>, "future_int_two_tasks_error_in_1st_task_with_same_scheduler") {
     {
         custom_scheduler<0>::reset();
         int p = 0;
@@ -1341,8 +1241,8 @@ BOOST_AUTO_TEST_CASE(future_int_two_tasks_error_in_1st_task_with_same_scheduler)
         wait_until_future_fails<test_exception>(copy(sut));
 
         check_failure<test_exception>(sut, "failure");
-        BOOST_REQUIRE_EQUAL(0, p);
-        BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
+        REQUIRE(p == 0);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
     }
     {
         custom_scheduler<0>::reset();
@@ -1357,14 +1257,12 @@ BOOST_AUTO_TEST_CASE(future_int_two_tasks_error_in_1st_task_with_same_scheduler)
         wait_until_future_fails<test_exception>(copy(sut));
 
         check_failure<test_exception>(sut, "failure");
-        BOOST_REQUIRE_EQUAL(0, p);
-        BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
+        REQUIRE(p == 0);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
     }
 }
 
-BOOST_AUTO_TEST_CASE(future_int_two_tasks_error_in_2nd_task_with_same_scheduler) {
-    BOOST_TEST_MESSAGE("running future void with two tasks which second fails");
-
+TEST_CASE_FIXTURE(test_fixture<int>, "future_int_two_tasks_error_in_2nd_task_with_same_scheduler") {
     {
         custom_scheduler<0>::reset();
         atomic_int p{0};
@@ -1376,8 +1274,8 @@ BOOST_AUTO_TEST_CASE(future_int_two_tasks_error_in_2nd_task_with_same_scheduler)
         wait_until_future_fails<test_exception>(copy(sut));
 
         check_failure<test_exception>(sut, "failure");
-        BOOST_REQUIRE_EQUAL(42, p);
-        BOOST_REQUIRE_LE(2, custom_scheduler<0>::usage_counter());
+        REQUIRE(p == 42);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 2);
     }
     {
         custom_scheduler<0>::reset();
@@ -1389,14 +1287,12 @@ BOOST_AUTO_TEST_CASE(future_int_two_tasks_error_in_2nd_task_with_same_scheduler)
         wait_until_future_fails<test_exception>(copy(sut));
 
         check_failure<test_exception>(sut, "failure");
-        BOOST_REQUIRE_EQUAL(42, p);
-        BOOST_REQUIRE_LE(2, custom_scheduler<0>::usage_counter());
+        REQUIRE(p == 42);
+        REQUIRE(custom_scheduler<0>::usage_counter() >= 2);
     }
 }
 
-BOOST_AUTO_TEST_CASE(future_int_Y_formation_tasks_with_failing_1st_task) {
-    BOOST_TEST_MESSAGE("running future int Y formation tasks where the 1st tasks fails");
-
+TEST_CASE_FIXTURE(test_fixture<int>, "future_int_Y_formation_tasks_with_failing_1st_task") {
     atomic_int p{0};
 
     sut = async(make_executor<0>(), []() -> int { throw test_exception("failure"); });
@@ -1413,13 +1309,12 @@ BOOST_AUTO_TEST_CASE(future_int_Y_formation_tasks_with_failing_1st_task) {
 
     check_failure<test_exception>(f1, "failure");
     check_failure<test_exception>(f2, "failure");
-    BOOST_REQUIRE_EQUAL(0, p);
-    BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
+    REQUIRE(p == 0);
+    REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
 }
 
-BOOST_AUTO_TEST_CASE(future_int_Y_formation_tasks_where_one_of_the_2nd_task_failing) {
-    BOOST_TEST_MESSAGE("running future int Y formation tasks where one of the 2nd tasks fails");
-
+TEST_CASE_FIXTURE(test_fixture<int>,
+                  "future_int_Y_formation_tasks_where_one_of_the_2nd_task_failing") {
     sut = async(make_executor<0>(), []() -> int { return 42; });
     auto f1 = sut.then(make_executor<0>(), [](auto) -> int { throw test_exception("failure"); });
     auto f2 = sut.then(make_executor<0>(), [](auto x) -> int { return x + 4711; });
@@ -1428,13 +1323,12 @@ BOOST_AUTO_TEST_CASE(future_int_Y_formation_tasks_where_one_of_the_2nd_task_fail
     wait_until_future_fails<test_exception>(copy(f1));
 
     check_failure<test_exception>(f1, "failure");
-    BOOST_REQUIRE_EQUAL(42 + 4711, *f2.get_try());
-    BOOST_REQUIRE_LE(3, custom_scheduler<0>::usage_counter());
+    REQUIRE(*f2.get_try() == 42 + 4711);
+    REQUIRE(custom_scheduler<0>::usage_counter() >= 3);
 }
 
-BOOST_AUTO_TEST_CASE(future_int_Y_formation_tasks_where_both_of_the_2nd_task_failing) {
-    BOOST_TEST_MESSAGE("running future int Y formation tasks where both of the 2nd tasks fails");
-
+TEST_CASE_FIXTURE(test_fixture<int>,
+                  "future_int_Y_formation_tasks_where_both_of_the_2nd_task_failing") {
     sut = async(make_executor<0>(), []() -> int { return 42; });
     auto f1 = sut.then(make_executor<0>(), [](auto) -> int { throw test_exception("failure"); });
     auto f2 = sut.then(make_executor<0>(), [](auto) -> int { throw test_exception("failure"); });
@@ -1443,11 +1337,10 @@ BOOST_AUTO_TEST_CASE(future_int_Y_formation_tasks_where_both_of_the_2nd_task_fai
 
     check_failure<test_exception>(f1, "failure");
     check_failure<test_exception>(f2, "failure");
-    BOOST_REQUIRE_LE(3, custom_scheduler<0>::usage_counter());
+    REQUIRE(custom_scheduler<0>::usage_counter() >= 3);
 }
 
-BOOST_AUTO_TEST_CASE(reduction_future_void_to_int_error) {
-    BOOST_TEST_MESSAGE("running future reduction void to int where the outer future fails");
+TEST_CASE_FIXTURE(test_fixture<int>, "reduction_future_void_to_int_error") {
     atomic_bool first{false};
     atomic_bool second{false};
 
@@ -1460,13 +1353,11 @@ BOOST_AUTO_TEST_CASE(reduction_future_void_to_int_error) {
 
     wait_until_future_fails<test_exception>(std::move(sut));
 
-    BOOST_REQUIRE(first);
-    BOOST_REQUIRE(!second);
+    REQUIRE(first);
+    REQUIRE(!second);
 }
 
-BOOST_AUTO_TEST_CASE(reduction_future_int_to_int_error) {
-    BOOST_TEST_MESSAGE("running future reduction int to int where the inner future fails");
-
+TEST_CASE_FIXTURE(test_fixture<int>, "reduction_future_int_to_int_error") {
     {
         atomic_bool first{false};
         atomic_bool second{false};
@@ -1486,8 +1377,8 @@ BOOST_AUTO_TEST_CASE(reduction_future_int_to_int_error) {
 
         wait_until_future_fails<test_exception>(std::move(sut));
 
-        BOOST_REQUIRE(first);
-        BOOST_REQUIRE(second);
+        REQUIRE(first);
+        REQUIRE(second);
     }
     {
         atomic_bool first{false};
@@ -1510,17 +1401,13 @@ BOOST_AUTO_TEST_CASE(reduction_future_int_to_int_error) {
 
         wait_until_future_fails<test_exception>(std::move(sut));
 
-        BOOST_REQUIRE(first);
-        BOOST_REQUIRE(second);
+        REQUIRE(first);
+        REQUIRE(second);
     }
 }
 
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_FIXTURE_TEST_SUITE(future_then_move_only_error, test_fixture<move_only>)
-
-BOOST_AUTO_TEST_CASE(reduction_future_move_only_to_move_only_when_inner_future_fails) {
-    BOOST_TEST_MESSAGE("running future reduction move-only to move-only when inner future fails");
+TEST_CASE_FIXTURE(test_fixture<stlab::move_only>,
+                  "reduction_future_move_only_to_move_only_when_inner_future_fails") {
     {
         atomic_bool first{false};
         atomic_bool second{false};
@@ -1540,8 +1427,8 @@ BOOST_AUTO_TEST_CASE(reduction_future_move_only_to_move_only_when_inner_future_f
 
         wait_until_future_fails<test_exception>(std::move(sut));
 
-        BOOST_REQUIRE(first);
-        BOOST_REQUIRE(second);
+        REQUIRE(first);
+        REQUIRE(second);
     }
     {
         bool first{false};
@@ -1562,9 +1449,7 @@ BOOST_AUTO_TEST_CASE(reduction_future_move_only_to_move_only_when_inner_future_f
 
         wait_until_future_fails<test_exception>(std::move(sut));
 
-        BOOST_REQUIRE(first);
-        BOOST_REQUIRE(second);
+        REQUIRE(first);
+        REQUIRE(second);
     }
 }
-
-BOOST_AUTO_TEST_SUITE_END()

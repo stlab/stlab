@@ -1,10 +1,6 @@
 include(stlab/development)
 
-# test dependencies
-## Boost
-
-set(BUILD_SHARED_LIBS OFF)
-set(Boost_USE_STATIC_LIBS ON)
+# test dependencies: doctest is fetched in root CMakeLists when BUILD_TESTING is ON
 
 # Set global sanitizer flags before any targets are created
 if(STLAB_SANITIZER STREQUAL "address")
@@ -15,21 +11,6 @@ if(STLAB_SANITIZER STREQUAL "address")
     add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
     add_link_options(-fsanitize=address)
   endif()
-endif()
-
-# https://github.com/boostorg/boost/releases
-CPMAddPackage(
-  NAME Boost
-  VERSION 1.89.0
-  URL https://github.com/boostorg/boost/releases/download/boost-1.89.0/boost-1.89.0-cmake.7z
-  URL_HASH SHA256=252149f583054515b10688855b24ca1c16072b5118e603b8fe017894d319c262
-  OPTIONS "BOOST_ENABLE_CMAKE ON" "BOOST_INCLUDE_LIBRARIES test" # Note the escapes!  container\\\;asio
-)
-
-# Mark the boost header files as external for MSVC
-if(MSVC)
-  get_target_property(Boost_INCLUDE_DIR Boost::unit_test_framework INTERFACE_INCLUDE_DIRECTORIES)
-  add_compile_options(/external:I${Boost_INCLUDE_DIR} /external:W0)
 endif()
 
 add_executable(stlab.test.channel
@@ -63,11 +44,11 @@ add_library(stlab::testing ALIAS testing)
 
 #
 # CMake targets linking to the stlab::testing target will (transitively)
-# link to the Boost::unit_test_framework and to stlab::stlab target.
+# link to doctest::doctest and to stlab::stlab target.
 #
 
 target_link_libraries(testing INTERFACE
-  Boost::unit_test_framework
+  doctest::doctest
   stlab::development
   stlab::stlab)
 
@@ -178,7 +159,6 @@ add_test(
   COMMAND stlab.test.cow
 )
 
-
 ################################################################################
 
 add_executable(stlab.test.task
@@ -200,7 +180,7 @@ add_executable(stlab.test.tuple
   tuple_test.cpp
   main.cpp)
 
-target_compile_definitions(stlab.test.channel PRIVATE STLAB_UNIT_TEST)
+target_compile_definitions(stlab.test.tuple PRIVATE STLAB_UNIT_TEST)
 
 target_link_libraries(stlab.test.tuple PUBLIC stlab::testing)
 
@@ -215,7 +195,7 @@ add_executable(stlab.test.traits
   traits_test.cpp
   main.cpp)
 
-target_compile_definitions(stlab.test.channel PRIVATE STLAB_UNIT_TEST)
+target_compile_definitions(stlab.test.traits PRIVATE STLAB_UNIT_TEST)
 
 target_link_libraries(stlab.test.traits PUBLIC stlab::testing)
 

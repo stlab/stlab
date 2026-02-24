@@ -8,7 +8,7 @@
 
 #include <atomic>
 
-#include <boost/test/unit_test.hpp>
+#include <doctest/doctest.h>
 
 #include <stlab/concurrency/channel.hpp>
 #include <stlab/concurrency/default_executor.hpp>
@@ -21,10 +21,7 @@
 
 using channel_test_fixture_int_1 = channel_test_helper::channel_test_fixture<int, 1>;
 
-BOOST_FIXTURE_TEST_SUITE(int_channel_void_functor, channel_test_fixture_int_1)
-
-BOOST_AUTO_TEST_CASE(int_channel_void_functor_one_value) {
-    BOOST_TEST_MESSAGE("int channel void functor one value");
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_channel_void_functor_one_value") {
     std::atomic_int result{0};
 
     auto check = _receive[0] | [&](int x) { result += x; };
@@ -34,11 +31,10 @@ BOOST_AUTO_TEST_CASE(int_channel_void_functor_one_value) {
 
     wait_until_done([&]() { return result != 0; });
 
-    BOOST_REQUIRE_EQUAL(1, result);
+    REQUIRE(result == 1);
 }
 
-BOOST_AUTO_TEST_CASE(int_channel_void_functor_two_values) {
-    BOOST_TEST_MESSAGE("int channel void functor two values");
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_channel_void_functor_two_values") {
     std::atomic_int result{0};
 
     auto check = _receive[0] | [&](int x) { result += x; };
@@ -48,12 +44,10 @@ BOOST_AUTO_TEST_CASE(int_channel_void_functor_two_values) {
     _send[0](2);
 
     wait_until_done([&]() { return result == 3; });
-    BOOST_REQUIRE_EQUAL(3, result);
+    REQUIRE(result == 3);
 }
 
-BOOST_AUTO_TEST_CASE(int_channel_void_functor_many_values) {
-    BOOST_TEST_MESSAGE("int channel void functor many values");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_channel_void_functor_many_values") {
     std::atomic_int result{0};
 
     auto check = _receive[0] | [&](int x) { result += x; };
@@ -64,12 +58,10 @@ BOOST_AUTO_TEST_CASE(int_channel_void_functor_many_values) {
     }
 
     wait_until_done([&]() { return result == 10; });
-    BOOST_REQUIRE_EQUAL(10, result);
+    REQUIRE(result == 10);
 }
 
-BOOST_AUTO_TEST_CASE(int_channel_split_void_functor) {
-    BOOST_TEST_MESSAGE("int channel void functor");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_channel_split_void_functor") {
     std::atomic_int result1{0};
     std::atomic_int result2{0};
 
@@ -83,13 +75,11 @@ BOOST_AUTO_TEST_CASE(int_channel_split_void_functor) {
 
     wait_until_done([&]() { return result1 == 45 && result2 == 45; });
 
-    BOOST_REQUIRE_EQUAL(45, result1);
-    BOOST_REQUIRE_EQUAL(45, result2);
+    REQUIRE(result1 == 45);
+    REQUIRE(result2 == 45);
 }
 
-BOOST_AUTO_TEST_CASE(int_channel_int_functor) {
-    BOOST_TEST_MESSAGE("int channel int functor");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_channel_int_functor") {
     std::atomic_int result{0};
 
     auto check = _receive[0] | [](int x) { return x + x; } | [&](int x) { result += x; };
@@ -100,11 +90,10 @@ BOOST_AUTO_TEST_CASE(int_channel_int_functor) {
     }
 
     wait_until_done([&]() { return result == 90; });
-    BOOST_REQUIRE_EQUAL(90, result);
+    REQUIRE(result == 90);
 }
 
-BOOST_AUTO_TEST_CASE(int_channel_split_int_functor) {
-    BOOST_TEST_MESSAGE("int channel int functor");
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_channel_split_int_functor") {
     std::atomic_int result1{0};
     std::atomic_int result2{0};
 
@@ -120,12 +109,11 @@ BOOST_AUTO_TEST_CASE(int_channel_split_int_functor) {
 
     wait_until_done([&] { return result1 == 90 && result2 == 90; });
 
-    BOOST_REQUIRE_EQUAL(90, result1);
-    BOOST_REQUIRE_EQUAL(90, result2);
+    REQUIRE(result1 == 90);
+    REQUIRE(result2 == 90);
 }
 
-BOOST_AUTO_TEST_CASE(int_channel_split_int_functor_async) {
-    BOOST_TEST_MESSAGE("int channel int functor asynchronous");
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_channel_split_int_functor_async") {
     std::vector<stlab::future<void>> inputs;
     inputs.reserve(10);
     for (auto i = 0; i < 10; ++i) {
@@ -145,20 +133,14 @@ BOOST_AUTO_TEST_CASE(int_channel_split_int_functor_async) {
 
     wait_until_done([&] { return result1 == 90 && result2 == 90; });
 
-    BOOST_REQUIRE_EQUAL(90, result1);
-    BOOST_REQUIRE_EQUAL(90, result2);
+    REQUIRE(result1 == 90);
+    REQUIRE(result2 == 90);
 }
-
-BOOST_AUTO_TEST_SUITE_END()
 
 using channel_test_fixture_move_only_1 =
     channel_test_helper::channel_test_fixture<stlab::move_only, 1>;
 
-BOOST_FIXTURE_TEST_SUITE(move_only_channel_void_functor, channel_test_fixture_move_only_1)
-
-BOOST_AUTO_TEST_CASE(move_only_int_channel_void_functor) {
-    BOOST_TEST_MESSAGE("move only int channel void functor");
-
+TEST_CASE_FIXTURE(channel_test_fixture_move_only_1, "move_only_int_channel_void_functor") {
     std::atomic_int result{0};
 
     auto check = _receive[0] | [&](stlab::move_only x) { result += x.member(); };
@@ -169,12 +151,10 @@ BOOST_AUTO_TEST_CASE(move_only_int_channel_void_functor) {
     }
 
     wait_until_done([&]() { return result == 10; });
-    BOOST_REQUIRE_EQUAL(10, result);
+    REQUIRE(result == 10);
 }
 
-BOOST_AUTO_TEST_CASE(move_only_int_channel_void_functor_async) {
-    BOOST_TEST_MESSAGE("move only int channel void functor asynchronously");
-
+TEST_CASE_FIXTURE(channel_test_fixture_move_only_1, "move_only_int_channel_void_functor_async") {
     std::atomic_int result{0};
 
     auto check = _receive[0] | [&](stlab::move_only x) { result += x.member(); };
@@ -188,12 +168,10 @@ BOOST_AUTO_TEST_CASE(move_only_int_channel_void_functor_async) {
     }
 
     wait_until_done([&]() { return result == 10; });
-    BOOST_REQUIRE_EQUAL(10, result);
+    REQUIRE(result == 10);
 }
 
-BOOST_AUTO_TEST_CASE(move_only_int_channel_int_functor) {
-    BOOST_TEST_MESSAGE("move only int channel int functor");
-
+TEST_CASE_FIXTURE(channel_test_fixture_move_only_1, "move_only_int_channel_int_functor") {
     std::atomic_int result{0};
 
     auto check = _receive[0] | [](stlab::move_only x) { return stlab::move_only(2 * x.member()); } |
@@ -206,12 +184,10 @@ BOOST_AUTO_TEST_CASE(move_only_int_channel_int_functor) {
 
     wait_until_done([&]() { return result >= 20; });
 
-    BOOST_REQUIRE_EQUAL(20, result);
+    REQUIRE(result == 20);
 }
 
-BOOST_AUTO_TEST_CASE(move_only_int_channel_int_functor_async) {
-    BOOST_TEST_MESSAGE("move only int channel int functor asynchronously");
-
+TEST_CASE_FIXTURE(channel_test_fixture_move_only_1, "move_only_int_channel_int_functor_async") {
     std::atomic_int result{0};
 
     auto check = _receive[0] | [](stlab::move_only x) { return stlab::move_only(2 * x.member()); } |
@@ -227,7 +203,5 @@ BOOST_AUTO_TEST_CASE(move_only_int_channel_int_functor_async) {
 
     wait_until_done([&]() { return result >= 20; });
 
-    BOOST_REQUIRE_EQUAL(20, result);
+    REQUIRE(result == 20);
 }
-
-BOOST_AUTO_TEST_SUITE_END()

@@ -13,7 +13,7 @@
 #include <thread>
 #include <utility>
 
-#include <boost/test/unit_test.hpp>
+#include <doctest/doctest.h>
 
 #include <stlab/concurrency/await.hpp>
 #include <stlab/concurrency/default_executor.hpp>
@@ -27,33 +27,27 @@ using namespace future_test_helper;
 
 auto get_the_answer() -> stlab::future<int> { co_return 42; }
 
-BOOST_AUTO_TEST_CASE(future_coroutine_int) {
-    BOOST_TEST_MESSAGE("future coroutine int");
-
+TEST_CASE("future_coroutine_int") {
     auto w = get_the_answer();
 
-    BOOST_REQUIRE(42 == await(std::move(w)));
+    REQUIRE(42 == await(std::move(w)));
 }
 
 auto get_move_only_answer() -> stlab::future<move_only> { co_return move_only{42}; }
 
-BOOST_AUTO_TEST_CASE(future_coroutine_move_only) {
-    BOOST_TEST_MESSAGE("future coroutine move only");
-
+TEST_CASE("future_coroutine_move_only") {
     auto w = get_move_only_answer();
     auto r = await(std::move(w));
 
-    BOOST_REQUIRE(42 == r.member());
+    REQUIRE(42 == r.member());
 }
 
 auto just_wait() -> stlab::future<void> { co_return; }
 
-BOOST_AUTO_TEST_CASE(future_coroutine_void) {
-    BOOST_TEST_MESSAGE("future coroutine void");
-
+TEST_CASE("future_coroutine_void") {
     auto w = just_wait();
 
-    BOOST_REQUIRE_NO_THROW(await(std::move(w)));
+    REQUIRE_NOTHROW(await(std::move(w)));
 }
 
 auto get_the_answer_with_failure() -> stlab::future<int> {
@@ -65,15 +59,12 @@ auto get_the_answer_with_failure() -> stlab::future<int> {
     throw test_exception("failure");
 }
 
-BOOST_AUTO_TEST_CASE(future_coroutine_int_failure) {
-    BOOST_TEST_MESSAGE("future coroutine int with failure");
-
+TEST_CASE("future_coroutine_int_failure") {
     auto w = get_the_answer_with_failure();
 
-    BOOST_REQUIRE_EXCEPTION(await(std::move(w)), test_exception,
-                            ([_m = std::string("failure")](const auto& e) {
-                                return std::string(_m) == std::string(e.what());
-                            }));
+    REQUIRE_THROWS_AS(await(std::move(w)), test_exception)](const auto& e) {
+        return std::string(_m) == std::string(e.what());
+    }));
 }
 
 auto get_the_answer_move_only_with_failure() -> stlab::future<move_only> {
@@ -84,15 +75,12 @@ auto get_the_answer_move_only_with_failure() -> stlab::future<move_only> {
     throw test_exception("failure");
 }
 
-BOOST_AUTO_TEST_CASE(future_coroutine_move_only_failure) {
-    BOOST_TEST_MESSAGE("future coroutine move only with failure");
-
+TEST_CASE("future_coroutine_move_only_failure") {
     auto w = get_the_answer_move_only_with_failure();
 
-    BOOST_REQUIRE_EXCEPTION(await(std::move(w)), test_exception,
-                            ([_m = std::string("failure")](const auto& e) {
-                                return std::string(_m) == std::string(e.what());
-                            }));
+    REQUIRE_THROWS_AS(await(std::move(w)), test_exception)](const auto& e) {
+        return std::string(_m) == std::string(e.what());
+    }));
 }
 
 auto do_it(future<int> x, std::atomic_int& result) -> future<void> {
@@ -102,8 +90,7 @@ auto do_it(future<int> x, std::atomic_int& result) -> future<void> {
     co_return;
 }
 
-BOOST_AUTO_TEST_CASE(future_coroutine_combined_void_int) {
-    BOOST_TEST_MESSAGE("future coroutine combination of void and int future");
+TEST_CASE("future_coroutine_combined_void_int") {
     std::atomic_int intCheck{0};
     std::atomic_bool boolCheck{false};
 
@@ -112,6 +99,6 @@ BOOST_AUTO_TEST_CASE(future_coroutine_combined_void_int) {
 
     await(std::move(hold));
 
-    BOOST_REQUIRE_EQUAL(42, intCheck);
-    BOOST_REQUIRE(boolCheck.load());
+    REQUIRE(intCheck == 42);
+    REQUIRE(boolCheck.load());
 }

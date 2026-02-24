@@ -9,7 +9,7 @@
 #include <atomic>
 #include <vector>
 
-#include <boost/test/unit_test.hpp>
+#include <doctest/doctest.h>
 
 #include <stlab/concurrency/channel.hpp>
 #include <stlab/concurrency/default_executor.hpp>
@@ -19,10 +19,8 @@
 
 using channel_test_fixture_int_1 = channel_test_helper::channel_test_fixture<int, 1>;
 
-BOOST_FIXTURE_TEST_CASE(int_merge_unordered_channel_void_functor_one_value,
-                        channel_test_fixture_int_1) {
-    BOOST_TEST_MESSAGE("int merge unordered_t channel void functor one value one value");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_1,
+                  "int_merge_unordered_channel_void_functor_one_value") {
     std::atomic_int result{0};
 
     auto check = stlab::merge_channel<stlab::unordered_t>(
@@ -33,13 +31,11 @@ BOOST_FIXTURE_TEST_CASE(int_merge_unordered_channel_void_functor_one_value,
 
     wait_until_done([&]() { return result != 0; });
 
-    BOOST_REQUIRE_EQUAL(1, result);
+    REQUIRE(1 == result);
 }
 
-BOOST_FIXTURE_TEST_CASE(int_merge_unordered_channel_void_functor_one_value_async,
-                        channel_test_fixture_int_1) {
-    BOOST_TEST_MESSAGE("int merge unordered_t channel void functor one value asynchronously");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_1,
+                  "int_merge_unordered_channel_void_functor_one_value_async") {
     std::atomic_int result{0};
 
     auto check = stlab::merge_channel<stlab::unordered_t>(
@@ -50,13 +46,11 @@ BOOST_FIXTURE_TEST_CASE(int_merge_unordered_channel_void_functor_one_value_async
 
     wait_until_done([&] { return result != 0; });
 
-    BOOST_REQUIRE_EQUAL(1, result);
+    REQUIRE(1 == result);
 }
 
-BOOST_FIXTURE_TEST_CASE(int_merge_unordered_channel_void_functor_many_values,
-                        channel_test_fixture_int_1) {
-    BOOST_TEST_MESSAGE("int merge unordered_t channel void functor many values");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_1,
+                  "int_merge_unordered_channel_void_functor_many_values") {
     std::atomic_int result{0};
 
     auto check = stlab::merge_channel<stlab::unordered_t>(
@@ -71,13 +65,11 @@ BOOST_FIXTURE_TEST_CASE(int_merge_unordered_channel_void_functor_many_values,
 
     wait_until_done([&]() { return result >= expected; });
 
-    BOOST_REQUIRE_EQUAL(expected, result);
+    REQUIRE(expected == result);
 }
 
-BOOST_FIXTURE_TEST_CASE(int_merge_unordered_channel_void_functor_many_values_async,
-                        channel_test_fixture_int_1) {
-    BOOST_TEST_MESSAGE("int merge unordered_t channel void functor many values asynchronously");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_1,
+                  "int_merge_unordered_channel_void_functor_many_values_async") {
     std::atomic_int result{0};
 
     auto check = stlab::merge_channel<stlab::unordered_t>(
@@ -92,15 +84,13 @@ BOOST_FIXTURE_TEST_CASE(int_merge_unordered_channel_void_functor_many_values_asy
     auto expected = 100 * (100 + 1) / 2;
     wait_until_done([&]() { return result >= expected; });
 
-    BOOST_REQUIRE_EQUAL(expected, result);
+    REQUIRE(expected == result);
 }
 
 using channel_test_fixture_int_2 = channel_test_helper::channel_test_fixture<int, 2>;
 
-BOOST_FIXTURE_TEST_CASE(int_merge_unordered_channel_same_type_void_functor_one_value,
-                        channel_test_fixture_int_2) {
-    BOOST_TEST_MESSAGE("int merge unordered_t channel same type void functor oane value");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_2,
+                  "int_merge_unordered_channel_same_type_void_functor_one_value") {
     std::atomic_int result{0};
 
     auto check = stlab::merge_channel<stlab::unordered_t>(
@@ -113,14 +103,11 @@ BOOST_FIXTURE_TEST_CASE(int_merge_unordered_channel_same_type_void_functor_one_v
 
     wait_until_done([&]() { return result >= 5; });
 
-    BOOST_REQUIRE_EQUAL(5, result);
+    REQUIRE(5 == result);
 }
 
-BOOST_FIXTURE_TEST_CASE(int_merge_unordered_channel_same_type_void_functor_one_value_async,
-                        channel_test_fixture_int_2) {
-    BOOST_TEST_MESSAGE(
-        "int merge unordered_t channel same type void functor one value asynchronously");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_2,
+                  "int_merge_unordered_channel_same_type_void_functor_one_value_async") {
     std::atomic_int result{0};
 
     auto check = stlab::merge_channel<stlab::unordered_t>(
@@ -136,13 +123,11 @@ BOOST_FIXTURE_TEST_CASE(int_merge_unordered_channel_same_type_void_functor_one_v
 
     wait_until_done([&]() { return result >= 5; });
 
-    BOOST_REQUIRE_EQUAL(5, result);
+    REQUIRE(5 == result);
 }
 
-BOOST_FIXTURE_TEST_CASE(int_merge_unordered_channel_same_type_void_functor_many_values,
-                        channel_test_fixture_int_2) {
-    BOOST_TEST_MESSAGE("int merge unordered_t channel same type void functor many values");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_2,
+                  "int_merge_unordered_channel_same_type_void_functor_many_values") {
     std::atomic_int result{0};
 
     auto check = stlab::merge_channel<stlab::unordered_t>(
@@ -159,14 +144,11 @@ BOOST_FIXTURE_TEST_CASE(int_merge_unordered_channel_same_type_void_functor_many_
         0 + 1 + 1 + 2 + 2 + 3 + 3 + 4 + 4 + 5 + 5 + 6 + 6 + 7 + 7 + 8 + 8 + 9 + 9 + 10;
     wait_until_done([&] { return result >= expected; });
 
-    BOOST_REQUIRE_EQUAL(expected, result);
+    REQUIRE(expected == result);
 }
 
-BOOST_FIXTURE_TEST_CASE(int_merge_unordered_channel_same_type_void_functor_many_values_async,
-                        channel_test_fixture_int_2) {
-    BOOST_TEST_MESSAGE(
-        "int merge unordered_t channel same type void functor many values asynchronously");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_2,
+                  "int_merge_unordered_channel_same_type_void_functor_many_values_async") {
     std::atomic_int result{0};
 
     auto check = stlab::merge_channel<stlab::unordered_t>(
@@ -185,14 +167,12 @@ BOOST_FIXTURE_TEST_CASE(int_merge_unordered_channel_same_type_void_functor_many_
         0 + 1 + 1 + 2 + 2 + 3 + 3 + 4 + 4 + 5 + 5 + 6 + 6 + 7 + 7 + 8 + 8 + 9 + 9 + 10;
     wait_until_done([&] { return result >= expected; });
 
-    BOOST_REQUIRE_EQUAL(expected, result);
+    REQUIRE(expected == result);
 }
 
 using channel_test_fixture_int_5 = channel_test_helper::channel_test_fixture<int, 5>;
-BOOST_FIXTURE_TEST_CASE(int_merge_unordered_channel_same_type_void_functor,
-                        channel_test_fixture_int_5) {
-    BOOST_TEST_MESSAGE("int merge unordered_t channel same type void functor");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_5,
+                  "int_merge_unordered_channel_same_type_void_functor") {
     std::atomic_int result{0};
 
     auto check = stlab::merge_channel<stlab::unordered_t>(
@@ -211,13 +191,11 @@ BOOST_FIXTURE_TEST_CASE(int_merge_unordered_channel_same_type_void_functor,
     const auto expectation = 2 + 3 + 4 + 5 + 6;
     wait_until_done([&]() { return result >= expectation; });
 
-    BOOST_REQUIRE_EQUAL(expectation, result);
+    REQUIRE(expectation == result);
 }
 
-BOOST_FIXTURE_TEST_CASE(int_merge_unordered_channel_same_type_void_functor_async,
-                        channel_test_fixture_int_5) {
-    BOOST_TEST_MESSAGE("int merge unordered_t channel same type void functor asynchronous");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_5,
+                  "int_merge_unordered_channel_same_type_void_functor_async") {
     std::atomic_int result{0};
 
     auto check = stlab::merge_channel<stlab::unordered_t>(
@@ -236,5 +214,5 @@ BOOST_FIXTURE_TEST_CASE(int_merge_unordered_channel_same_type_void_functor_async
     const auto expectation = 2 + 3 + 4 + 5 + 6;
     wait_until_done([&]() { return result >= expectation; });
 
-    BOOST_REQUIRE_EQUAL(expectation, result);
+    REQUIRE(expectation == result);
 }

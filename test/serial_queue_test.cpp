@@ -8,7 +8,7 @@
 #include <utility>
 #include <vector>
 
-#include <boost/test/unit_test.hpp>
+#include <doctest/doctest.h>
 
 #include <stlab/concurrency/await.hpp>
 #include <stlab/concurrency/default_executor.hpp>
@@ -192,7 +192,7 @@ void test1(stlab::schedule_mode mode) {
 
 /**************************************************************************************************/
 
-BOOST_AUTO_TEST_CASE(serial_queue_interface) {
+TEST_CASE("serial_queue_interface") {
     test0(stlab::schedule_mode::single);
 
     std::cout << "-=-=-=-=-\n";

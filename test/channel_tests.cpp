@@ -19,7 +19,7 @@
 #include <utility>
 #include <vector>
 
-#include <boost/test/unit_test.hpp>
+#include <doctest/doctest.h>
 
 #include <stlab/concurrency/executor_base.hpp>
 #include <stlab/concurrency/task.hpp>
@@ -40,39 +40,32 @@
 
 using namespace stlab;
 
-BOOST_AUTO_TEST_CASE(int_sender) {
-    BOOST_TEST_MESSAGE("int sender");
-
+TEST_CASE("int_sender") {
     stlab::sender<int> const send;
 
-    BOOST_REQUIRE_NO_THROW(send(42));
+    REQUIRE_NOTHROW(send(42));
 }
 
-BOOST_AUTO_TEST_CASE(int_receiver) {
-    BOOST_TEST_MESSAGE("int receiver");
-
+TEST_CASE("int_receiver") {
     stlab::receiver<int> receive;
 
-    BOOST_REQUIRE_EQUAL(false, receive.ready());
+    REQUIRE(receive.ready() == false);
 
     receive.set_ready();
-    BOOST_REQUIRE_EQUAL(true, receive.ready());
+    REQUIRE(receive.ready() == true);
 }
 
 using channel_test_fixture_int_1 = channel_test_helper::channel_test_fixture<int, 1>;
 
-BOOST_FIXTURE_TEST_SUITE(int_channel, channel_test_fixture_int_1)
-BOOST_AUTO_TEST_CASE(int_channel) {
-    BOOST_TEST_MESSAGE("int channel");
-
-    BOOST_REQUIRE_EQUAL(false, _receive[0].ready());
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_channel") {
+    REQUIRE(_receive[0].ready() == false);
 
     _receive[0].set_ready();
-    BOOST_REQUIRE_EQUAL(true, _receive[0].ready());
+    REQUIRE(_receive[0].ready() == true);
 }
 
-BOOST_AUTO_TEST_CASE(int_channel_move_ctor_sender) {
-    BOOST_TEST_MESSAGE("int channel move ctor sender");
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_channel_move_ctor_sender") {
+    // "int channel move ctor sender");
 
     std::atomic_int result{0};
 
@@ -84,11 +77,11 @@ BOOST_AUTO_TEST_CASE(int_channel_move_ctor_sender) {
 
     wait_until_done([&] { return result == 42; });
 
-    BOOST_REQUIRE_EQUAL(42, result);
+    REQUIRE(result == 42);
 }
 
-BOOST_AUTO_TEST_CASE(int_channel_move_assignment_sender) {
-    BOOST_TEST_MESSAGE("int channel move assignment sender");
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_channel_move_assignment_sender") {
+    // "int channel move assignment sender");
 
     stlab::sender<int> sut;
     std::atomic_int result{0};
@@ -101,11 +94,11 @@ BOOST_AUTO_TEST_CASE(int_channel_move_assignment_sender) {
 
     wait_until_done([&] { return result == 42; });
 
-    BOOST_REQUIRE_EQUAL(42, result);
+    REQUIRE(result == 42);
 }
 
-BOOST_AUTO_TEST_CASE(int_channel_copy_ctor_sender) {
-    BOOST_TEST_MESSAGE("int channel copy ctor sender");
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_channel_copy_ctor_sender") {
+    // "int channel copy ctor sender");
 
     std::atomic_int result{0};
 
@@ -117,7 +110,7 @@ BOOST_AUTO_TEST_CASE(int_channel_copy_ctor_sender) {
 
     wait_until_done([&] { return result == 42; });
 
-    BOOST_REQUIRE_EQUAL(42, result);
+    REQUIRE(result == 42);
 
     result = 0;
 
@@ -125,11 +118,11 @@ BOOST_AUTO_TEST_CASE(int_channel_copy_ctor_sender) {
 
     wait_until_done([&] { return result == 4711; });
 
-    BOOST_REQUIRE_EQUAL(4711, result);
+    REQUIRE(result == 4711);
 }
 
-BOOST_AUTO_TEST_CASE(int_channel_copy_assignment_sender) {
-    BOOST_TEST_MESSAGE("int channel copy assignment sender");
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_channel_copy_assignment_sender") {
+    // "int channel copy assignment sender");
 
     stlab::sender<int> sut;
     std::atomic_int result{0};
@@ -142,7 +135,7 @@ BOOST_AUTO_TEST_CASE(int_channel_copy_assignment_sender) {
 
     wait_until_done([&] { return result == 42; });
 
-    BOOST_REQUIRE_EQUAL(42, result);
+    REQUIRE(result == 42);
 
     result = 0;
 
@@ -150,11 +143,11 @@ BOOST_AUTO_TEST_CASE(int_channel_copy_assignment_sender) {
 
     wait_until_done([&] { return result == 4711; });
 
-    BOOST_REQUIRE_EQUAL(4711, result);
+    REQUIRE(result == 4711);
 }
 
-BOOST_AUTO_TEST_CASE(int_channel_move_ctor_receiver) {
-    BOOST_TEST_MESSAGE("int channel move ctor receiver");
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_channel_move_ctor_receiver") {
+    // "int channel move ctor receiver");
 
     std::atomic_int result{0};
 
@@ -166,11 +159,11 @@ BOOST_AUTO_TEST_CASE(int_channel_move_ctor_receiver) {
 
     wait_until_done([&] { return result == 42; });
 
-    BOOST_REQUIRE_EQUAL(42, result);
+    REQUIRE(result == 42);
 }
 
-BOOST_AUTO_TEST_CASE(int_channel_move_assignment_receiver) {
-    BOOST_TEST_MESSAGE("int channel move assignment receiver");
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_channel_move_assignment_receiver") {
+    // "int channel move assignment receiver");
 
     stlab::receiver<int> sut;
     std::atomic_int result{0};
@@ -183,11 +176,11 @@ BOOST_AUTO_TEST_CASE(int_channel_move_assignment_receiver) {
 
     wait_until_done([&] { return result == 42; });
 
-    BOOST_REQUIRE_EQUAL(42, result);
+    REQUIRE(result == 42);
 }
 
-BOOST_AUTO_TEST_CASE(int_channel_copy_ctor_receiver) {
-    BOOST_TEST_MESSAGE("int channel copy ctor receiver");
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_channel_copy_ctor_receiver") {
+    // "int channel copy ctor receiver");
 
     std::atomic_int result{0};
 
@@ -201,11 +194,11 @@ BOOST_AUTO_TEST_CASE(int_channel_copy_ctor_receiver) {
 
     wait_until_done([&]() { return result == 42; });
 
-    BOOST_REQUIRE_EQUAL(42, result);
+    REQUIRE(result == 42);
 }
 
-BOOST_AUTO_TEST_CASE(int_channel_copy_assignment_receiver) {
-    BOOST_TEST_MESSAGE("int channel copy assignment receiver");
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_channel_copy_assignment_receiver") {
+    // "int channel copy assignment receiver");
 
     stlab::receiver<int> sut;
     std::atomic_int result{0};
@@ -221,10 +214,10 @@ BOOST_AUTO_TEST_CASE(int_channel_copy_assignment_receiver) {
 
     wait_until_done([&] { return result == 42; });
 
-    BOOST_REQUIRE_EQUAL(42, result);
+    REQUIRE(result == 42);
 }
 
-BOOST_AUTO_TEST_CASE(int_concatenate_two_channels) {
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_concatenate_two_channels") {
     std::atomic_int result{0};
     stlab::sender<int> A;
     stlab::sender<int> X;
@@ -244,10 +237,10 @@ BOOST_AUTO_TEST_CASE(int_concatenate_two_channels) {
 
     wait_until_done([&] { return result == 42; });
 
-    BOOST_REQUIRE_EQUAL(42, result);
+    REQUIRE(result == 42);
 }
 
-BOOST_AUTO_TEST_CASE(int_concatenate_channels_with_different_executor) {
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_concatenate_channels_with_different_executor") {
     {
         std::atomic_int result{0};
 
@@ -261,7 +254,7 @@ BOOST_AUTO_TEST_CASE(int_concatenate_channels_with_different_executor) {
 
         wait_until_done([&] { return result == 43; });
 
-        BOOST_REQUIRE_EQUAL(43, result);
+        REQUIRE(result == 43);
     }
     test_reset();
     {
@@ -277,11 +270,9 @@ BOOST_AUTO_TEST_CASE(int_concatenate_channels_with_different_executor) {
 
         wait_until_done([&] { return result == 43; });
 
-        BOOST_REQUIRE_EQUAL(43, result);
+        REQUIRE(result == 43);
     }
 }
-
-BOOST_AUTO_TEST_SUITE_END()
 
 namespace {
 
@@ -352,13 +343,13 @@ struct generator {
 };
 
 void RequireInClosedRange(size_t minValue, size_t test, size_t maxValue) {
-    BOOST_REQUIRE_LE(minValue, test);
-    BOOST_REQUIRE_LE(test, maxValue);
+    REQUIRE(minValue <= test);
+    REQUIRE(test <= maxValue);
 }
 
 } // namespace
 
-BOOST_AUTO_TEST_CASE(int_channel_with_2_sized_buffer) {
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_channel_with_2_sized_buffer") {
     main_queue q;
 
     auto receive = stlab::channel<void>(q.executor());
@@ -369,7 +360,7 @@ BOOST_AUTO_TEST_CASE(int_channel_with_2_sized_buffer) {
 
     auto r2 = std::move(receive) | ref(myGenerator) | (stlab::buffer_size{2} & std::ref(myEcho)) |
               [&valuesInFlight](auto x) {
-                  BOOST_REQUIRE_EQUAL(x, valuesInFlight.front());
+                  REQUIRE(valuesInFlight.front() == x);
                   valuesInFlight.pop();
                   std::cout << x << std::endl;
               };
@@ -379,12 +370,12 @@ BOOST_AUTO_TEST_CASE(int_channel_with_2_sized_buffer) {
     // The first buffer has size 2 and the next process has per default size 1,
     // so there can be max 2 + 1 values in flight
     q.execute_next_task(); // generate value(0)
-    BOOST_REQUIRE_GE(3U, valuesInFlight.size());
+    REQUIRE(valuesInFlight.size() <= 3U);
     q.execute_next_task(); // await and yield value(0) by echo
-    BOOST_REQUIRE_GE(3U, valuesInFlight.size());
+    REQUIRE(valuesInFlight.size() <= 3U);
 
     q.execute_next_task(); // generate value(1)
-    BOOST_REQUIRE_GE(3U, valuesInFlight.size());
+    REQUIRE(valuesInFlight.size() <= 3U);
     q.execute_next_task(); // generate value(2)
     RequireInClosedRange(2U, valuesInFlight.size(), 3U);
 
@@ -410,7 +401,7 @@ BOOST_AUTO_TEST_CASE(int_channel_with_2_sized_buffer) {
     RequireInClosedRange(2U, valuesInFlight.size(), 3U);
 }
 
-BOOST_AUTO_TEST_CASE(int_channel_with_3_sized_buffer) {
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_channel_with_3_sized_buffer") {
     main_queue q;
 
     auto receive = stlab::channel<void>(q.executor());
@@ -421,7 +412,7 @@ BOOST_AUTO_TEST_CASE(int_channel_with_3_sized_buffer) {
 
     auto r2 = std::move(receive) | std::ref(myGenerator) |
               (stlab::buffer_size{3} & std::ref(myEcho)) | [&valuesInFlight](auto x) {
-                  BOOST_REQUIRE_EQUAL(x, valuesInFlight.front());
+                  REQUIRE(valuesInFlight.front() == x);
                   valuesInFlight.pop();
               };
 
@@ -431,11 +422,11 @@ BOOST_AUTO_TEST_CASE(int_channel_with_3_sized_buffer) {
     // so there can be max 3 + 1 values in flight
 
     q.execute_next_task(); // generate value(0)
-    BOOST_REQUIRE_GE(3U, valuesInFlight.size());
+    REQUIRE(valuesInFlight.size() <= 3U);
     q.execute_next_task(); // await and yield value(0) by echo
-    BOOST_REQUIRE_GE(3U, valuesInFlight.size());
+    REQUIRE(valuesInFlight.size() <= 3U);
     q.execute_next_task(); // generate value(1)
-    BOOST_REQUIRE_GE(3U, valuesInFlight.size());
+    REQUIRE(valuesInFlight.size() <= 3U);
     q.execute_next_task(); // generate value(2)
 
     RequireInClosedRange(2U, valuesInFlight.size(), 4U);
@@ -463,7 +454,7 @@ BOOST_AUTO_TEST_CASE(int_channel_with_3_sized_buffer) {
     RequireInClosedRange(2U, valuesInFlight.size(), 4U);
 }
 
-BOOST_AUTO_TEST_CASE(int_channel_with_split_different_sized_buffer) {
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_channel_with_split_different_sized_buffer") {
     // Here the bigger buffer size must not steer the upstream, but the
     // smaller size
     std::vector<std::pair<size_t, size_t>> const bufferSizes = {
@@ -484,11 +475,11 @@ BOOST_AUTO_TEST_CASE(int_channel_with_split_different_sized_buffer) {
                  generator<std::queue<int>, std::queue<int>>(valuesInFlight1, valuesInFlight2);
 
         auto r1 = g | (stlab::buffer_size{bs.first} & echo()) | [&valuesInFlight1](auto x) {
-            BOOST_REQUIRE_EQUAL(x, valuesInFlight1.front());
+            REQUIRE(valuesInFlight1.front() == x);
             valuesInFlight1.pop();
         };
         auto r2 = g | (stlab::buffer_size{bs.second} & echo()) | [&valuesInFlight2](auto x) {
-            BOOST_REQUIRE_EQUAL(x, valuesInFlight2.front());
+            REQUIRE(valuesInFlight2.front() == x);
             valuesInFlight2.pop();
         };
 
@@ -533,8 +524,8 @@ BOOST_AUTO_TEST_CASE(int_channel_with_split_different_sized_buffer) {
     }
 }
 
-BOOST_AUTO_TEST_CASE(int_channel_one_value_different_buffer_sizes) {
-    BOOST_TEST_MESSAGE("int channel one value different buffer sizes");
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_channel_one_value_different_buffer_sizes") {
+    // "int channel one value different buffer sizes");
 
     for (auto bs : std::vector<std::size_t>{0, 1, 2, 10}) {
         stlab::sender<int> send;
@@ -551,12 +542,12 @@ BOOST_AUTO_TEST_CASE(int_channel_one_value_different_buffer_sizes) {
             invoke_waiting([] { std::this_thread::sleep_for(std::chrono::microseconds(1)); });
         }
 
-        BOOST_REQUIRE_EQUAL(1, result);
+        REQUIRE(result == 1);
     }
 }
 
-BOOST_AUTO_TEST_CASE(int_channel_two_values_different_buffer_sizes) {
-    BOOST_TEST_MESSAGE("int channel two values different buffer sizes");
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_channel_two_values_different_buffer_sizes") {
+    // "int channel two values different buffer sizes");
 
     for (auto bs : std::vector<std::size_t>{0, 1, 2, 10}) {
         stlab::sender<int> send;
@@ -574,12 +565,12 @@ BOOST_AUTO_TEST_CASE(int_channel_two_values_different_buffer_sizes) {
             invoke_waiting([] { std::this_thread::sleep_for(std::chrono::microseconds(1)); });
         }
 
-        BOOST_REQUIRE_EQUAL(2, result);
+        REQUIRE(result == 2);
     }
 }
 
-BOOST_AUTO_TEST_CASE(int_channel_many_values_different_buffer_sizes) {
-    BOOST_TEST_MESSAGE("int channel many values different buffer sizes");
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "int_channel_many_values_different_buffer_sizes") {
+    // "int channel many values different buffer sizes");
 
     {
         for (auto bs : std::vector<std::size_t>{0, 1, 2, 10}) {
@@ -599,7 +590,7 @@ BOOST_AUTO_TEST_CASE(int_channel_many_values_different_buffer_sizes) {
                 invoke_waiting([] { std::this_thread::sleep_for(std::chrono::microseconds(1)); });
             }
 
-            BOOST_REQUIRE_EQUAL(10, result);
+            REQUIRE(result == 10);
         }
     }
     {
@@ -620,57 +611,47 @@ BOOST_AUTO_TEST_CASE(int_channel_many_values_different_buffer_sizes) {
                 invoke_waiting([] { std::this_thread::sleep_for(std::chrono::microseconds(1)); });
             }
 
-            BOOST_REQUIRE_EQUAL(10, result);
+            REQUIRE(result == 10);
         }
     }
 }
 
-BOOST_AUTO_TEST_CASE(report_channel_broken_when_no_process_is_attached) {
-    BOOST_TEST_MESSAGE("Expect broken channel exception when no process is attached");
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "report_channel_broken_when_no_process_is_attached") {
+    // "Expect broken channel exception when no process is attached");
 
     stlab::receiver<int> receive;
 
-    BOOST_REQUIRE_EXCEPTION(
-        (void)(receive | [](int) { return 1; }), stlab::channel_error,
-        ([](const auto& e) { return std::string("broken channel") == e.what(); }));
-
-    BOOST_REQUIRE_EXCEPTION(
-        (void)(receive | (stlab::buffer_size{2} & [](int) { return 1; })), stlab::channel_error,
-        ([](const auto& e) { return std::string("broken channel") == e.what(); }));
+    REQUIRE_THROWS_AS((void)(receive | [](int) { return 1; }), stlab::channel_error);
+    REQUIRE_THROWS_AS((void)(receive | (stlab::buffer_size{2} & [](int) { return 1; })),
+                      stlab::channel_error);
 }
 
-BOOST_AUTO_TEST_CASE(report_channel_broken_when_process_is_already_running) {
-    BOOST_TEST_MESSAGE(
-        "Expect \"process already running\" exception when process is already running");
-
+TEST_CASE_FIXTURE(channel_test_fixture_int_1,
+                  "report_channel_broken_when_process_is_already_running") {
     stlab::sender<int> send;
     stlab::receiver<int> receive;
     std::tie(send, receive) = stlab::channel<int>(stlab::default_executor);
 
     receive.set_ready();
 
-    BOOST_REQUIRE_EXCEPTION(
-        (void)(receive | [](int) { return 1; }), stlab::channel_error,
-        ([](const auto& e) { return std::string("process already running") == e.what(); }));
-
-    BOOST_REQUIRE_EXCEPTION(
-        (void)(receive | (stlab::buffer_size{2} & [](int) { return 1; })), stlab::channel_error,
-        ([](const auto& e) { return std::string("process already running") == e.what(); }));
+    REQUIRE_THROWS_AS((void)(receive | [](int) { return 1; }), stlab::channel_error);
+    REQUIRE_THROWS_AS((void)(receive | (stlab::buffer_size{2} & [](int) { return 1; })),
+                      stlab::channel_error);
 }
 
-BOOST_AUTO_TEST_CASE(sender_receiver_equality_tests) {
-    BOOST_TEST_MESSAGE("running sender equality tests");
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "sender_receiver_equality_tests") {
+    // "running sender equality tests");
     {
         stlab::sender<int> a;
         stlab::sender<int> b;
         stlab::receiver<int> x;
         stlab::receiver<int> y;
 
-        BOOST_REQUIRE(a == b);
-        BOOST_REQUIRE(!(a != b));
+        REQUIRE(a == b);
+        REQUIRE(!(a != b));
 
-        BOOST_REQUIRE(x == y);
-        BOOST_REQUIRE(!(x != y));
+        REQUIRE(x == y);
+        REQUIRE(!(x != y));
     }
 
     {
@@ -679,11 +660,11 @@ BOOST_AUTO_TEST_CASE(sender_receiver_equality_tests) {
         stlab::receiver<stlab::move_only> x;
         stlab::receiver<stlab::move_only> y;
 
-        BOOST_REQUIRE(a == b);
-        BOOST_REQUIRE(!(a != b));
+        REQUIRE(a == b);
+        REQUIRE(!(a != b));
 
-        BOOST_REQUIRE(x == y);
-        BOOST_REQUIRE(!(x != y));
+        REQUIRE(x == y);
+        REQUIRE(!(x != y));
     }
 
     {
@@ -693,8 +674,8 @@ BOOST_AUTO_TEST_CASE(sender_receiver_equality_tests) {
 
         auto a = send;
         auto x = rec;
-        BOOST_REQUIRE(send == a);
-        BOOST_REQUIRE(rec == x);
+        REQUIRE(send == a);
+        REQUIRE(rec == x);
     }
 
     {
@@ -705,8 +686,8 @@ BOOST_AUTO_TEST_CASE(sender_receiver_equality_tests) {
         std::tie(a, x) = stlab::channel<int>(stlab::immediate_executor);
         std::tie(b, y) = stlab::channel<int>(stlab::immediate_executor);
 
-        BOOST_REQUIRE(a != b);
-        BOOST_REQUIRE(x != y);
+        REQUIRE(a != b);
+        REQUIRE(x != y);
     }
     {
         stlab::sender<stlab::move_only> send;
@@ -714,11 +695,11 @@ BOOST_AUTO_TEST_CASE(sender_receiver_equality_tests) {
         std::tie(send, rec) = stlab::channel<stlab::move_only>(stlab::immediate_executor);
 
         stlab::sender<stlab::move_only> const a;
-        BOOST_REQUIRE(a != send);
+        REQUIRE(a != send);
     }
 }
 
-BOOST_AUTO_TEST_CASE(sender_receiver_swap_tests) {
+TEST_CASE_FIXTURE(channel_test_fixture_int_1, "sender_receiver_swap_tests") {
     {
         stlab::sender<int> a;
         stlab::sender<int> b;
@@ -740,8 +721,8 @@ BOOST_AUTO_TEST_CASE(sender_receiver_swap_tests) {
         a(1);
         b(2);
 
-        BOOST_REQUIRE_EQUAL(1, result2);
-        BOOST_REQUIRE_EQUAL(2, result1);
+        REQUIRE(result2 == 1);
+        REQUIRE(result1 == 2);
     }
     {
         stlab::sender<int> a;
@@ -764,8 +745,8 @@ BOOST_AUTO_TEST_CASE(sender_receiver_swap_tests) {
         a(1);
         b(2);
 
-        BOOST_REQUIRE_EQUAL(1, result2);
-        BOOST_REQUIRE_EQUAL(2, result1);
+        REQUIRE(result2 == 1);
+        REQUIRE(result1 == 2);
     }
     {
         stlab::sender<stlab::move_only> a;
@@ -788,8 +769,8 @@ BOOST_AUTO_TEST_CASE(sender_receiver_swap_tests) {
         a(1);
         b(2);
 
-        BOOST_REQUIRE_EQUAL(1, result2);
-        BOOST_REQUIRE_EQUAL(2, result1);
+        REQUIRE(result2 == 1);
+        REQUIRE(result1 == 2);
     }
     {
         stlab::sender<stlab::move_only> a;
@@ -812,7 +793,7 @@ BOOST_AUTO_TEST_CASE(sender_receiver_swap_tests) {
         a(1);
         b(2);
 
-        BOOST_REQUIRE_EQUAL(1, result2);
-        BOOST_REQUIRE_EQUAL(2, result1);
+        REQUIRE(result2 == 1);
+        REQUIRE(result1 == 2);
     }
 }

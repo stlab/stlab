@@ -13,7 +13,7 @@
 #include <utility>
 #include <vector>
 
-#include <boost/test/unit_test.hpp>
+#include <doctest/doctest.h>
 
 #include <stlab/concurrency/await.hpp>
 #include <stlab/concurrency/default_executor.hpp>
@@ -28,24 +28,19 @@
 using namespace stlab;
 using namespace future_test_helper;
 
-BOOST_FIXTURE_TEST_SUITE(future_when_all_args_int, test_fixture<int>)
-BOOST_AUTO_TEST_CASE(future_when_all_args_int_with_one_element) {
-    BOOST_TEST_MESSAGE("running future when_all int with one element");
-
+TEST_CASE_FIXTURE(test_fixture<int>, "future_when_all_args_int_with_one_element") {
     auto f1 = async(make_executor<0>(), [] { return 42; });
     sut = when_all(make_executor<1>(), [](auto x) { return x + x; }, f1);
 
     check_valid_future(sut);
     wait_until_future_completed(copy(sut));
 
-    BOOST_REQUIRE_EQUAL(42 + 42, *sut.get_try());
-    BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
-    BOOST_REQUIRE_LE(1, custom_scheduler<1>::usage_counter());
+    REQUIRE(*sut.get_try() == 42 + 42);
+    REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
+    REQUIRE(custom_scheduler<1>::usage_counter() >= 1);
 }
 
-BOOST_AUTO_TEST_CASE(future_when_all_args_int_with_many_elements) {
-    BOOST_TEST_MESSAGE("running future when_all args int with many elements");
-
+TEST_CASE_FIXTURE(test_fixture<int>, "future_when_all_args_int_with_many_elements") {
     auto f1 = async(make_executor<0>(), [] { return 1; });
     auto f2 = async(make_executor<0>(), [] { return 2; });
     auto f3 = async(make_executor<0>(), [] { return 3; });
@@ -59,14 +54,12 @@ BOOST_AUTO_TEST_CASE(future_when_all_args_int_with_many_elements) {
     check_valid_future(sut);
     wait_until_future_completed(copy(sut));
 
-    BOOST_REQUIRE_EQUAL(1 * 7 + 2 * 11 + 3 * 13 + 5 * 17, *sut.get_try());
-    BOOST_REQUIRE_LE(4, custom_scheduler<0>::usage_counter());
-    BOOST_REQUIRE_LE(1, custom_scheduler<1>::usage_counter());
+    REQUIRE(*sut.get_try() == 1 * 7 + 2 * 11 + 3 * 13 + 5 * 17);
+    REQUIRE(custom_scheduler<0>::usage_counter() >= 4);
+    REQUIRE(custom_scheduler<1>::usage_counter() >= 1);
 }
 
-BOOST_AUTO_TEST_CASE(future_when_all_args_int_with_ready_element) {
-    BOOST_TEST_MESSAGE("running future when_all int with ready element");
-
+TEST_CASE_FIXTURE(test_fixture<int>, "future_when_all_args_int_with_ready_element") {
     sut = when_all(
         make_executor<1>(), [](auto x) { return x + x; },
         make_ready_future<int>(42, immediate_executor));
@@ -74,13 +67,11 @@ BOOST_AUTO_TEST_CASE(future_when_all_args_int_with_ready_element) {
     check_valid_future(sut);
     wait_until_future_completed(copy(sut));
 
-    BOOST_REQUIRE_EQUAL(42 + 42, *sut.get_try());
-    BOOST_REQUIRE_LE(1, custom_scheduler<1>::usage_counter());
+    REQUIRE(*sut.get_try() == 42 + 42);
+    REQUIRE(custom_scheduler<1>::usage_counter() >= 1);
 }
 
-BOOST_AUTO_TEST_CASE(future_when_all_args_int_with_executor) {
-    BOOST_TEST_MESSAGE("running future when_all int with ready element");
-
+TEST_CASE_FIXTURE(test_fixture<int>, "future_when_all_args_int_with_executor") {
     sut = stlab::when_all(
         make_executor<1>(), [](auto x, auto y) { return x + y; },
         stlab::make_ready_future<int>(42, stlab::immediate_executor),
@@ -89,13 +80,11 @@ BOOST_AUTO_TEST_CASE(future_when_all_args_int_with_executor) {
     check_valid_future(sut);
     wait_until_future_completed(copy(sut));
 
-    BOOST_REQUIRE_EQUAL(42 + 42, *sut.get_try());
-    BOOST_REQUIRE_LE(1, custom_scheduler<1>::usage_counter());
+    REQUIRE(*sut.get_try() == 42 + 42);
+    REQUIRE(custom_scheduler<1>::usage_counter() >= 1);
 }
 
-BOOST_AUTO_TEST_CASE(future_when_all_args_int_with_two_ready_element) {
-    BOOST_TEST_MESSAGE("running future when_all int with two ready element");
-
+TEST_CASE_FIXTURE(test_fixture<int>, "future_when_all_args_int_with_two_ready_element") {
     sut = when_all(
         make_executor<1>(), [](auto x, auto y) { return x + y; },
         make_ready_future<int>(42, immediate_executor),
@@ -104,11 +93,11 @@ BOOST_AUTO_TEST_CASE(future_when_all_args_int_with_two_ready_element) {
     check_valid_future(sut);
     wait_until_future_completed(copy(sut));
 
-    BOOST_REQUIRE_EQUAL(42 + 42, *sut.get_try());
-    BOOST_REQUIRE_LE(1, custom_scheduler<1>::usage_counter());
+    REQUIRE(*sut.get_try() == 42 + 42);
+    REQUIRE(custom_scheduler<1>::usage_counter() >= 1);
 }
 
-BOOST_AUTO_TEST_CASE(future_when_all_args) {
+TEST_CASE_FIXTURE(test_fixture<int>, "future_when_all_args") {
     auto main_thread_id = std::this_thread::get_id();
     auto r = when_all(
         make_executor<1>(), [] { return std::this_thread::get_id(); },
@@ -116,13 +105,11 @@ BOOST_AUTO_TEST_CASE(future_when_all_args) {
 
     wait_until_future_completed(copy(r));
 
-    BOOST_REQUIRE(main_thread_id != *r.get_try());
-    BOOST_REQUIRE_LE(1, custom_scheduler<1>::usage_counter());
+    REQUIRE(main_thread_id != *r.get_try());
+    REQUIRE(custom_scheduler<1>::usage_counter() >= 1);
 }
 
-BOOST_AUTO_TEST_CASE(future_when_all_Arguments_with_mutable_task) {
-    BOOST_TEST_MESSAGE("future when all arguments with mutable task");
-
+TEST_CASE_FIXTURE(test_fixture<int>, "future_when_all_Arguments_with_mutable_task") {
     struct mutable_int {
         int i = 0;
         auto operator()() {
@@ -145,11 +132,9 @@ BOOST_AUTO_TEST_CASE(future_when_all_Arguments_with_mutable_task) {
             return func;
         }));
 
-    BOOST_REQUIRE_EQUAL(4, stlab::await(std::move(r)));
+    REQUIRE(stlab::await(std::move(r)) == 4);
 }
-BOOST_AUTO_TEST_CASE(future_when_all_arguments_with_mutable_move_onlytask) {
-    BOOST_TEST_MESSAGE("future when all arguments with mutable move only task");
-
+TEST_CASE_FIXTURE(test_fixture<int>, "future_when_all_arguments_with_mutable_move_onlytask") {
     struct mutable_move_only {
         move_only i;
         auto operator()() {
@@ -172,14 +157,11 @@ BOOST_AUTO_TEST_CASE(future_when_all_arguments_with_mutable_move_onlytask) {
             return std::move(func);
         }));
 
-    BOOST_REQUIRE_EQUAL(4, stlab::await(std::move(r)));
+    REQUIRE(stlab::await(std::move(r)) == 4);
 }
-BOOST_AUTO_TEST_SUITE_END()
 
-BOOST_FIXTURE_TEST_SUITE(future_when_all_args_move_only, test_fixture<move_only>)
-BOOST_AUTO_TEST_CASE(future_when_all_args_move_only_with_one_element) {
-    BOOST_TEST_MESSAGE("running future when_all move_only with one element");
-
+TEST_CASE_FIXTURE(test_fixture<stlab::move_only>,
+                  "future_when_all_args_move_only_with_one_element") {
     auto f1 = async(make_executor<0>(), [] { return move_only(42); });
     sut = when_all(
         make_executor<1>(), [](auto x) { return move_only(x.member() + x.member()); },
@@ -188,14 +170,13 @@ BOOST_AUTO_TEST_CASE(future_when_all_args_move_only_with_one_element) {
     check_valid_future(sut);
     auto result = await(std::move(sut));
 
-    BOOST_REQUIRE_EQUAL(42 + 42, result.member());
-    BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
-    BOOST_REQUIRE_LE(1, custom_scheduler<1>::usage_counter());
+    REQUIRE(result.member() == 42 + 42);
+    REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
+    REQUIRE(custom_scheduler<1>::usage_counter() >= 1);
 }
 
-BOOST_AUTO_TEST_CASE(future_when_all_args_move_only_with_many_elements) {
-    BOOST_TEST_MESSAGE("running future when_all args move_only with many elements");
-
+TEST_CASE_FIXTURE(test_fixture<stlab::move_only>,
+                  "future_when_all_args_move_only_with_many_elements") {
     auto f1 = async(make_executor<0>(), [] { return move_only(1); });
     auto f2 = async(make_executor<0>(), [] { return move_only(2); });
     auto f3 = async(make_executor<0>(), [] { return move_only(3); });
@@ -212,17 +193,12 @@ BOOST_AUTO_TEST_CASE(future_when_all_args_move_only_with_many_elements) {
     check_valid_future(sut);
     auto result = await(std::move(sut));
 
-    BOOST_REQUIRE_EQUAL(1 * 7 + 2 * 11 + 3 * 13 + 5 * 17, result.member());
-    BOOST_REQUIRE_LE(4, custom_scheduler<0>::usage_counter());
-    BOOST_REQUIRE_LE(1, custom_scheduler<1>::usage_counter());
+    REQUIRE(result.member() == 1 * 7 + 2 * 11 + 3 * 13 + 5 * 17);
+    REQUIRE(custom_scheduler<0>::usage_counter() >= 4);
+    REQUIRE(custom_scheduler<1>::usage_counter() >= 1);
 }
 
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_FIXTURE_TEST_SUITE(future_when_all_args_string, test_fixture<std::string>)
-BOOST_AUTO_TEST_CASE(future_when_all_args_with_different_types) {
-    BOOST_TEST_MESSAGE("running future when_all args with different types");
-
+TEST_CASE_FIXTURE(test_fixture<std::string>, "future_when_all_args_with_different_types") {
     auto f1 = async(make_executor<0>(), [] { return 1; });
     auto f2 = async(make_executor<0>(), [] { return 3.1415; });
     auto f3 = async(make_executor<0>(), [] { return std::string("Don't panic!"); });
@@ -240,33 +216,27 @@ BOOST_AUTO_TEST_CASE(future_when_all_args_with_different_types) {
     check_valid_future(sut);
     wait_until_future_completed(copy(sut));
 
-    BOOST_REQUIRE_EQUAL(std::string("1 3.1415 Don't panic! 3 3"), *sut.get_try());
-    BOOST_REQUIRE_LE(4, custom_scheduler<0>::usage_counter());
-    BOOST_REQUIRE_LE(1, custom_scheduler<1>::usage_counter());
+    REQUIRE((*sut.get_try() == std::string("1 3.1415 Don't panic! 3 3")));
+    REQUIRE(custom_scheduler<0>::usage_counter() >= 4);
+    REQUIRE(custom_scheduler<1>::usage_counter() >= 1);
 }
-BOOST_AUTO_TEST_SUITE_END()
 
 // ----------------------------------------------------------------------------
 //                             Error cases
 // ----------------------------------------------------------------------------
 
-BOOST_FIXTURE_TEST_SUITE(future_when_all_args_int_failure, test_fixture<int>)
-BOOST_AUTO_TEST_CASE(future_when_all_args_int_failure_with_one_element) {
-    BOOST_TEST_MESSAGE("running future when_all int with range of one element");
-
+TEST_CASE_FIXTURE(test_fixture<int>, "future_when_all_args_int_failure_with_one_element") {
     auto f1 = async(make_executor<0>(), []() -> int { throw test_exception("failure"); });
     sut = when_all(make_executor<1>(), [](auto x) { return x + x; }, f1);
 
     wait_until_future_fails<test_exception>(copy(sut));
 
     check_failure<test_exception>(sut, "failure");
-    BOOST_REQUIRE_LE(1, custom_scheduler<0>::usage_counter());
-    BOOST_REQUIRE_LE(1, custom_scheduler<1>::usage_counter());
+    REQUIRE(custom_scheduler<0>::usage_counter() >= 1);
+    REQUIRE(custom_scheduler<1>::usage_counter() >= 1);
 }
 
-BOOST_AUTO_TEST_CASE(future_when_all_args_int_with_many_elements_one_failing) {
-    BOOST_TEST_MESSAGE("running future when_all args int with many elements one failing");
-
+TEST_CASE_FIXTURE(test_fixture<int>, "future_when_all_args_int_with_many_elements_one_failing") {
     auto f1 = async(make_executor<0>(), [] { return 1; });
     auto f2 = async(make_executor<0>(), []() -> int { throw test_exception("failure"); });
     auto f3 = async(make_executor<0>(), [] { return 3; });
@@ -280,13 +250,11 @@ BOOST_AUTO_TEST_CASE(future_when_all_args_int_with_many_elements_one_failing) {
     wait_until_future_fails<test_exception>(copy(sut));
 
     check_failure<test_exception>(sut, "failure");
-    BOOST_REQUIRE_LE(4, custom_scheduler<0>::usage_counter());
-    BOOST_REQUIRE_LE(1, custom_scheduler<1>::usage_counter());
+    REQUIRE(custom_scheduler<0>::usage_counter() >= 4);
+    REQUIRE(custom_scheduler<1>::usage_counter() >= 1);
 }
 
-BOOST_AUTO_TEST_CASE(future_when_all_args_int_with_many_elements_all_failing) {
-    BOOST_TEST_MESSAGE("running future when_all args int with many elements all failing");
-
+TEST_CASE_FIXTURE(test_fixture<int>, "future_when_all_args_int_with_many_elements_all_failing") {
     auto f1 = async(make_executor<0>(), []() -> int { throw test_exception("failure"); });
     auto f2 = async(make_executor<0>(), []() -> int { throw test_exception("failure"); });
     auto f3 = async(make_executor<0>(), []() -> int { throw test_exception("failure"); });
@@ -300,16 +268,12 @@ BOOST_AUTO_TEST_CASE(future_when_all_args_int_with_many_elements_all_failing) {
     wait_until_future_fails<test_exception>(copy(sut));
 
     check_failure<test_exception>(sut, "failure");
-    BOOST_REQUIRE_LE(4, custom_scheduler<0>::usage_counter());
-    BOOST_REQUIRE_LE(1, custom_scheduler<1>::usage_counter());
+    REQUIRE(custom_scheduler<0>::usage_counter() >= 4);
+    REQUIRE(custom_scheduler<1>::usage_counter() >= 1);
 }
 
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_FIXTURE_TEST_SUITE(future_when_all_args_string_failure, test_fixture<std::string>)
-BOOST_AUTO_TEST_CASE(future_when_all_args_with_different_types_one_failing) {
-    BOOST_TEST_MESSAGE("running future when_all args with different types one failing");
-
+TEST_CASE_FIXTURE(test_fixture<std::string>,
+                  "future_when_all_args_with_different_types_one_failing") {
     auto f1 = async(make_executor<0>(), [] { return 1; });
     auto f2 = async(make_executor<0>(), [] { return 3.1415; });
     auto f3 = async(make_executor<0>(), []() -> std::string { throw test_exception("failure"); });
@@ -327,13 +291,12 @@ BOOST_AUTO_TEST_CASE(future_when_all_args_with_different_types_one_failing) {
     wait_until_future_fails<test_exception>(copy(sut));
 
     check_failure<test_exception>(sut, "failure");
-    BOOST_REQUIRE_LE(4, custom_scheduler<0>::usage_counter());
-    BOOST_REQUIRE_LE(1, custom_scheduler<1>::usage_counter());
+    REQUIRE(custom_scheduler<0>::usage_counter() >= 4);
+    REQUIRE(custom_scheduler<1>::usage_counter() >= 1);
 }
 
-BOOST_AUTO_TEST_CASE(future_when_all_args_with_different_types_all_failing) {
-    BOOST_TEST_MESSAGE("running future when_all args with different types all failing");
-
+TEST_CASE_FIXTURE(test_fixture<std::string>,
+                  "future_when_all_args_with_different_types_all_failing") {
     auto f1 = async(make_executor<0>(), []() -> int { throw test_exception("failure"); });
     auto f2 = async(make_executor<0>(), []() -> double { throw test_exception("failure"); });
     auto f3 = async(make_executor<0>(), []() -> std::string { throw test_exception("failure"); });
@@ -352,8 +315,6 @@ BOOST_AUTO_TEST_CASE(future_when_all_args_with_different_types_all_failing) {
     wait_until_future_fails<test_exception>(copy(sut));
 
     check_failure<test_exception>(sut, "failure");
-    BOOST_REQUIRE_LE(4, custom_scheduler<0>::usage_counter());
-    BOOST_REQUIRE_LE(1, custom_scheduler<1>::usage_counter());
+    REQUIRE(custom_scheduler<0>::usage_counter() >= 4);
+    REQUIRE(custom_scheduler<1>::usage_counter() >= 1);
 }
-
-BOOST_AUTO_TEST_SUITE_END()
