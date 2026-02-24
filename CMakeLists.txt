@@ -54,8 +54,13 @@ cmake_dependent_option(stlab.coverage
   "Enable binary instrumentation to collect test coverage information in the DEBUG configuration"
   OFF PROJECT_IS_TOP_LEVEL OFF)
 
-stlab_check_disfunctional_coroutines(STLAB_DEFAULT_NO_STD_COROUTINES)
-option(STLAB_NO_STD_COROUTINES "Suppress usage of standard coroutines. Useful for non-conforming compilers." ${STLAB_DEFAULT_NO_STD_COROUTINES})
+# Coroutines are enabled for C++20+ by default. Use STLAB_NO_STD_COROUTINES to
+# force them off for non-conforming compilers.
+cmake_dependent_option(STLAB_NO_STD_COROUTINES
+  "Suppress usage of standard coroutines. Useful for non-conforming compilers."
+  OFF
+  "CMAKE_CXX_STANDARD VERSION_GREATER_EQUAL 20"
+  ON)
 if(STLAB_NO_STD_COROUTINES)
   set(STLAB_STD_COROUTINES 0)
 else()
@@ -171,7 +176,7 @@ elseif(STLAB_MAIN_EXECUTOR STREQUAL "qt6")
   target_link_libraries(stlab INTERFACE Qt6::Core)
 endif()
 
-message(STATUS "stlab: Disable Coroutines: ${STLAB_DEFAULT_NO_STD_COROUTINES}")
+message(STATUS "stlab: Disable Coroutines: ${STLAB_NO_STD_COROUTINES}")
 message(STATUS "stlab: Thread System: ${STLAB_THREAD_SYSTEM}")
 message(STATUS "stlab: Task System: ${STLAB_TASK_SYSTEM}")
 message(STATUS "stlab: Main Executor: ${STLAB_MAIN_EXECUTOR}")

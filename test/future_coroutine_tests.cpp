@@ -9,7 +9,6 @@
 #include <atomic>
 #include <chrono>
 #include <iostream>
-#include <string>
 #include <thread>
 #include <utility>
 
@@ -51,36 +50,29 @@ TEST_CASE("future_coroutine_void") {
 }
 
 auto get_the_answer_with_failure() -> stlab::future<int> {
-    (void)co_await stlab::async(stlab::default_executor, [] {
+    co_return co_await stlab::async(stlab::default_executor, []() -> int {
         invoke_waiting([] { std::this_thread::sleep_for(std::chrono::milliseconds(1000)); });
-        return 42;
+        throw test_exception("failure");
     });
-
-    throw test_exception("failure");
 }
 
 TEST_CASE("future_coroutine_int_failure") {
     auto w = get_the_answer_with_failure();
 
-    REQUIRE_THROWS_AS(await(std::move(w)), test_exception)](const auto& e) {
-        return std::string(_m) == std::string(e.what());
-    }));
+    REQUIRE_THROWS_WITH_AS(await(std::move(w)), "failure", test_exception);
 }
 
 auto get_the_answer_move_only_with_failure() -> stlab::future<move_only> {
-    (void)co_await stlab::async(stlab::default_executor, [] {
+    co_return co_await stlab::async(stlab::default_executor, []() -> move_only {
         invoke_waiting([] { std::this_thread::sleep_for(std::chrono::milliseconds(1000)); });
-        return move_only{42};
+        throw test_exception("failure");
     });
-    throw test_exception("failure");
 }
 
 TEST_CASE("future_coroutine_move_only_failure") {
     auto w = get_the_answer_move_only_with_failure();
 
-    REQUIRE_THROWS_AS(await(std::move(w)), test_exception)](const auto& e) {
-        return std::string(_m) == std::string(e.what());
-    }));
+    REQUIRE_THROWS_WITH_AS(await(std::move(w)), "failure", test_exception);
 }
 
 auto do_it(future<int> x, std::atomic_int& result) -> future<void> {

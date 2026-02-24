@@ -2,60 +2,6 @@
 # functionality useful for stlab builds.
 
 include( CheckCXXSymbolExists )
-include( CheckCXXSourceRuns )
-
-# Determine if the selected C++ compiler has functional coroutines. Set the
-# specified 'result_var' to 'TRUE' if they are determined to be disfunctional
-# and 'FALSE' otherwise. Note that this check consists of a smoke test and does
-# not check all the ways this feature may be deficient.
-function( stlab_check_disfunctional_coroutines result_var )
-  check_cxx_source_runs( "
-#include <concepts>
-#include <coroutine>
-#include <exception>
-
-struct ReturnObject {
-  struct promise_type {
-    ReturnObject get_return_object() { return {}; }
-    std::suspend_never initial_suspend() { return {}; }
-    std::suspend_never final_suspend() noexcept { return {}; }
-    void unhandled_exception() {}
-  };
-};
-
-struct Awaiter {
-  std::coroutine_handle<> *hp_;
-  constexpr bool await_ready() const noexcept { return false; }
-  void await_suspend(std::coroutine_handle<> h) { *hp_ = h; }
-  constexpr void await_resume() const noexcept {}
-};
-
-ReturnObject
-counter(std::coroutine_handle<> *continuation_out)
-{
-  Awaiter a{continuation_out};
-  for (unsigned i = 0;; ++i) {
-    co_await a;
-  }
-}
-
-int
-main()
-{
-  std::coroutine_handle<> h;
-  counter(&h);
-  for (int i = 0; i < 3; ++i) {
-    h();
-  }
-  h.destroy();
-}
-" STLAB_HAVE_FUNCTIONAL_COROUTINES )
-  if( STLAB_HAVE_FUNCTIONAL_COROUTINES )
-    set( ${result_var} FALSE PARENT_SCOPE )
-  else()
-    set( ${result_var} TRUE PARENT_SCOPE )
-  endif()
-endfunction()
 
 # Detect the target platform's thread system and set the specified 'result_var'
 # to the result. The following table shows the correspondence between result
