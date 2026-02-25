@@ -40,10 +40,33 @@
 
 /**************************************************************************************************/
 
-/*
-    packaged_task<Args...> is a function that holds a type erased promise
-    invoking the packaged task will call with the moved promise
+/**
+Asynchronous one-shot results: futures and packaged tasks.
 
+`future<T>` is the consumer side: it eventually holds a value or an exception.
+`packaged_task<Args...>` is the producer side: an invocable that, when called,
+runs a callable and completes its associated future with the result. You create
+a task and its future together with `package<Sig>(executor, f)`. Return types
+are auto-reduced: a `future<future<T>>` is flattened to `future<T>`, so
+continuations and `package()` never expose nested futures.
+
+Lifecycle and cancellation: if a `future` is destroyed before the result is
+produced, the other side can observe cancellation (`future_error_codes::broken_promise`).
+If a `packaged_task` is destroyed without being invoked, its future is completed
+with broken_promise. Thus tasks are effectively canceled when their future or
+packaged_task is destroyed. A packaged_task can call `canceled()` to see if the
+future was already released.
+
+Futures to copyable types are copyable; you can attach multiple continuations
+via `then()` or `recover()` from the same future. Futures to non-copyable types
+are move-only and support a single continuation (use `std::move(f).then(...)`).
+`then(f)` runs when the future has a value; `recover(f)` runs when the future
+is ready (value or exception), so you can handle errors. Continuations run on
+an executor (default or explicit). Use `when_all` and `when_any` to combine
+futures; use `async(executor, f, args...)` to run a function on an executor
+and get a future for its result. Obtain the value with `get_ready()` (blocks
+until ready) or `get_try()` (returns immediately with value or empty); call
+`detach()` to drop the future without cancelling the associated task.
 */
 
 /**************************************************************************************************/
@@ -53,7 +76,7 @@ inline namespace STLAB_VERSION_NAMESPACE() {
 
 /**************************************************************************************************/
 
-// invoke mapping void to std::monostate
+/// Invokes `f` with `args` and returns its result, or `std::monostate{}` if the result is void.
 template <class F, class... Args>
 auto invoke_void_to_monostate_result(F&& f, Args&&... args) {
     if constexpr (std::is_void_v<std::invoke_result_t<F, Args...>>) {
@@ -64,20 +87,21 @@ auto invoke_void_to_monostate_result(F&& f, Args&&... args) {
     }
 }
 
-// REVISIT (sean-parent) : As a typedef, this generates file names in the hyde documentation that
-// are too long for windows. Moving to a class for now, but I may also change how this is used and
-// have a single future<> class with conditional members for easier documentation.
+/// Maps `void` to `std::monostate` for uniform future result storage; other types unchanged.
 template <class T>
 struct void_to_monostate {
     using type = std::conditional_t<std::is_void_v<T>, std::monostate, T>;
 };
 
+/// Alias for `void_to_monostate<T>::type`.
 template <class T>
 using void_to_monostate_t = typename void_to_monostate<T>::type;
 
+/// True if T is `std::monostate`.
 template <class T>
 inline constexpr bool is_monostate_v = std::is_same_v<T, std::monostate>;
 
+/// Returns `o.has_value()` when T is `std::monostate`, otherwise `std::move(o)`.
 template <class T>
 auto optional_monostate_to_bool(std::optional<T>&& o) {
     if constexpr (is_monostate_v<T>) {
@@ -87,6 +111,7 @@ auto optional_monostate_to_bool(std::optional<T>&& o) {
     }
 }
 
+/// Converts `std::monostate` to void (no return); forwards other types unchanged.
 template <class T>
 auto monostate_to_void(T&& a) {
     if constexpr (is_monostate_v<T>) {
@@ -96,6 +121,8 @@ auto monostate_to_void(T&& a) {
     }
 }
 
+/// Converts `std::monostate` to `std::tuple{}`; wraps other types in `std::tuple` for uniform
+/// application.
 template <class T>
 auto monostate_to_empty_tuple(T&& a) {
     if constexpr (is_monostate_v<T>) {
@@ -105,6 +132,7 @@ auto monostate_to_empty_tuple(T&& a) {
     }
 }
 
+/// Invokes `f` with `args` after removing `std::monostate` values (for void future results).
 template <class F, class... Args>
 auto invoke_remove_monostate_arguments(F&& f, Args&&... args) {
     return std::apply(
@@ -118,9 +146,10 @@ auto invoke_remove_monostate_arguments(F&& f, Args&&... args) {
 
 /**************************************************************************************************/
 
-enum class future_error_codes : std::uint8_t { // names for futures errors
-    broken_promise = 1,
-    no_state
+/// Error codes for future_error.
+enum class future_error_codes : std::uint8_t {
+    broken_promise = 1, ///< Promise was destroyed without setting a value or exception.
+    no_state            ///< Operation required a valid shared state.
 };
 
 /**************************************************************************************************/
@@ -158,14 +187,15 @@ using result_t = std::result_of_t<F(Args...)>;
 
 /**************************************************************************************************/
 
-// future exception
-
+/// Exception thrown when a future-related contract is violated (e.g. `broken_promise`, `no_state`).
 class future_error : public std::logic_error {
 public:
     explicit future_error(future_error_codes code) : logic_error(""), _code(code) {}
 
+    /// The error code that caused this exception.
     [[nodiscard]] auto code() const noexcept -> const future_error_codes& { return _code; }
 
+    /// Human-readable message for the stored error code.
     [[nodiscard]] auto what() const noexcept -> const char* override {
         return detail::Future_error_map(_code);
     }
@@ -231,6 +261,7 @@ auto unique_usage(const std::shared_ptr<T>& p) -> bool {
 template <class...>
 class packaged_task;
 
+/// One-shot asynchronous result: holds a value or exception produced by a promise or packaged_task.
 template <class, class = void>
 class future;
 
@@ -292,6 +323,8 @@ struct value_;
 
 /**************************************************************************************************/
 
+/// Creates a packaged task and its future for the callable `f`, run on `executor`.
+/// @return A pair (packaged_task, future); invoke the task to run `f` and complete the future.
 template <class Sig, class E, class F>
 auto package(E, F&&)
     -> std::pair<detail::packaged_task_from_signature_t<Sig>, detail::reduced_result_t<Sig>>;
@@ -591,10 +624,10 @@ struct shared_base<T, enable_if_not_copyable<void_to_monostate_t<T>>>
 
 /**************************************************************************************************/
 
-// class promise
-
 /**************************************************************************************************/
 
+/// Producer side of a one-shot result; setting a value or exception completes the associated
+/// future.
 template <class R>
 class promise {
     using type = void_to_monostate_t<R>;
@@ -616,6 +649,8 @@ public:
     promise(const promise&) = delete;
     auto operator=(const promise&) -> promise& = delete;
 
+    /// Completes the future with `value`. No effect if the future was already satisfied or
+    /// canceled.
     void set_value(type&& value) && noexcept {
         if (auto p = _p.lock()) {
             _p.reset();
@@ -623,8 +658,10 @@ public:
         }
     }
 
+    /// Completes the future (void result). No effect if already satisfied or canceled.
     auto set_value() && noexcept { set_value(std::monostate{}); }
 
+    /// Completes the future with `error`. No effect if already satisfied or canceled.
     void set_exception(const std::exception_ptr& error) && noexcept {
         if (auto p = _p.lock()) {
             _p.reset();
@@ -632,9 +669,11 @@ public:
         }
     }
 
+    /// True if the associated future was released (e.g. consumer no longer interested).
     [[nodiscard]] auto canceled() const -> bool { return _p.expired(); }
 };
 
+/// Deduction guide for promise from `shared_ptr<shared_base<R>>`.
 template <class R>
 promise(std::shared_ptr<shared_base<R>>) -> promise<R>;
 
@@ -668,6 +707,8 @@ auto make_shared_state(executor_t s, F&& f) -> std::shared_ptr<shared<F, Sig>> {
 
 /**************************************************************************************************/
 
+/// Invocable that completes a future when called with arguments of type `Args...`; created by
+/// `package()`.
 template <class... Args>
 class packaged_task {
     using ptr_t = std::weak_ptr<detail::shared_task<Args...>>;
@@ -697,6 +738,7 @@ public:
     packaged_task(packaged_task&&) noexcept = default;
     auto operator=(packaged_task&& x) noexcept -> packaged_task& = default;
 
+    /// Invokes the packaged callable with `args` and completes the associated future.
     template <class... A>
     void operator()(A&&... args) noexcept {
         if (auto p = _p.lock()) {
@@ -705,8 +747,10 @@ public:
         }
     }
 
+    /// True if the associated future was released.
     [[nodiscard]] auto canceled() const -> bool { return _p.expired(); }
 
+    /// Completes the future with `error` without invoking the callable.
     void set_exception(const std::exception_ptr& error) noexcept {
         if (auto p = _p.lock()) {
             _p.reset();
@@ -717,6 +761,8 @@ public:
 
 /**************************************************************************************************/
 
+/// Consumer side of a one-shot result (copyable T). Use `get_ready()` or `get_try()` to obtain the
+/// value.
 template <class T>
 class STLAB_NODISCARD() future<T, enable_if_copyable<void_to_monostate_t<T>>> {
     using type = void_to_monostate_t<T>;
@@ -738,6 +784,7 @@ class STLAB_NODISCARD() future<T, enable_if_copyable<void_to_monostate_t<T>>> {
     friend struct detail::value_;
 
 public:
+    /// The type of the value this future holds.
     using result_type = T;
 
     future() = default;
@@ -752,8 +799,11 @@ public:
     inline friend auto operator==(const future& x, const future& y) -> bool { return x._p == y._p; }
     inline friend auto operator!=(const future& x, const future& y) -> bool { return !(x == y); }
 
+    /// True if this future has an associated shared state.
     [[nodiscard]] auto valid() const -> bool { return static_cast<bool>(_p); }
 
+    /// Returns a future that completes with the result of `f` applied to this future's value
+    /// (default executor).
     template <class F>
     auto then(F&& f) const& {
         return recover([_f = std::forward<F>(f)](future<result_type>&& p) mutable {
@@ -763,11 +813,14 @@ public:
         });
     }
 
+    /// Pipe operator: same as `then(f)`.
     template <class F>
     auto operator|(F&& f) const& {
         return then(std::forward<F>(f));
     }
 
+    /// Returns a future that completes with the result of `f` on `executor` applied to this
+    /// future's value.
     template <class E, class F>
     auto then(E&& executor, F&& f) const& {
         return recover(
@@ -812,16 +865,20 @@ public:
         return std::move(*this).then(std::move(etp)._executor, std::move(etp)._f);
     }
 
+    /// Returns a future that completes with the result of `f` given this future (possibly in error
+    /// state); default executor.
     template <class F>
     auto recover(F&& f) const& {
         return _p->recover(copy(*this), std::forward<F>(f));
     }
 
+    /// Pipe operator: same as `recover(f)`.
     template <class F>
     auto operator^(F&& f) const& {
         return recover(std::forward<F>(f));
     }
 
+    /// Returns a future that completes with the result of `f` given this future, run on `executor`.
     template <class E, class F>
     auto recover(E&& executor, F&& f) const& {
         return _p->recover(copy(*this), std::forward<E>(executor), std::forward<F>(f));
@@ -854,29 +911,39 @@ public:
         return std::move(*this).recover(std::move(etp)._executor, std::move(etp)._f);
     }
 
+    /// Drops this future without requiring a value; the promise may see `broken_promise`.
     void detach() const { _p->_detach(); }
 
+    /// When this future completes (value or exception), invokes `f` with it and does not propagate
+    /// further.
     template <class F>
     void detach(F&& f) && {
         auto& self = *_p.get();
         self._detach(std::move(*this), std::forward<F>(f));
     }
 
+    /// Invokes `f` when this future completes (value or exception), on the shared state's executor.
     template <class F>
     void on_completion(F&& f) {
         _p->_on_completion(std::forward<F>(f));
     }
 
+    /// Releases the shared state; `valid()` becomes false.
     void reset() noexcept { _p.reset(); }
 
+    /// True if the result or exception is available.
     [[nodiscard]] auto is_ready() const& -> bool { return _p && _p->is_ready(); }
 
+    /// Returns the value if ready, or `std::nullopt` / false (for void) if not; rethrows if
+    /// completed with exception.
     [[nodiscard]] auto get_try() const& { return optional_monostate_to_bool(_p->get_try()); }
 
     auto get_try() && { return optional_monostate_to_bool(_p->get_try_r(unique_usage(_p))); }
 
+    /// Returns the value. @pre `is_ready()`. Rethrows the stored exception if the future failed.
     [[nodiscard]] auto get_ready() const& { return monostate_to_void(_p->get_ready()); }
 
+    /// Same as `get_ready()` but may move the value when this is the only reference.
     auto get_ready() && { return monostate_to_void(_p->get_ready_r(unique_usage(_p))); }
 
     [[deprecated("Use exception() instead")]] [[nodiscard]] auto error()
@@ -884,7 +951,8 @@ public:
         return _p->_exception ? std::optional<std::exception_ptr>{_p->_exception} : std::nullopt;
     }
 
-    // Precondition: is_ready()
+    /// Returns the stored exception, or a null `exception_ptr` if the future completed with a
+    /// value. @pre `is_ready()`
     [[nodiscard]] auto exception() const& -> std::exception_ptr {
         assert(is_ready());
         return _p->_exception;
@@ -893,6 +961,8 @@ public:
 
 /**************************************************************************************************/
 
+/// Consumer side of a one-shot result (non-copyable T). Use `get_ready()` or `get_try()`;
+/// `then`/`recover` only on rvalue.
 template <class T>
 class STLAB_NODISCARD() future<T, enable_if_not_copyable<void_to_monostate_t<T>>> {
     using ptr_t = std::shared_ptr<detail::shared_base<T>>;
@@ -913,6 +983,7 @@ class STLAB_NODISCARD() future<T, enable_if_not_copyable<void_to_monostate_t<T>>
     friend struct detail::value_;
 
 public:
+    /// The type of the value this future holds.
     using result_type = T;
 
     future() = default;
@@ -927,8 +998,11 @@ public:
     inline friend auto operator==(const future& x, const future& y) -> bool { return x._p == y._p; }
     inline friend auto operator!=(const future& x, const future& y) -> bool { return !(x == y); }
 
+    /// True if this future has an associated shared state.
     [[nodiscard]] auto valid() const -> bool { return static_cast<bool>(_p); }
 
+    /// Returns a future that completes with the result of `f` applied to this future's value
+    /// (rvalue only).
     template <class F>
     auto then(F&& f) && {
         return std::move(*this).recover([_f = std::forward<F>(f)](future<result_type>&& p) mutable {
@@ -976,29 +1050,39 @@ public:
         return std::move(*this).recover(std::move(etp)._executor, std::move(etp)._f);
     }
 
+    /// Drops this future without requiring a value; the promise may see `broken_promise`.
     void detach() const { _p->_detach(); }
 
+    /// When this future completes (value or exception), invokes `f` with it and does not propagate
+    /// further.
     template <class F>
     void detach(F&& f) && {
         auto& self = *_p.get();
         self._detach(std::move(*this), std::forward<F>(f));
     }
 
+    /// Invokes `f` when this future completes (value or exception), on the shared state's executor.
     template <class F>
     void on_completion(F&& f) {
         _p->_on_completion(std::forward<F>(f));
     }
 
+    /// Releases the shared state; `valid()` becomes false.
     void reset() noexcept { _p.reset(); }
 
+    /// True if the result or exception is available.
     [[nodiscard]] auto is_ready() const& -> bool { return _p && _p->is_ready(); }
 
+    /// Returns the value if ready, or `std::nullopt` / false (for void) if not; rethrows if
+    /// completed with exception.
     [[nodiscard]] auto get_try() const& { return optional_monostate_to_bool(_p->get_try()); }
 
     auto get_try() && { return optional_monostate_to_bool(_p->get_try_r(unique_usage(_p))); }
 
+    /// Returns the value. @pre `is_ready()`. Rethrows the stored exception if the future failed.
     [[nodiscard]] auto get_ready() const& { return monostate_to_void(_p->get_ready()); }
 
+    /// Same as `get_ready()` but may move the value when this is the only reference.
     auto get_ready() && { return monostate_to_void(_p->get_ready_r(unique_usage(_p))); }
 
     [[deprecated("Use exception() instead")]] [[nodiscard]] auto error()
@@ -1006,7 +1090,8 @@ public:
         return _p->_exception ? std::optional<std::exception_ptr>{_p->_exception} : std::nullopt;
     }
 
-    // Precondition: is_ready()
+    /// Returns the stored exception, or a null `exception_ptr` if the future completed with a
+    /// value. @pre `is_ready()`
     [[nodiscard]] auto exception() const& -> std::exception_ptr {
         assert(is_ready());
         return _p->_exception;
@@ -1070,6 +1155,8 @@ auto package(E executor, F&& f)
     }
 }
 
+/// Returns a future of type T that is already ready with a `broken_promise` error (e.g. for
+/// canceled work).
 template <class T, class E>
 auto future_with_broken_promise(E executor) -> detail::reduced_t<T> {
     auto p = std::make_shared<detail::shared_base<typename detail::reduced_t<T>::result_type>>(
@@ -1286,6 +1373,8 @@ void attach_when_args(E&& executor, std::shared_ptr<P>& p, Ts... a) {
 
 /**************************************************************************************************/
 
+/// Returns a future that completes when all `args` are ready; `f` is invoked with their values (or
+/// first exception).
 template <class E, class F, class... Ts>
 auto when_all(const E& executor, F f, future<Ts>... args) {
     using vt_t = voidless_tuple<Ts...>;
@@ -1304,6 +1393,7 @@ auto when_all(const E& executor, F f, future<Ts>... args) {
 
 /**************************************************************************************************/
 
+/// Helper to implement when_any for result type T.
 template <class T>
 struct make_when_any {
     template <class E, class F, class... Ts>
@@ -1324,6 +1414,7 @@ struct make_when_any {
 
 /**************************************************************************************************/
 
+/// Helper to implement when_any for void results.
 template <>
 struct make_when_any<void> {
     template <class E, class F, class... Ts>
@@ -1344,6 +1435,8 @@ struct make_when_any<void> {
 
 /**************************************************************************************************/
 
+/// Returns a future that completes when any of the given futures is ready; `f` receives the value
+/// and the index of the future that completed first (as a second argument of type `std::size_t`).
 template <class E, class F, class T, class... Ts>
 auto when_any(E&& executor, F&& f, future<T>&& arg, future<Ts>&&... args) {
     return make_when_any<T>::make(std::forward<E>(executor), std::forward<F>(f), std::move(arg),
@@ -1606,10 +1699,9 @@ struct create_range_of_futures<R, T, C, enable_if_not_copyable<T>> {
 
 /**************************************************************************************************/
 
-template <class E, // models task executor
-          class F, // models functional object
-          class I> // models ForwardIterator that reference to a range of futures of the same
-                   // type
+/// Returns a future that completes when all futures in `[range.first, range.second)` are ready; `f`
+/// receives their values.
+template <class E, class F, class I>
 auto when_all(const E& executor, F f, std::pair<I, I> range) {
     using param_t = typename std::iterator_traits<I>::value_type::result_type;
     using result_t = typename detail::result_of_when_all_t<F, param_t>::result_type;
@@ -1631,10 +1723,10 @@ auto when_all(const E& executor, F f, std::pair<I, I> range) {
 
 /**************************************************************************************************/
 
-template <class E, // models task executor
-          class F, // models functional object
-          class I> // models ForwardIterator that reference to a range of futures of the same
-                   // type
+/// Returns a future that completes when any future in `[range.first, range.second)` is ready; `f`
+/// receives the result and the index of the future that completed first (as a second argument of
+/// type `std::size_t`).
+template <class E, class F, class I>
 auto when_any(const E& executor, F&& f, std::pair<I, I> range) {
     using param_t = typename std::iterator_traits<I>::value_type::result_type;
     using result_t = std::decay_t<typename detail::result_of_when_any_t<F, param_t>::result_type>;
@@ -1652,6 +1744,7 @@ auto when_any(const E& executor, F&& f, std::pair<I, I> range) {
 
 /**************************************************************************************************/
 
+/// Runs `f` with `args` on `executor` and returns a future for the result.
 template <class E, class F, class... Args>
 auto async(const E& executor, F&& f, Args&&... args)
     -> detail::reduced_t<detail::result_t<std::decay_t<F>, std::decay_t<Args>...>> {
