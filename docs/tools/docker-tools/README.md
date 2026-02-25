@@ -47,8 +47,16 @@ docker build --build-arg RUBY_VERSION=$RUBY_VERSION --file ./docs/tools/docker-t
 
 To run the docker image, execute the following.
 
-```
+macOS and Linux (Bash):
+
+```bash
 docker run --mount type=bind,source="$(pwd)",target=/mnt/host --tty --interactive --publish 3000-3001:3000-3001 $VOLUME bash
+```
+
+Windows (PowerShell) — use `$PWD` and quote the whole `--mount` argument so the path is passed correctly:
+
+```powershell
+docker run --mount "type=bind,source=$PWD,target=/mnt/host" --tty --interactive --publish 3000-3001:3000-3001 $VOLUME bash
 ```
 
 ### Running the Docker image with local theme

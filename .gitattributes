@@ -1,0 +1,5 @@
+# Shell scripts must use LF so they run correctly in Linux (e.g. in Docker).
+*.sh text eol=lf
+
+# Documentation under docs/include (e.g. generated) use LF.
+docs/include/ text eol=lf

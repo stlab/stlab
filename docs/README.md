@@ -20,6 +20,10 @@ cmake --preset=hyde-build-docs
 
 Login to [GitHub Packages registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#authenticating-with-a-personal-access-token-classic)
 
+```pwsh
+$CR_PAT=<personal access token>
+```
+
 ```bash
 echo $CR_PAT | docker login ghcr.io --password-stdin -u USERNAME 
 ```
@@ -35,10 +39,34 @@ docker run --platform linux/x86_64 --mount type=bind,source="$(pwd)/..",target=/
     ghcr.io/adobe/hyde:$HYDE_VERSION bash
 ```
 
+```pwsh
+$HYDE_VERSION="2.0.1"
+docker pull ghcr.io/adobe/hyde:$HYDE_VERSION
+
+docker run --platform linux/x86_64 --mount "type=bind,source=$(Split-Path -Parent $PWD),target=/mnt/host" --tty --interactive ghcr.io/adobe/hyde:$HYDE_VERSION bash
+```
+
 From the docker prompt
 
 ```
-cd /mnt/host/libraries/docs
+  sed -i 's/\r$//' ./generate_docs.sh
+  sed -i 's/\r$//' ./about.sh
+  sed -i 's/\r$//' ./CMakePresets.json
+
+  
+  cmake -S . -B build/hyde -G Ninja \
+  -DCMAKE_CXX_STANDARD=20 \
+  -DBUILD_TESTING=OFF \
+  -DSTLAB_MAIN_EXECUTOR=none \
+  -DSTLAB_NO_STD_COROUTINES=ON \
+  -DSTLAB_TASK_SYSTEM=portable \
+  -DSTLAB_THREAD_SYSTEM=pthread \
+  -Dstlab.coverage=OFF \
+  -DCPM_SOURCE_CACHE=.cache/cpm
+```
+
+```
+cd /mnt/host/stlab/docs
 ./generate_docs.sh
 ./about.sh
 ```
