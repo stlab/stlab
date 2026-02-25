@@ -76,7 +76,7 @@ TEST_CASE("future_coroutine_move_only_failure") {
 }
 
 auto do_it(future<int> x, std::atomic_int& result) -> future<void> {
-    int v = co_await x;
+    int v = co_await std::move(x);
     result = v;
     std::cout << v << '\n';
     co_return;

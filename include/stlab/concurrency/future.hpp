@@ -383,6 +383,19 @@ struct shared_base<T, enable_if_copyable<void_to_monostate_t<T>>>
             _then.emplace_back([](auto&&) {}, [_p = this->shared_from_this()]() noexcept {});
     }
 
+    template <class F>
+    void _on_completion(F&& f) {
+        task<void() noexcept> t(std::forward<F>(f));
+        {
+            std::unique_lock<std::mutex> lock(_mutex);
+            if (!_ready) {
+                _then.emplace_back(immediate_executor, std::move(t));
+                return;
+            }
+        }
+        std::move(t)();
+    }
+
     void _set_exception(const std::exception_ptr& error) noexcept {
         _exception = error;
         then_t then;
@@ -487,7 +500,10 @@ struct shared_base<T, enable_if_not_copyable<void_to_monostate_t<T>>>
         {
             std::unique_lock<std::mutex> lock(_mutex);
             ready = _ready;
-            if (!ready) _then = {std::move(executor), std::move(pro)};
+            if (!ready) {
+                assert(!_then.second && "recover: _then slot already occupied");
+                _then = {std::move(executor), std::move(pro)};
+            }
         }
         if (ready) executor(std::move(pro)); // cannot reference this after here
 
@@ -513,6 +529,20 @@ struct shared_base<T, enable_if_not_copyable<void_to_monostate_t<T>>>
     void _detach() {
         std::unique_lock<std::mutex> lock(_mutex);
         if (!_ready) _then = then_t([](auto&&) {}, [_p = this->shared_from_this()]() noexcept {});
+    }
+
+    template <class F>
+    void _on_completion(F&& f) {
+        task<void() noexcept> t(std::forward<F>(f));
+        {
+            std::unique_lock<std::mutex> lock(_mutex);
+            if (!_ready) {
+                assert(!_then.second && "on_completion: _then slot already occupied");
+                _then = {immediate_executor, std::move(t)};
+                return;
+            }
+        }
+        std::move(t)();
     }
 
     void _set_exception(const std::exception_ptr& error) noexcept {
@@ -832,6 +862,11 @@ public:
         self._detach(std::move(*this), std::forward<F>(f));
     }
 
+    template <class F>
+    void on_completion(F&& f) {
+        _p->_on_completion(std::forward<F>(f));
+    }
+
     void reset() noexcept { _p.reset(); }
 
     [[nodiscard]] auto is_ready() const& -> bool { return _p && _p->is_ready(); }
@@ -947,6 +982,11 @@ public:
     void detach(F&& f) && {
         auto& self = *_p.get();
         self._detach(std::move(*this), std::forward<F>(f));
+    }
+
+    template <class F>
+    void on_completion(F&& f) {
+        _p->_on_completion(std::forward<F>(f));
     }
 
     void reset() noexcept { _p.reset(); }
@@ -1701,55 +1741,108 @@ void shared_base<T, enable_if_not_copyable<void_to_monostate_t<T>>>::set_value(A
 
 #if STLAB_STD_COROUTINES()
 
+/**************************************************************************************************/
+
+namespace stlab {
+inline namespace STLAB_VERSION_NAMESPACE() {
+namespace detail {
+
+struct coroutine_guard {
+    std::coroutine_handle<> _handle;
+
+    explicit coroutine_guard(std::coroutine_handle<> h) : _handle(h) {}
+    coroutine_guard(coroutine_guard&& x) noexcept : _handle(std::exchange(x._handle, nullptr)) {}
+    coroutine_guard& operator=(coroutine_guard&&) = delete;
+    coroutine_guard(const coroutine_guard&) = delete;
+    coroutine_guard& operator=(const coroutine_guard&) = delete;
+
+    void release() noexcept { _handle = nullptr; }
+    ~coroutine_guard() {
+        if (_handle) _handle.destroy();
+    }
+};
+
+struct final_awaiter {
+    bool await_ready() noexcept { return false; }
+    void await_resume() noexcept {}
+    void await_suspend(std::coroutine_handle<> h) noexcept { h.destroy(); }
+};
+
+} // namespace detail
+} // namespace STLAB_VERSION_NAMESPACE()
+} // namespace stlab
+
+/**************************************************************************************************/
+
 template <class T, class... Args>
 struct std::coroutine_traits<stlab::future<T>, Args...> {
     struct promise_type {
-        std::pair<stlab::packaged_task<T>, stlab::future<T>> _promise;
+        stlab::packaged_task<std::variant<T, std::exception_ptr>> _promise;
 
-        promise_type() {
-            _promise = stlab::package<T(T)>(stlab::immediate_executor, std::identity{});
+        stlab::future<T> get_return_object() {
+            auto [pro, fut] = stlab::package<T(std::variant<T, std::exception_ptr>)>(
+                stlab::immediate_executor,
+                [guard = stlab::detail::coroutine_guard{
+                     std::coroutine_handle<promise_type>::from_promise(
+                         *this)}](std::variant<T, std::exception_ptr>&& v) mutable -> T {
+                    guard.release();
+                    if (auto* ep = std::get_if<std::exception_ptr>(&v)) {
+                        std::rethrow_exception(*ep);
+                    }
+                    return std::get<T>(std::move(v));
+                });
+            _promise = std::move(pro);
+            return std::move(fut);
         }
 
-        stlab::future<T> get_return_object() { return std::move(_promise.second); }
+        auto initial_suspend() const noexcept { return std::suspend_never{}; }
 
-        auto initial_suspend() const { return std::suspend_never{}; }
-
-        auto final_suspend() const noexcept { return std::suspend_never{}; }
+        auto final_suspend() noexcept { return stlab::detail::final_awaiter{}; }
 
         template <class U>
         void return_value(U&& val) {
-            _promise.first(std::forward<U>(val));
+            _promise(
+                std::variant<T, std::exception_ptr>{std::in_place_type<T>, std::forward<U>(val)});
         }
 
-        void unhandled_exception() { _promise.first.set_exception(std::current_exception()); }
+        void unhandled_exception() {
+            _promise(std::variant<T, std::exception_ptr>{std::in_place_type<std::exception_ptr>,
+                                                         std::current_exception()});
+        }
     };
 };
 
 template <class... Args>
 struct std::coroutine_traits<stlab::future<void>, Args...> {
     struct promise_type {
-        std::pair<stlab::packaged_task<>, stlab::future<void>> _promise;
+        stlab::packaged_task<std::exception_ptr> _promise;
 
-        inline promise_type() {
-            _promise = stlab::package<void()>(stlab::immediate_executor, []() {});
+        stlab::future<void> get_return_object() {
+            auto [pro, fut] = stlab::package<void(std::exception_ptr)>(
+                stlab::immediate_executor, [guard = stlab::detail::coroutine_guard{
+                                                std::coroutine_handle<promise_type>::from_promise(
+                                                    *this)}](const std::exception_ptr& ep) mutable {
+                    guard.release();
+                    if (ep) std::rethrow_exception(ep);
+                });
+            _promise = std::move(pro);
+            return std::move(fut);
         }
 
-        inline stlab::future<void> get_return_object() { return _promise.second; }
+        auto initial_suspend() const noexcept { return std::suspend_never{}; }
 
-        inline auto initial_suspend() const { return std::suspend_never{}; }
+        auto final_suspend() noexcept { return stlab::detail::final_awaiter{}; }
 
-        inline auto final_suspend() const noexcept { return std::suspend_never{}; }
+        void return_void() { _promise(std::exception_ptr{}); }
 
-        inline void return_void() { _promise.first(); }
-
-        inline void unhandled_exception() {
-            _promise.first.set_exception(std::current_exception());
-        }
+        void unhandled_exception() { _promise(std::current_exception()); }
     };
 };
 
+/**************************************************************************************************/
+
 template <class R>
-auto operator co_await(stlab::future<R> f) {
+auto operator co_await(stlab::future<R>&& f) {
     struct Awaiter {
         stlab::future<R> _input;
 
@@ -1758,14 +1851,16 @@ auto operator co_await(stlab::future<R> f) {
         auto await_resume() { return std::move(_input).get_ready(); }
 
         void await_suspend(std::coroutine_handle<> ch) {
-            std::move(_input).detach([this, ch](stlab::future<R>&& f) {
-                _input = std::move(f);
-                ch.resume();
-            });
+            _input.on_completion([ch]() noexcept { ch.resume(); });
         }
     };
     return Awaiter{std::move(f)};
 }
+
+// co_await on an lvalue future is deleted — use std::move(f) to make cancellation semantics
+// explicit
+template <class R>
+auto operator co_await(stlab::future<R>& f) = delete;
 
 #endif // STLAB_STD_COROUTINES()
 
