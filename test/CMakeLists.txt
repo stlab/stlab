@@ -1,17 +1,7 @@
 include(stlab/development)
 
 # test dependencies: doctest is fetched in root CMakeLists when BUILD_TESTING is ON
-
-# Set global sanitizer flags before any targets are created
-if(STLAB_SANITIZER STREQUAL "address")
-  if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    add_compile_options(/fsanitize=address)
-    add_link_options(/fsanitize=address)
-  elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
-    add_link_options(-fsanitize=address)
-  endif()
-endif()
+# Sanitizer options from development.cmake apply to test targets; stlab target gets them in src/CMakeLists.txt.
 
 add_executable(stlab.test.channel
   channel_functor_tests.cpp

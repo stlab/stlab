@@ -67,6 +67,11 @@ futures; use `async(executor, f, args...)` to run a function on an executor
 and get a future for its result. Obtain the value with `get_ready()` (blocks
 until ready) or `get_try()` (returns immediately with value or empty); call
 `detach()` to drop the future without cancelling the associated task.
+
+Coroutines: a function returning `future<T>` can use `co_return` and `co_await`.
+Use `co_await std::move(f)` to await a future (resumption happens in the
+thread that completes the future). Use `co_await resume_on(executor, std::move(f))`
+to resume the current coroutine on a specific executor when the future completes.
 */
 
 /**************************************************************************************************/
@@ -429,6 +434,19 @@ struct shared_base<T, enable_if_copyable<void_to_monostate_t<T>>>
         std::move(t)();
     }
 
+    template <class E, class F>
+    void _on_completion(E executor, F&& f) {
+        task<void() noexcept> t(std::forward<F>(f));
+        {
+            std::unique_lock<std::mutex> lock(_mutex);
+            if (!_ready) {
+                _then.emplace_back(std::move(executor), std::move(t));
+                return;
+            }
+        }
+        executor(std::move(t));
+    }
+
     void _set_exception(const std::exception_ptr& error) noexcept {
         _exception = error;
         then_t then;
@@ -578,6 +596,20 @@ struct shared_base<T, enable_if_not_copyable<void_to_monostate_t<T>>>
         std::move(t)();
     }
 
+    template <class E, class F>
+    void _on_completion(E executor, F&& f) {
+        task<void() noexcept> t(std::forward<F>(f));
+        {
+            std::unique_lock<std::mutex> lock(_mutex);
+            if (!_ready) {
+                assert(!_then.second && "on_completion: _then slot already occupied");
+                _then = {std::move(executor), std::move(t)};
+                return;
+            }
+        }
+        executor(std::move(t));
+    }
+
     void _set_exception(const std::exception_ptr& error) noexcept {
         _exception = error;
         then_t then;
@@ -621,8 +653,6 @@ struct shared_base<T, enable_if_not_copyable<void_to_monostate_t<T>>>
         return {};
     }
 };
-
-/**************************************************************************************************/
 
 /**************************************************************************************************/
 
@@ -793,10 +823,14 @@ public:
     auto operator=(const future&) -> future& = default;
     auto operator=(future&&) noexcept -> future& = default;
 
+    /// Exchanges the shared state with `x`.
     void swap(future& x) noexcept { std::swap(_p, x._p); }
 
+    /// Exchanges the shared states of `x` and `y`.
     inline friend void swap(future& x, future& y) noexcept { x.swap(y); }
+    /// True if `x` and `y` share the same shared state.
     inline friend auto operator==(const future& x, const future& y) -> bool { return x._p == y._p; }
+    /// True if `x` and `y` do not share the same shared state.
     inline friend auto operator!=(const future& x, const future& y) -> bool { return !(x == y); }
 
     /// True if this future has an associated shared state.
@@ -831,11 +865,14 @@ public:
             });
     }
 
+    /// Pipe operator: same as `then(etp.executor(), etp.task())`.
     template <class F>
     auto operator|(executor_task_pair<F> etp) const& {
         return then(std::move(etp)._executor, std::move(etp)._f);
     }
 
+    /// Returns a future that completes with the result of `f` applied to this future's value
+    /// (default executor). Rvalue overload; consumes `*this`.
     template <class F>
     auto then(F&& f) && {
         return std::move(*this).recover([_f = std::forward<F>(f)](future<result_type>&& p) mutable {
@@ -845,11 +882,14 @@ public:
         });
     }
 
+    /// Pipe operator: same as `then(f)`. Rvalue overload; consumes `*this`.
     template <class F>
     auto operator|(F&& f) && {
         return std::move(*this).then(std::forward<F>(f));
     }
 
+    /// Returns a future that completes with the result of `f` on `executor` applied to this
+    /// future's value. Rvalue overload; consumes `*this`.
     template <class E, class F>
     auto then(E&& executor, F&& f) && {
         return std::move(*this).recover(
@@ -860,6 +900,7 @@ public:
             });
     }
 
+    /// Pipe operator: same as `then(etp.executor(), etp.task())`. Rvalue overload; consumes `*this`.
     template <class F>
     auto operator|(executor_task_pair<F> etp) && {
         return std::move(*this).then(std::move(etp)._executor, std::move(etp)._f);
@@ -884,28 +925,36 @@ public:
         return _p->recover(copy(*this), std::forward<E>(executor), std::forward<F>(f));
     }
 
+    /// Pipe operator: same as `recover(etp.executor(), etp.task())`.
     template <class F>
     auto operator^(executor_task_pair<F> etp) const& {
         return recover(std::move(etp)._executor, std::move(etp)._f);
     }
 
+    /// Returns a future that completes with the result of `f` given this future (possibly in error
+    /// state); default executor. Rvalue overload; consumes `*this`.
     template <class F>
     auto recover(F&& f) && {
         auto& self = *_p.get();
         return self.recover(std::move(*this), std::forward<F>(f));
     }
 
+    /// Pipe operator: same as `recover(f)`. Rvalue overload; consumes `*this`.
     template <class F>
     auto operator^(F&& f) && {
         return std::move(*this).recover(std::forward<F>(f));
     }
 
+    /// Returns a future that completes with the result of `f` given this future, run on `executor`.
+    /// Rvalue overload; consumes `*this`.
     template <class E, class F>
     auto recover(E&& executor, F&& f) && {
         auto& self = *_p.get();
         return self.recover(std::move(*this), std::forward<E>(executor), std::forward<F>(f));
     }
 
+    /// Pipe operator: same as `recover(etp.executor(), etp.task())`. Rvalue overload; consumes
+    /// `*this`.
     template <class F>
     auto operator^(executor_task_pair<F> etp) && {
         return std::move(*this).recover(std::move(etp)._executor, std::move(etp)._f);
@@ -928,6 +977,12 @@ public:
         _p->_on_completion(std::forward<F>(f));
     }
 
+    /// Invokes `f` when this future completes (value or exception), on `executor`.
+    template <class E, class F>
+    void on_completion(E&& executor, F&& f) {
+        _p->_on_completion(std::forward<E>(executor), std::forward<F>(f));
+    }
+
     /// Releases the shared state; `valid()` becomes false.
     void reset() noexcept { _p.reset(); }
 
@@ -938,6 +993,7 @@ public:
     /// completed with exception.
     [[nodiscard]] auto get_try() const& { return optional_monostate_to_bool(_p->get_try()); }
 
+    /// Same as `get_try()` but may move the value when this is the only reference.
     auto get_try() && { return optional_monostate_to_bool(_p->get_try_r(unique_usage(_p))); }
 
     /// Returns the value. @pre `is_ready()`. Rethrows the stored exception if the future failed.
@@ -992,10 +1048,14 @@ public:
     auto operator=(const future&) -> future& = delete;
     auto operator=(future&&) noexcept -> future& = default;
 
+    /// Exchanges the shared state with `x`.
     void swap(future& x) noexcept { std::swap(_p, x._p); }
 
+    /// Exchanges the shared states of `x` and `y`.
     inline friend void swap(future& x, future& y) noexcept { x.swap(y); }
+    /// True if `x` and `y` share the same shared state.
     inline friend auto operator==(const future& x, const future& y) -> bool { return x._p == y._p; }
+    /// True if `x` and `y` do not share the same shared state.
     inline friend auto operator!=(const future& x, const future& y) -> bool { return !(x == y); }
 
     /// True if this future has an associated shared state.
@@ -1010,11 +1070,14 @@ public:
         });
     }
 
+    /// Pipe operator: same as `then(f)`.
     template <class F>
     auto operator|(F&& f) && {
         return std::move(*this).then(std::forward<F>(f));
     }
 
+    /// Returns a future that completes with the result of `f` on `executor` applied to this
+    /// future's value.
     template <class E, class F>
     auto then(E&& executor, F&& f) && {
         return std::move(*this).recover(std::forward<E>(executor),
@@ -1023,28 +1086,34 @@ public:
                                         });
     }
 
+    /// Pipe operator: same as `then(etp.executor(), etp.task())`.
     template <class F>
     auto operator|(executor_task_pair<F> etp) && {
         return std::move(*this).then(std::move(etp)._executor, std::move(etp)._f);
     }
 
+    /// Returns a future that completes with the result of `f` given this future (possibly in error
+    /// state); default executor.
     template <class F>
     auto recover(F&& f) && {
         auto& self = *_p.get();
         return self.recover(std::move(*this), std::forward<F>(f));
     }
 
+    /// Pipe operator: same as `recover(f)`.
     template <class F>
     auto operator^(F&& f) && {
         return std::move(*this).recover(std::forward<F>(f));
     }
 
+    /// Returns a future that completes with the result of `f` given this future, run on `executor`.
     template <class E, class F>
     auto recover(E&& executor, F&& f) && {
         auto& self = *_p.get();
         return self.recover(std::move(*this), std::forward<E>(executor), std::forward<F>(f));
     }
 
+    /// Pipe operator: same as `recover(etp.executor(), etp.task())`.
     template <class F>
     auto operator^(executor_task_pair<F> etp) && {
         return std::move(*this).recover(std::move(etp)._executor, std::move(etp)._f);
@@ -1067,6 +1136,12 @@ public:
         _p->_on_completion(std::forward<F>(f));
     }
 
+    /// Invokes `f` when this future completes (value or exception), on `executor`.
+    template <class E, class F>
+    void on_completion(E&& executor, F&& f) {
+        _p->_on_completion(std::forward<E>(executor), std::forward<F>(f));
+    }
+
     /// Releases the shared state; `valid()` becomes false.
     void reset() noexcept { _p.reset(); }
 
@@ -1077,6 +1152,7 @@ public:
     /// completed with exception.
     [[nodiscard]] auto get_try() const& { return optional_monostate_to_bool(_p->get_try()); }
 
+    /// Same as `get_try()` but may move the value when this is the only reference.
     auto get_try() && { return optional_monostate_to_bool(_p->get_try_r(unique_usage(_p))); }
 
     /// Returns the value. @pre `is_ready()`. Rethrows the stored exception if the future failed.
@@ -1861,7 +1937,31 @@ struct final_awaiter {
     void await_suspend(std::coroutine_handle<> h) noexcept { h.destroy(); }
 };
 
+/// Awaitable that suspends and resumes the coroutine on the given executor when the future
+/// completes.
+template <class R>
+struct resume_on_awaiter {
+    executor_t _executor;
+    future<R> _input;
+
+    bool await_ready() const noexcept { return false; }
+
+    auto await_resume() { return std::move(_input).get_ready(); }
+
+    void await_suspend(std::coroutine_handle<> ch) {
+        _input.on_completion(std::move(_executor), [ch]() noexcept { ch.resume(); });
+    }
+};
+
 } // namespace detail
+
+/// When the future completes, the current coroutine is resumed on `executor`; result/exception
+/// semantics are the same as `co_await std::move(f)`.
+template <class E, class R>
+auto resume_on(E&& executor, future<R>&& f) -> detail::resume_on_awaiter<R> {
+    return detail::resume_on_awaiter<R>{executor_t(std::forward<E>(executor)), std::move(f)};
+}
+
 } // namespace STLAB_VERSION_NAMESPACE()
 } // namespace stlab
 

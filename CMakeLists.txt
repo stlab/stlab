@@ -27,6 +27,10 @@ project(stlab LANGUAGES CXX)
 # Set version from git tags after project()
 cpp_library_set_version()
 
+include(CTest)
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+
 # Create the main library target first
 add_library(stlab)
 add_library(stlab::stlab ALIAS stlab)
@@ -38,12 +42,9 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build" FORCE)
 endif()
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 include(GNUInstallDirs)
 include(CMakeDependentOption)
 include(StlabUtil)
-# CTest must be included at the top level for tests to be found.
-include(CTest)
 
 find_package(libdispatch)
 find_package(Qt5 QUIET COMPONENTS Core)

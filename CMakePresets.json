@@ -192,6 +192,11 @@
             "output": {
                 "verbosity": "verbose"
             }
+        },
+        {
+            "name": "debug-asan",
+            "description": "Run tests with address sanitizer build",
+            "configurePreset": "debug-asan"
         }
     ]
 }

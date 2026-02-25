@@ -17,6 +17,7 @@
 #include <stlab/concurrency/await.hpp>
 #include <stlab/concurrency/default_executor.hpp>
 #include <stlab/concurrency/future.hpp>
+#include <stlab/concurrency/ready_future.hpp>
 #include <stlab/test/model.hpp>
 
 #include "future_test_helper.hpp"
@@ -93,4 +94,38 @@ TEST_CASE("future_coroutine_combined_void_int") {
 
     REQUIRE(intCheck == 42);
     REQUIRE(boolCheck.load());
+}
+
+auto resume_on_executor_coroutine(future<int> f, std::atomic_int& result,
+                                  std::atomic_int* executor_usage_count) -> future<void> {
+    int v = co_await resume_on(make_executor<0>(), std::move(f));
+    result = v;
+    if (executor_usage_count) *executor_usage_count = custom_scheduler<0>::usage_counter();
+    co_return;
+}
+
+TEST_CASE("resume_on_resumes_coroutine_on_given_executor") {
+    custom_scheduler<0>::reset();
+    std::atomic_int result{0};
+    std::atomic_int executor_usage_count{0};
+
+    auto fut = async(default_executor, [] { return 42; });
+    auto done = resume_on_executor_coroutine(std::move(fut), result, &executor_usage_count);
+    await(std::move(done));
+
+    REQUIRE(result == 42);
+    REQUIRE(executor_usage_count.load() >= 1);
+}
+
+TEST_CASE("resume_on_already_ready_future_resumes_on_executor") {
+    custom_scheduler<0>::reset();
+    std::atomic_int result{0};
+    std::atomic_int executor_usage_count{0};
+
+    auto fut = make_ready_future(43, default_executor);
+    auto done = resume_on_executor_coroutine(std::move(fut), result, &executor_usage_count);
+    await(std::move(done));
+
+    REQUIRE(result == 43);
+    REQUIRE(executor_usage_count.load() >= 1);
 }
