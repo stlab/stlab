@@ -1,5 +1,5 @@
 {
-    "version": 10,
+    "version": 8,
     "cmakeMinimumRequired": {
         "major": 3,
         "minor": 28,
@@ -38,7 +38,8 @@
             "hidden": true,
             "inherits": "base-cpp20",
             "cacheVariables": {
-                "CMAKE_CXX_FLAGS": "-fsanitize=thread -fsanitize=undefined"
+                "CMAKE_CXX_FLAGS": "-fsanitize=thread -fsanitize=undefined",
+                "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=thread -fsanitize=undefined"
             }
         },
         {
@@ -70,6 +71,31 @@
             "inherits": "base-cpp20",
             "cacheVariables": {
                 "STLAB_SANITIZER": "address"
+            }
+        },
+        {
+            "name": "debug-clang-libcxx",
+            "description": "Debug build with Clang and libc++ (Linux)",
+            "inherits": "base-cpp20",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            },
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++",
+                "CMAKE_CXX_FLAGS": "-stdlib=libc++",
+                "CMAKE_EXE_LINKER_FLAGS": "-stdlib=libc++"
+            }
+        },
+        {
+            "name": "debug-clang-libcxx-sanitizer",
+            "description": "Debug build with Clang, libc++, and UBSan+TSan (Linux)",
+            "inherits": "debug-clang-libcxx",
+            "cacheVariables": {
+                "CMAKE_CXX_FLAGS": "-stdlib=libc++ -fsanitize=thread -fsanitize=undefined",
+                "CMAKE_EXE_LINKER_FLAGS": "-stdlib=libc++ -fsanitize=thread -fsanitize=undefined"
             }
         },
         {
@@ -178,6 +204,14 @@
             "configurePreset": "debug-asan"
         },
         {
+            "name": "debug-clang-libcxx",
+            "configurePreset": "debug-clang-libcxx"
+        },
+        {
+            "name": "debug-clang-libcxx-sanitizer",
+            "configurePreset": "debug-clang-libcxx-sanitizer"
+        },
+        {
             "name": "clang-tidy-fix",
             "configurePreset": "clang-tidy-fix",
             "jobs": 1
@@ -215,6 +249,16 @@
             "name": "debug-asan",
             "description": "Run tests with address sanitizer build",
             "configurePreset": "debug-asan"
+        },
+        {
+            "name": "debug-clang-libcxx",
+            "description": "Run tests with Clang + libc++ build",
+            "configurePreset": "debug-clang-libcxx"
+        },
+        {
+            "name": "debug-clang-libcxx-sanitizer",
+            "description": "Run tests with Clang + libc++ + UBSan/TSan build",
+            "configurePreset": "debug-clang-libcxx-sanitizer"
         }
     ]
 }
