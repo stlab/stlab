@@ -51,27 +51,28 @@ are auto-reduced: a `future<future<T>>` is flattened to `future<T>`, so
 continuations and `package()` never expose nested futures.
 
 Lifecycle and cancellation: if a `future` is destroyed before the result is
-produced, the other side can observe cancellation (`future_error_codes::broken_promise`).
-If a `packaged_task` is destroyed without being invoked, its future is completed
-with broken_promise. Thus tasks are effectively canceled when their future or
-packaged_task is destroyed. A packaged_task can call `canceled()` to see if the
-future was already released.
+produced, the other side can observe cancellation
+(`future_error_codes::broken_promise`). If a `packaged_task` is destroyed
+without being invoked, its future is completed with broken_promise. Thus tasks
+are effectively canceled when their future or packaged_task is destroyed. A
+packaged_task can call `canceled()` to see if the future was already released.
 
 Futures to copyable types are copyable; you can attach multiple continuations
-via `then()` or `recover()` from the same future. Futures to non-copyable types
-are move-only and support a single continuation (use `std::move(f).then(...)`).
-`then(f)` runs when the future has a value; `recover(f)` runs when the future
-is ready (value or exception), so you can handle errors. Continuations run on
-an executor (default or explicit). Use `when_all` and `when_any` to combine
-futures; use `async(executor, f, args...)` to run a function on an executor
-and get a future for its result. Obtain the value with `get_ready()` (blocks
-until ready) or `get_try()` (returns immediately with value or empty); call
-`detach()` to drop the future without cancelling the associated task.
+via `then()`, `recover()`, `|`, or `^` from the same future. Futures to
+non-copyable types are move-only and support a single continuation (use
+`std::move(f).then(...)`). `then(f)` runs when the future has a value;
+`recover(f)` runs when the future is ready (value or exception), so you can
+handle errors. Continuations run on an executor (default or explicit). Use
+`when_all` and `when_any` to combine futures; use `async(executor, f, args...)`
+to run a function on an executor and get a future for its result. Obtain the
+value with `get_ready()` (if the future is known to be ready) or `get_try()`
+(returns immediately with value or empty); call `detach()` to drop the future
+without cancelling the associated task.
 
 Coroutines: a function returning `future<T>` can use `co_return` and `co_await`.
-Use `co_await std::move(f)` to await a future (resumption happens in the
-thread that completes the future). Use `co_await resume_on(executor, std::move(f))`
-to resume the current coroutine on a specific executor when the future completes.
+Use `co_await std::move(f)` to await a future (resumption happens in the thread
+that completes the future). Use `co_await resume_on(executor, std::move(f))` to
+resume the current coroutine on a specific executor when the future completes.
 */
 
 /**************************************************************************************************/
@@ -971,13 +972,15 @@ public:
         self._detach(std::move(*this), std::forward<F>(f));
     }
 
-    /// Invokes `f` when this future completes (value or exception), on the shared state's executor.
+    /// Invokes `f` immediately when this future completes (value or exception).
+    /// Requires `f` is noexcept.
     template <class F>
     void on_completion(F&& f) {
         _p->_on_completion(std::forward<F>(f));
     }
 
     /// Invokes `f` when this future completes (value or exception), on `executor`.
+    /// Requires `f` is noexcept.
     template <class E, class F>
     void on_completion(E&& executor, F&& f) {
         _p->_on_completion(std::forward<E>(executor), std::forward<F>(f));
@@ -1130,13 +1133,17 @@ public:
         self._detach(std::move(*this), std::forward<F>(f));
     }
 
-    /// Invokes `f` when this future completes (value or exception), on the shared state's executor.
+    /// Invokes `f` immediately when this future completes (value or exception).
+    /// This consumes the continuation slot, the behavior of attaching a
+    /// continuation after on_completion() is undefined.
     template <class F>
     void on_completion(F&& f) {
         _p->_on_completion(std::forward<F>(f));
     }
 
     /// Invokes `f` when this future completes (value or exception), on `executor`.
+    /// This consumes the continuation slot, the behavior of attaching a
+    /// continuation after on_completion() is undefined.
     template <class E, class F>
     void on_completion(E&& executor, F&& f) {
         _p->_on_completion(std::forward<E>(executor), std::forward<F>(f));

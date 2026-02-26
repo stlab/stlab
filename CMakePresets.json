@@ -66,6 +66,14 @@
             }
         },
         {
+            "name": "debug-portable-sanitizer",
+            "description": "Debug build with portable task system and TSan+UBSan",
+            "inherits": "base-sanitizer",
+            "cacheVariables": {
+                "STLAB_TASK_SYSTEM": "portable"
+            }
+        },
+        {
             "name": "debug-asan",
             "description": "Debug build with address sanitizer",
             "inherits": "base-cpp20",
@@ -198,6 +206,10 @@
         {
             "name": "debug-portable",
             "configurePreset": "debug-portable"
+        },
+        {
+            "name": "debug-portable-sanitizer",
+            "configurePreset": "debug-portable-sanitizer"
         },
         {
             "name": "debug-asan",
