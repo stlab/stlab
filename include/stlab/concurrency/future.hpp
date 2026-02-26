@@ -732,6 +732,10 @@ auto make_shared_state(executor_t s, F&& f) -> std::shared_ptr<shared<F, Sig>> {
     return std::make_shared<shared<F, Sig>>(std::move(s), std::forward<F>(f));
 }
 
+template <class... Args>
+[[nodiscard]] auto weak_state(const packaged_task<Args...>& p)
+    -> std::weak_ptr<shared_task<Args...>>;
+
 /**************************************************************************************************/
 
 } // namespace detail
@@ -753,6 +757,9 @@ class packaged_task {
 
     template <class T, class E>
     friend auto future_with_broken_promise(E) -> detail::reduced_t<T>;
+
+    friend auto detail::weak_state(const packaged_task<Args...>& p)
+        -> std::weak_ptr<detail::shared_task<Args...>>;
 
 public:
     packaged_task() = default;
@@ -789,6 +796,16 @@ public:
         }
     }
 };
+
+namespace detail {
+
+template <class... Args>
+[[nodiscard]] auto weak_state(const packaged_task<Args...>& p)
+    -> std::weak_ptr<detail::shared_task<Args...>> {
+    return p._p;
+}
+
+} // namespace detail
 
 /**************************************************************************************************/
 
@@ -901,7 +918,8 @@ public:
             });
     }
 
-    /// Pipe operator: same as `then(etp.executor(), etp.task())`. Rvalue overload; consumes `*this`.
+    /// Pipe operator: same as `then(etp.executor(), etp.task())`. Rvalue overload; consumes
+    /// `*this`.
     template <class F>
     auto operator|(executor_task_pair<F> etp) && {
         return std::move(*this).then(std::move(etp)._executor, std::move(etp)._f);
@@ -1944,6 +1962,22 @@ struct final_awaiter {
     void await_suspend(std::coroutine_handle<> h) noexcept { h.destroy(); }
 };
 
+/// Awaitable for co_await future when used from a coroutine (via await_transform).
+/// Uses weak_ptr to the outer future's shared state to avoid resuming a destroyed coroutine.
+template <class R, class WeakPtr>
+struct future_awaiter_with_control {
+    future<R> _input;
+    WeakPtr _weak;
+
+    bool await_ready() { return _input.is_ready(); }
+    auto await_resume() { return std::move(_input).get_ready(); }
+    void await_suspend(std::coroutine_handle<> ch) {
+        _input.on_completion([weak = _weak, ch]() noexcept {
+            if (weak.lock()) ch.resume();
+        });
+    }
+};
+
 /// Awaitable that suspends and resumes the coroutine on the given executor when the future
 /// completes.
 template <class R>
@@ -1957,6 +1991,22 @@ struct resume_on_awaiter {
 
     void await_suspend(std::coroutine_handle<> ch) {
         _input.on_completion(std::move(_executor), [ch]() noexcept { ch.resume(); });
+    }
+};
+
+/// resume_on_awaiter with weak_ptr check for use from coroutines (via await_transform).
+template <class R, class WeakPtr>
+struct resume_on_awaiter_with_control {
+    executor_t _executor;
+    future<R> _input;
+    WeakPtr _weak;
+
+    bool await_ready() const noexcept { return false; }
+    auto await_resume() { return std::move(_input).get_ready(); }
+    void await_suspend(std::coroutine_handle<> ch) {
+        _input.on_completion(std::move(_executor), [weak = _weak, ch]() noexcept {
+            if (weak.lock()) ch.resume();
+        });
     }
 };
 
@@ -2010,6 +2060,23 @@ struct std::coroutine_traits<stlab::future<T>, Args...> {
             _promise(std::variant<T, std::exception_ptr>{std::in_place_type<std::exception_ptr>,
                                                          std::current_exception()});
         }
+
+        template <class R>
+        auto await_transform(stlab::future<R>&& f) {
+            return stlab::detail::future_awaiter_with_control<R, decltype(stlab::detail::weak_state(
+                                                                     _promise))>{
+                std::move(f), stlab::detail::weak_state(_promise)};
+        }
+        template <class R>
+        auto await_transform(stlab::detail::resume_on_awaiter<R> a) {
+            return stlab::detail::resume_on_awaiter_with_control<
+                R, decltype(stlab::detail::weak_state(_promise))>{
+                std::move(a._executor), std::move(a._input), stlab::detail::weak_state(_promise)};
+        }
+        template <class U>
+        U&& await_transform(U&& u) {
+            return std::forward<U>(u);
+        }
     };
 };
 
@@ -2037,6 +2104,23 @@ struct std::coroutine_traits<stlab::future<void>, Args...> {
         void return_void() { _promise(std::exception_ptr{}); }
 
         void unhandled_exception() { _promise(std::current_exception()); }
+
+        template <class R>
+        auto await_transform(stlab::future<R>&& f) {
+            return stlab::detail::future_awaiter_with_control<R, decltype(stlab::detail::weak_state(
+                                                                     _promise))>{
+                std::move(f), stlab::detail::weak_state(_promise)};
+        }
+        template <class R>
+        auto await_transform(stlab::detail::resume_on_awaiter<R> a) {
+            return stlab::detail::resume_on_awaiter_with_control<
+                R, decltype(stlab::detail::weak_state(_promise))>{
+                std::move(a._executor), std::move(a._input), stlab::detail::weak_state(_promise)};
+        }
+        template <class U>
+        U&& await_transform(U&& u) {
+            return std::forward<U>(u);
+        }
     };
 };
 
@@ -2044,7 +2128,7 @@ struct std::coroutine_traits<stlab::future<void>, Args...> {
 
 template <class R>
 auto operator co_await(stlab::future<R>&& f) {
-    struct Awaiter {
+    struct awaiter {
         stlab::future<R> _input;
 
         bool await_ready() { return _input.is_ready(); }
@@ -2055,7 +2139,7 @@ auto operator co_await(stlab::future<R>&& f) {
             _input.on_completion([ch]() noexcept { ch.resume(); });
         }
     };
-    return Awaiter{std::move(f)};
+    return awaiter{std::move(f)};
 }
 
 // co_await on an lvalue future is deleted — use std::move(f) to make cancellation semantics

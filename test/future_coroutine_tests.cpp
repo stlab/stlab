@@ -118,6 +118,29 @@ TEST_CASE("resume_on_resumes_coroutine_on_given_executor") {
     REQUIRE(executor_usage_count.load() >= 1);
 }
 
+namespace {
+
+future<int> resume_on_default_executor() {
+    std::cerr << "started\n";
+    auto result = co_await async(default_executor, [] {
+        std::cerr << "async started\n";
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::cerr << "async finished\n";
+        return 42;
+    });
+    std::cerr << "finished\n";
+    co_return result;
+}
+
+} // namespace
+
+TEST_CASE("resume_on_with_cancelled_future") {
+    {
+        auto result(resume_on_default_executor());
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
+}
+
 TEST_CASE("resume_on_already_ready_future_resumes_on_executor") {
     custom_scheduler<0>::reset();
     std::atomic_int result{0};
