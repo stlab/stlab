@@ -3,7 +3,6 @@
 // stdc++
 #include <cassert>
 #include <cstddef>
-#include <iostream>
 #include <iterator>
 #include <optional>
 
@@ -21,42 +20,6 @@
 /**************************************************************************************************/
 
 using namespace stlab;
-
-/**************************************************************************************************/
-
-namespace {
-
-/**************************************************************************************************/
-
-template <typename T>
-void print(const forest<T>& f) {
-    auto first{f.begin()};
-    auto last{f.end()};
-    std::size_t depth{0};
-
-    while (first != last) {
-        if (is_trailing(first)) {
-            --depth;
-        }
-
-        for (std::size_t i{0}; i < depth; ++i)
-            std::cout << "    ";
-
-        if (is_leading(first)) {
-            std::cout << "<";
-            ++depth;
-        } else {
-            std::cout << "</";
-        }
-
-        std::cout << *first << ">\n";
-        ++first;
-    }
-}
-
-/**************************************************************************************************/
-
-} // namespace
 
 /**************************************************************************************************/
 

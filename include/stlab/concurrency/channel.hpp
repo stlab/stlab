@@ -24,6 +24,7 @@
 #include <numeric>
 #include <optional>
 #include <tuple>
+#include <type_traits>
 #include <utility>
 #include <variant>
 
@@ -1384,6 +1385,9 @@ auto combine_bs_executor(B&& b, E&& e) -> detail::annotations {
 
 } // namespace detail
 
+// !std::is_enum_v<std::remove_reference_t<F>>, int> = 0 is used to exclude enum types from
+// operator& so built-in & is used (e.g. doctest assertType).
+
 inline auto operator&(buffer_size bs, const executor& e) -> detail::annotations {
     return detail::combine_bs_executor(bs, e);
 }
@@ -1400,12 +1404,12 @@ inline auto operator&(executor&& e, buffer_size bs) -> detail::annotations {
     return detail::combine_bs_executor(bs, std::move(e));
 }
 
-template <typename F>
+template <typename F, std::enable_if_t<!std::is_enum_v<std::remove_reference_t<F>>, int> = 0>
 auto operator&(buffer_size bs, F&& f) -> detail::annotated_process<F> {
     return detail::annotated_process<F>(std::forward<F>(f), bs);
 }
 
-template <typename F>
+template <typename F, std::enable_if_t<!std::is_enum_v<std::remove_reference_t<F>>, int> = 0>
 auto operator&(F&& f, buffer_size bs) -> detail::annotated_process<F> {
     return detail::annotated_process<F>(std::forward<F>(f), bs);
 }
@@ -1420,12 +1424,12 @@ auto operator&(buffer_size bs, executor_task_pair<F>&& etp) -> detail::annotated
     return detail::annotated_process<F>{std::move(etp), bs};
 }
 
-template <typename F>
+template <typename F, std::enable_if_t<!std::is_enum_v<std::remove_reference_t<F>>, int> = 0>
 auto operator&(detail::annotations&& a, F&& f) -> detail::annotated_process<F> {
     return detail::annotated_process<F>{std::forward<F>(f), std::move(a)};
 }
 
-template <typename F>
+template <typename F, std::enable_if_t<!std::is_enum_v<std::remove_reference_t<F>>, int> = 0>
 auto operator&(F&& f, detail::annotations&& a) -> detail::annotated_process<F> {
     return detail::annotated_process<F>{std::forward<F>(f), std::move(a)};
 }

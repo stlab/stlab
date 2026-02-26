@@ -10,7 +10,6 @@
 #include <cstddef>
 #include <cstdlib>
 #include <iostream>
-#include <memory>
 #include <string>
 
 // boost
@@ -30,7 +29,9 @@
 #include <stlab/concurrency/tuple_algorithm.hpp>
 #include <stlab/utility.hpp>
 
-#if defined(__clang__)
+
+// cxxabi.h (demangling) is only available with libstdc++ (e.g. Linux/macOS Clang), not on Windows.
+#if defined(__clang__) && defined(__GLIBCXX__)
 #include <cxxabi.h>
 #endif
 
@@ -42,7 +43,7 @@ namespace {
 
 template <typename T>
 auto demangle() -> std::string {
-#if defined(__clang__)
+#if defined(__clang__) && defined(__GLIBCXX__)
     struct freer_t {
         void operator()(void* x) const { std::free(x); }
     };
@@ -50,7 +51,7 @@ auto demangle() -> std::string {
         abi::__cxa_demangle(typeid(T).name(), nullptr, nullptr, nullptr));
     return c_str.get();
 #else
-    return std::string();
+    return {};
 #endif
 }
 
@@ -88,7 +89,10 @@ TEST_CASE("add_placeholder_test") {
 /**************************************************************************************************/
 
 template <typename F, typename... Ts>
-void when_all_typecheck(F, const future<Ts>&...) {
+void when_all_typecheck(
+    F f, const future<Ts>&... futures) { // NOLINT(cert-dcl50-cpp) parameter pack, not C variadic
+    (void)f;
+    (..., (void)futures);
     using pt_t = placeholder_tuple<Ts...>;
     using opt_t = optional_placeholder_tuple<Ts...>;
     using vt_t = voidless_tuple<Ts...>;

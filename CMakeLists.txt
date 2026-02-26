@@ -27,6 +27,12 @@ project(stlab LANGUAGES CXX)
 # Set version from git tags after project()
 cpp_library_set_version()
 
+# Ensure C++ exceptions are always enabled (STLab uses them; some presets/toolchains omit them).
+add_compile_options(
+  $<$<CXX_COMPILER_ID:MSVC>:/EHsc>
+  $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:AppleClang>>:-fexceptions>
+)
+
 include(CTest)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")

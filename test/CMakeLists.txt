@@ -60,7 +60,6 @@ add_test(
 
 add_executable(stlab.test.future
   future_recover_tests.cpp
-  future_test_helper.cpp
   future_tests.cpp
   future_then_tests.cpp
   future_when_all_arguments_tests.cpp

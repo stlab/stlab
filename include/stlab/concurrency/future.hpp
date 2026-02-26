@@ -1979,10 +1979,11 @@ struct std::coroutine_traits<stlab::future<T>, Args...> {
                      std::coroutine_handle<promise_type>::from_promise(
                          *this)}](std::variant<T, std::exception_ptr>&& v) mutable -> T {
                     guard.release();
-                    if (auto* ep = std::get_if<std::exception_ptr>(&v)) {
+                    // Use index (1 = exception) to avoid ambiguity when T is std::exception_ptr.
+                    if (auto* ep = std::get_if<1>(&v)) {
                         std::rethrow_exception(*ep);
                     }
-                    return std::get<T>(std::move(v));
+                    return std::get<0>(std::move(v));
                 });
             _promise = std::move(pro);
             return std::move(fut);

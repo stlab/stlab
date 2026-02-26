@@ -9,7 +9,6 @@
 #include <cstddef>
 #include <exception>
 #include <mutex>
-#include <string_view>
 #include <utility>
 
 #include <doctest/doctest.h>

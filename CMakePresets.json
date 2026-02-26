@@ -107,10 +107,23 @@
         },
         {
             "name": "clang-tidy",
-            "description": "Run clang-tidy without fixes",
+            "description": "Run clang-tidy without fixes. On Windows with MSVC, the 32-bit clang-tidy can crash (0xC0000005); use clang-tidy-win64 or set CMAKE_CXX_CLANG_TIDY to your VC/Tools/Llvm/x64/bin/clang-tidy.exe",
             "inherits": "base-cpp17",
             "cacheVariables": {
-                "CMAKE_CXX_CLANG_TIDY": "clang-tidy"
+                "CMAKE_CXX_CLANG_TIDY": "clang-tidy;--extra-arg=-std=c++17"
+            }
+        },
+        {
+            "name": "clang-tidy-win64",
+            "description": "Run clang-tidy using 64-bit LLVM (avoids Windows crash). Requires VCINSTALLDIR (set when Cursor is launched from a Visual Studio developer prompt).",
+            "inherits": "clang-tidy",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            },
+            "cacheVariables": {
+                "CMAKE_CXX_CLANG_TIDY": "$env{VCINSTALLDIR}Tools/Llvm/x64/bin/clang-tidy.exe;--extra-arg=/std:c++17;--extra-arg=/EHsc"
             }
         },
         {
@@ -118,7 +131,7 @@
             "description": "Run clang-tidy with auto-fix",
             "inherits": "clang-tidy",
             "cacheVariables": {
-                "CMAKE_CXX_CLANG_TIDY": "clang-tidy;--fix"
+                "CMAKE_CXX_CLANG_TIDY": "clang-tidy;--extra-arg=-std=c++17;--fix"
             }
         },
         {
@@ -172,6 +185,11 @@
         {
             "name": "clang-tidy",
             "configurePreset": "clang-tidy"
+        },
+        {
+            "name": "clang-tidy-win64",
+            "configurePreset": "clang-tidy-win64",
+            "description": "Build with 64-bit clang-tidy on Windows (avoids crash)"
         },
         {
             "name": "include-what-you-use",

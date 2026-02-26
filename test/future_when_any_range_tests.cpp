@@ -11,7 +11,6 @@
 #include <exception>
 #include <mutex>
 #include <optional>
-#include <string_view>
 #include <utility>
 
 #include <doctest/doctest.h>

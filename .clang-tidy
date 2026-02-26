@@ -1,5 +1,5 @@
-ExtraArgs:
-  - "-std=c++17"
+# Standard comes from the compile command (CMake); -std=c++17 here would be
+# wrong when using clang-cl (clang-tidy-win64 on Windows) which expects /std:c++17.
 Checks: >
   cert-*,
   performance-*,
@@ -16,5 +16,6 @@ CheckOptions:
       boost/test/.*;
       __chrono/.*
 HeaderFilterRegex: "^.*/include/stlab/.*$"
-# ExcludeHeaderRegex: "^.*/boost/.*$|^.*Program Files.*$"
+# Exclude third-party and system headers from diagnostics (doctest, CPM cache, Program Files).
+ExcludeHeaderFilterRegex: "^.*(doctest|\\.cache[/\\\\]cpm|Program Files).*$"
 # WarningsAsErrors: "*"
