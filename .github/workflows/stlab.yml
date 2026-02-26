@@ -113,3 +113,37 @@ jobs:
         run: |
           cd ../build/
           ctest --output-on-failure --verbose
+
+  macos-tsan:
+    name: macOS TSan
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4.1.6
+
+      - name: Configure
+        run: cmake --preset debug-sanitizer
+
+      - name: Build
+        run: cmake --build build/debug-sanitizer
+
+      - name: Test
+        run: |
+          cd build/debug-sanitizer
+          ctest --output-on-failure --verbose
+
+  macos-tsan-portable:
+    name: macOS TSan (portable)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4.1.6
+
+      - name: Configure
+        run: cmake --preset debug-portable-sanitizer
+
+      - name: Build
+        run: cmake --build build/debug-portable-sanitizer
+
+      - name: Test
+        run: |
+          cd build/debug-portable-sanitizer
+          ctest --output-on-failure --verbose
