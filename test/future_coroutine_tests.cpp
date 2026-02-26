@@ -96,7 +96,8 @@ TEST_CASE("future_coroutine_combined_void_int") {
     REQUIRE(boolCheck.load());
 }
 
-auto resume_on_executor_coroutine(future<int> f, std::atomic_int& result,
+auto resume_on_executor_coroutine(future<int> f,
+                                  std::atomic_int& result,
                                   std::atomic_int* executor_usage_count) -> future<void> {
     int v = co_await resume_on(make_executor<0>(), std::move(f));
     result = v;
