@@ -2026,6 +2026,15 @@ auto resume_on(E&& executor, future<R>&& f) -> detail::resume_on_awaiter<R> {
 } // namespace stlab
 
 /**************************************************************************************************/
+// Coroutine ownership and destruction rules (implementation notes):
+//
+// We destroy the coroutine only while it is suspended, never while it is executing. Safe destroy
+// points are: (1) at final_suspend, or (2) when suspended on an stlab::future (co_await future or
+// resume_on). The shared state stores _co_handle; when suspended on a future we store the handle
+// there so we can resume via weak_state, and when the future is abandoned we destroy the coroutine.
+// For non-future awaitables we clear _co_handle (give up ownership); the final_awaiter destroys
+// in that case. initial_suspend is suspend_never so we never own before the first suspend.
+/**************************************************************************************************/
 
 template <class T, class... Args>
 struct std::coroutine_traits<stlab::future<T>, Args...> {
