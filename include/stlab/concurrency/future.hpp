@@ -351,11 +351,11 @@ struct shared_base;
 
 template <class... Args>
 struct shared_task {
-    void* _co_handle = nullptr;
+    void* _co_handle{nullptr}; // storing as void* for ABI stability.
 
     virtual ~shared_task() {
 #if STLAB_STD_COROUTINES()
-        std::coroutine_handle<>::from_address(_co_handle).destroy();
+        if (_co_handle) std::coroutine_handle<>::from_address(_co_handle).destroy();
 #endif
     }
 
