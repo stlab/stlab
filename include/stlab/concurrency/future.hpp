@@ -350,18 +350,20 @@ struct shared_base;
 
 template <class... Args>
 struct shared_task {
-    std::atomic<void*> _co_handle{nullptr};
+    // Use uintptr_t instead of void* to avoid GCC 13 -Wstringop-overflow false positive
+    // (writing 8 bytes into region of size 0) when storing coroutine handle addresses.
+    std::atomic<uintptr_t> _co_handle{0};
 
     virtual ~shared_task() {
 #if STLAB_STD_COROUTINES()
-        if (auto p = _co_handle.exchange(nullptr, std::memory_order_relaxed))
-            std::coroutine_handle<>::from_address(p).destroy();
+        if (auto p = _co_handle.exchange(0, std::memory_order_relaxed))
+            std::coroutine_handle<>::from_address(reinterpret_cast<void*>(p)).destroy();
 #endif
     }
 
     void _clear_co_handle() noexcept {
 #if STLAB_STD_COROUTINES()
-        _co_handle.store(nullptr, std::memory_order_relaxed);
+        _co_handle.store(0, std::memory_order_relaxed);
 #endif
     }
 
@@ -2008,11 +2010,12 @@ struct resume_on_awaiter_with_control {
     auto await_resume() { return std::move(_input).get_ready(); }
     void await_suspend(std::coroutine_handle<> ch) {
         assert(_weak.lock() && "await_suspend: weak_state is gone");
-        _weak.lock()->_co_handle.store(ch.address(), std::memory_order_relaxed);
+        _weak.lock()->_co_handle.store(reinterpret_cast<uintptr_t>(ch.address()),
+                                      std::memory_order_relaxed);
         _input.on_completion(std::move(_executor), [weak = _weak]() noexcept {
             if (auto state = weak.lock()) {
                 if (auto p = state->_co_handle.load(std::memory_order_relaxed))
-                    std::coroutine_handle<>::from_address(p).resume();
+                    std::coroutine_handle<>::from_address(reinterpret_cast<void*>(p)).resume();
             }
         });
     }
@@ -2093,7 +2096,7 @@ struct std::coroutine_traits<stlab::future<T>, Args...> {
         template <class U>
         U&& await_transform(U&& u) {
             if (auto state = stlab::detail::weak_state(_promise).lock())
-                state->_co_handle.store(nullptr, std::memory_order_relaxed);
+                state->_co_handle.store(0, std::memory_order_relaxed);
             return std::forward<U>(u);
         }
     };
@@ -2139,7 +2142,7 @@ struct std::coroutine_traits<stlab::future<void>, Args...> {
         template <class U>
         U&& await_transform(U&& u) {
             if (auto state = stlab::detail::weak_state(_promise).lock())
-                state->_co_handle.store(nullptr, std::memory_order_relaxed);
+                state->_co_handle.store(0, std::memory_order_relaxed);
             return std::forward<U>(u);
         }
     };
