@@ -2042,10 +2042,6 @@ struct std::coroutine_traits<stlab::future<T>, Args...> {
                     }
                     return std::get<0>(std::move(v));
                 });
-            if (auto state = stlab::detail::weak_state(pro).lock())
-                state->_co_handle.store(
-                    std::coroutine_handle<promise_type>::from_promise(*this).address(),
-                    std::memory_order_relaxed);
             _promise = std::move(pro);
             return std::move(fut);
         }
@@ -2100,10 +2096,6 @@ struct std::coroutine_traits<stlab::future<void>, Args...> {
                 stlab::immediate_executor, [](const std::exception_ptr& ep) mutable {
                     if (ep) std::rethrow_exception(ep);
                 });
-            if (auto state = stlab::detail::weak_state(pro).lock())
-                state->_co_handle.store(
-                    std::coroutine_handle<promise_type>::from_promise(*this).address(),
-                    std::memory_order_relaxed);
             _promise = std::move(pro);
             return std::move(fut);
         }
