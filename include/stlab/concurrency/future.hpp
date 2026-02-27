@@ -722,8 +722,6 @@ struct shared<F, R(Args...)> final : shared_base<R>, shared_task<Args...> {
     shared(executor_t s, F&& f) : shared_base<R>(std::move(s)), _f(std::move(f)) {}
 
     void operator()(Args... args) noexcept override {
-        this->shared_task<Args...>::_co_handle = nullptr; // give up ownership before invoke (noop
-                                                          // if not coroutine-backed)
         std::move (*_f)(promise{this->shared_from_this()}, std::move(args)...);
         // After invoking `_f`, it is not destructed because it could be satisfying the promise
         // asynchronously. `_f` is responsible for any cleanup prior to the future being released
@@ -2022,7 +2020,7 @@ auto resume_on(E&& executor, future<R>&& f) -> detail::resume_on_awaiter<R> {
 // Coroutine ownership and destruction rules (implementation notes):
 //
 // We destroy the coroutine only while it is suspended, and only in one place: ~shared_task(), which
-// exchanges _co_handle and destroys the handle if non-null. The shared state stores _co_handle;
+// destroys the handle (noop if not coroutine-backed). The shared state stores _co_handle;
 // when suspended on a future we store the handle there so we can resume via weak_state. At
 // final_suspend we always store the handle in the shared state so ~shared_task() is the sole
 // destroy point. For non-future awaitables we clear _co_handle before suspending (give up
