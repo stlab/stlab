@@ -132,11 +132,30 @@ future<int> resume_on_default_executor() {
     co_return result;
 }
 
+future<int> resume_on_with_explicit_resume_on() {
+    std::cerr << "resume_on started\n";
+    auto result = co_await resume_on(default_executor, async(default_executor, [] {
+                                         std::cerr << "resume_on async started\n";
+                                         std::this_thread::sleep_for(std::chrono::seconds(1));
+                                         std::cerr << "resume_on async finished\n";
+                                         return 42;
+                                     }));
+    std::cerr << "resume_on finished\n";
+    co_return result;
+}
+
 } // namespace
 
 TEST_CASE("resume_on_with_cancelled_future") {
     {
         auto result(resume_on_default_executor());
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
+}
+
+TEST_CASE("resume_on_explicit_with_cancelled_future") {
+    {
+        auto result(resume_on_with_explicit_resume_on());
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 }
