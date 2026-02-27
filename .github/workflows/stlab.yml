@@ -9,11 +9,11 @@ on:
 jobs:
   generate-matrix:
     name: Generate job matrix
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v4.1.6
+      - uses: actions/checkout@v6
 
       - name: Generate job matrix
         id: set-matrix
@@ -30,22 +30,12 @@ jobs:
     name: ${{ matrix.config.name }}
 
     steps:
-      - uses: actions/checkout@v4.1.6
-
-      - name: Install dependencies // Linux (GCC|Clang)
-        if: ${{ startsWith(matrix.config.os, 'ubuntu') && !startsWith(matrix.config.compiler, 'emscripten') }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ninja-build
-        shell: bash
+      - uses: actions/checkout@v6
 
       - name: Install dependencies // Linux Emscripten
         if: ${{ startsWith(matrix.config.compiler, 'emscripten') }}
         shell: bash
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ninja-build
-
           git clone --depth 1 https://github.com/emscripten-core/emsdk.git $HOME/emsdk
           pushd $HOME/emsdk
           ./emsdk install latest
@@ -87,11 +77,13 @@ jobs:
           cmake -S. -B../build -GNinja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=23 \
             -DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/cmake/Platform/Emscripten-STLab.cmake
 
+      - name: Setup MSVC
+        if: ${{ startsWith(matrix.config.os, 'windows') }}
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Configure // Windows
         if: ${{ startsWith(matrix.config.os, 'windows') }}
-        shell: cmd
         run: |
-          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
           mkdir ..\build
           cmake -S. -B../build -GNinja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_STANDARD=20
 
@@ -103,9 +95,7 @@ jobs:
 
       - name: Build // Windows
         if: ${{ startsWith(matrix.config.os, 'windows') }}
-        shell: cmd
         run: |
-          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
           cmake --build ../build/
 
       - name: Test
@@ -118,7 +108,7 @@ jobs:
     name: macOS TSan
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4.1.6
+      - uses: actions/checkout@v6
 
       - name: Configure
         run: cmake --preset debug-sanitizer
@@ -135,7 +125,7 @@ jobs:
     name: macOS TSan (portable)
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4.1.6
+      - uses: actions/checkout@v6
 
       - name: Configure
         run: cmake --preset debug-portable-sanitizer
