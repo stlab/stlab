@@ -48,20 +48,6 @@ jobs:
           cat .emscripten
           popd
 
-      - name: Set enviroment variables // Linux GCC
-        if: ${{ matrix.config.compiler == 'gcc' }}
-        shell: bash
-        run: |
-          echo "CC=gcc-${{matrix.config.version}}" >> $GITHUB_ENV
-          echo "CXX=g++-${{matrix.config.version}}" >> $GITHUB_ENV
-
-      - name: Set enviroment variables // Linux Clang
-        if: ${{ matrix.config.compiler == 'clang' }}
-        shell: bash
-        run: |
-          echo "CC=clang-${{matrix.config.version}}" >> $GITHUB_ENV
-          echo "CXX=clang++-${{matrix.config.version}}" >> $GITHUB_ENV
-
       - name: Configure // Unix !Emscripten
         if: ${{ (startsWith(matrix.config.os, 'ubuntu') || startsWith(matrix.config.os, 'macos')) && !startsWith(matrix.config.compiler, 'emscripten') }}
         shell: bash

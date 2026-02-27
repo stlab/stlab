@@ -3,25 +3,21 @@
     {
       "name": "Linux GCC",
       "compiler": "gcc",
-      "version": "latest",
       "os": "ubuntu-latest"
     },
     {
       "name": "Linux Clang",
       "compiler": "clang",
-      "version": "latest",
       "os": "ubuntu-latest"
     },
     {
       "name": "macOS apple-clang latest",
       "compiler": "apple-clang",
-      "version": "latest",
       "os": "macos-latest"
     },
     {
       "name": "Windows",
       "compiler": "Visual Studio",
-      "version": "latest",
       "os": "windows-latest"
     },
     {
