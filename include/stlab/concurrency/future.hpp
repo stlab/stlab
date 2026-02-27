@@ -22,6 +22,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <utility>
 #include <variant> // for std::monostate
 #include <vector>
 
@@ -350,32 +351,11 @@ struct shared_base;
 
 template <class... Args>
 struct shared_task {
-    std::atomic<void*> _co_handle{nullptr};
+    void* _co_handle = nullptr;
 
     virtual ~shared_task() {
 #if STLAB_STD_COROUTINES()
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstringop-overflow"
-#endif
-        if (auto p = _co_handle.exchange(nullptr, std::memory_order_relaxed))
-            std::coroutine_handle<>::from_address(p).destroy();
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
-#endif
-    }
-
-    void _clear_co_handle() noexcept {
-#if STLAB_STD_COROUTINES()
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstringop-overflow"
-#endif
-        _co_handle.store(nullptr, std::memory_order_relaxed);
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
+        std::coroutine_handle<>::from_address(_co_handle).destroy();
 #endif
     }
 
@@ -742,8 +722,8 @@ struct shared<F, R(Args...)> final : shared_base<R>, shared_task<Args...> {
     shared(executor_t s, F&& f) : shared_base<R>(std::move(s)), _f(std::move(f)) {}
 
     void operator()(Args... args) noexcept override {
-        this->shared_task<Args...>::_clear_co_handle(); // give up ownership before invoke (noop if
-                                                        // not coroutine-backed)
+        this->shared_task<Args...>::_co_handle = nullptr; // give up ownership before invoke (noop
+                                                          // if not coroutine-backed)
         std::move (*_f)(promise{this->shared_from_this()}, std::move(args)...);
         // After invoking `_f`, it is not destructed because it could be satisfying the promise
         // asynchronously. `_f` is responsible for any cleanup prior to the future being released
@@ -1978,18 +1958,7 @@ struct final_awaiter {
     bool await_ready() noexcept { return false; }
     void await_resume() noexcept {}
     void await_suspend(std::coroutine_handle<> h) noexcept {
-        if (auto s = _weak.lock()) {
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstringop-overflow"
-#endif
-            if (s->_co_handle.load(std::memory_order_relaxed))
-                return; // shared state owns it; suspend
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
-        }
-        h.destroy(); // we gave up ownership; destroy here
+        _weak.lock()->_co_handle = h.address();
     }
 };
 
@@ -2029,20 +1998,11 @@ struct resume_on_awaiter_with_control {
     auto await_resume() { return std::move(_input).get_ready(); }
     void await_suspend(std::coroutine_handle<> ch) {
         assert(_weak.lock() && "await_suspend: weak_state is gone");
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstringop-overflow"
-#endif
-        _weak.lock()->_co_handle.store(ch.address(), std::memory_order_relaxed);
-        _input.on_completion(std::move(_executor), [weak = _weak]() noexcept {
-            if (auto state = weak.lock()) {
-                if (auto p = state->_co_handle.load(std::memory_order_relaxed))
-                    std::coroutine_handle<>::from_address(p).resume();
-            }
+        _weak.lock()->_co_handle = ch.address();
+        _input.on_completion(std::move(_executor), [weak = std::move(_weak)]() noexcept {
+            if (auto state = weak.lock())
+                std::coroutine_handle<>::from_address(state->_co_handle).resume();
         });
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
     }
 };
 
@@ -2061,12 +2021,13 @@ auto resume_on(E&& executor, future<R>&& f) -> detail::resume_on_awaiter<R> {
 /**************************************************************************************************/
 // Coroutine ownership and destruction rules (implementation notes):
 //
-// We destroy the coroutine only while it is suspended, never while it is executing. Safe destroy
-// points are: (1) at final_suspend, or (2) when suspended on an stlab::future (co_await future or
-// resume_on). The shared state stores _co_handle; when suspended on a future we store the handle
-// there so we can resume via weak_state, and when the future is abandoned we destroy the coroutine.
-// For non-future awaitables we clear _co_handle (give up ownership); the final_awaiter destroys
-// in that case. initial_suspend is suspend_never so we never own before the first suspend.
+// We destroy the coroutine only while it is suspended, and only in one place: ~shared_task(), which
+// exchanges _co_handle and destroys the handle if non-null. The shared state stores _co_handle;
+// when suspended on a future we store the handle there so we can resume via weak_state. At
+// final_suspend we always store the handle in the shared state so ~shared_task() is the sole
+// destroy point. For non-future awaitables we clear _co_handle before suspending (give up
+// ownership for that suspend); at final_suspend we then store the handle again. initial_suspend
+// is suspend_never so we never own before the first suspend.
 /**************************************************************************************************/
 
 template <class T, class... Args>
@@ -2120,15 +2081,8 @@ struct std::coroutine_traits<stlab::future<T>, Args...> {
         }
         template <class U>
         U&& await_transform(U&& u) {
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstringop-overflow"
-#endif
             if (auto state = stlab::detail::weak_state(_promise).lock())
-                state->_co_handle.store(nullptr, std::memory_order_relaxed);
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
+                state->_co_handle = nullptr;
             return std::forward<U>(u);
         }
     };
@@ -2173,15 +2127,8 @@ struct std::coroutine_traits<stlab::future<void>, Args...> {
         }
         template <class U>
         U&& await_transform(U&& u) {
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstringop-overflow"
-#endif
             if (auto state = stlab::detail::weak_state(_promise).lock())
-                state->_co_handle.store(nullptr, std::memory_order_relaxed);
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
+                state->_co_handle = nullptr;
             return std::forward<U>(u);
         }
     };
