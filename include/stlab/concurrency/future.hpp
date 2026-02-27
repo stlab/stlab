@@ -350,7 +350,20 @@ struct shared_base;
 
 template <class... Args>
 struct shared_task {
-    virtual ~shared_task() = default;
+    std::atomic<void*> _co_handle{nullptr};
+
+    virtual ~shared_task() {
+#if STLAB_STD_COROUTINES()
+        if (auto p = _co_handle.exchange(nullptr, std::memory_order_relaxed))
+            std::coroutine_handle<>::from_address(p).destroy();
+#endif
+    }
+
+    void _clear_co_handle() noexcept {
+#if STLAB_STD_COROUTINES()
+        _co_handle.store(nullptr, std::memory_order_relaxed);
+#endif
+    }
 
     virtual void operator()(Args...) = 0;
     virtual void set_exception(const std::exception_ptr&) noexcept = 0;
@@ -715,6 +728,7 @@ struct shared<F, R(Args...)> final : shared_base<R>, shared_task<Args...> {
     shared(executor_t s, F&& f) : shared_base<R>(std::move(s)), _f(std::move(f)) {}
 
     void operator()(Args... args) noexcept override {
+        this->shared_task<Args...>::_clear_co_handle();  // give up ownership before invoke (noop if not coroutine-backed)
         std::move (*_f)(promise{this->shared_from_this()}, std::move(args)...);
         // After invoking `_f`, it is not destructed because it could be satisfying the promise
         // asynchronously. `_f` is responsible for any cleanup prior to the future being released
@@ -1941,25 +1955,19 @@ namespace stlab {
 inline namespace STLAB_VERSION_NAMESPACE() {
 namespace detail {
 
-struct coroutine_guard {
-    std::coroutine_handle<> _handle;
-
-    explicit coroutine_guard(std::coroutine_handle<> h) : _handle(h) {}
-    coroutine_guard(coroutine_guard&& x) noexcept : _handle(std::exchange(x._handle, nullptr)) {}
-    coroutine_guard& operator=(coroutine_guard&&) = delete;
-    coroutine_guard(const coroutine_guard&) = delete;
-    coroutine_guard& operator=(const coroutine_guard&) = delete;
-
-    void release() noexcept { _handle = nullptr; }
-    ~coroutine_guard() {
-        if (_handle) _handle.destroy();
-    }
-};
-
+template <class... Args>
 struct final_awaiter {
+    std::weak_ptr<shared_task<Args...>> _weak;
+
     bool await_ready() noexcept { return false; }
     void await_resume() noexcept {}
-    void await_suspend(std::coroutine_handle<> h) noexcept { h.destroy(); }
+    void await_suspend(std::coroutine_handle<> h) noexcept {
+        if (auto s = _weak.lock()) {
+            if (s->_co_handle.load(std::memory_order_relaxed))
+                return;  // shared state owns it; suspend
+        }
+        h.destroy();  // we gave up ownership; destroy here
+    }
 };
 
 /// Awaitable for co_await future when used from a coroutine (via await_transform).
@@ -1972,8 +1980,12 @@ struct future_awaiter_with_control {
     bool await_ready() { return _input.is_ready(); }
     auto await_resume() { return std::move(_input).get_ready(); }
     void await_suspend(std::coroutine_handle<> ch) {
-        _input.on_completion([weak = _weak, ch]() noexcept {
-            if (weak.lock()) ch.resume();
+        _weak.lock()->_co_handle.store(ch.address(), std::memory_order_relaxed);
+        _input.on_completion([weak = _weak]() noexcept {
+            if (auto state = weak.lock()) {
+                if (auto p = state->_co_handle.load(std::memory_order_relaxed))
+                    std::coroutine_handle<>::from_address(p).resume();
+            }
         });
     }
 };
@@ -2004,8 +2016,12 @@ struct resume_on_awaiter_with_control {
     bool await_ready() const noexcept { return false; }
     auto await_resume() { return std::move(_input).get_ready(); }
     void await_suspend(std::coroutine_handle<> ch) {
-        _input.on_completion(std::move(_executor), [weak = _weak, ch]() noexcept {
-            if (weak.lock()) ch.resume();
+        _weak.lock()->_co_handle.store(ch.address(), std::memory_order_relaxed);
+        _input.on_completion(std::move(_executor), [weak = _weak]() noexcept {
+            if (auto state = weak.lock()) {
+                if (auto p = state->_co_handle.load(std::memory_order_relaxed))
+                    std::coroutine_handle<>::from_address(p).resume();
+            }
         });
     }
 };
@@ -2032,23 +2048,27 @@ struct std::coroutine_traits<stlab::future<T>, Args...> {
         stlab::future<T> get_return_object() {
             auto [pro, fut] = stlab::package<T(std::variant<T, std::exception_ptr>)>(
                 stlab::immediate_executor,
-                [guard = stlab::detail::coroutine_guard{
-                     std::coroutine_handle<promise_type>::from_promise(
-                         *this)}](std::variant<T, std::exception_ptr>&& v) mutable -> T {
-                    guard.release();
+                [](std::variant<T, std::exception_ptr>&& v) mutable -> T {
                     // Use index (1 = exception) to avoid ambiguity when T is std::exception_ptr.
                     if (auto* ep = std::get_if<1>(&v)) {
                         std::rethrow_exception(*ep);
                     }
                     return std::get<0>(std::move(v));
                 });
+            if (auto state = stlab::detail::weak_state(pro).lock())
+                state->_co_handle.store(
+                    std::coroutine_handle<promise_type>::from_promise(*this).address(),
+                    std::memory_order_relaxed);
             _promise = std::move(pro);
             return std::move(fut);
         }
 
         auto initial_suspend() const noexcept { return std::suspend_never{}; }
 
-        auto final_suspend() noexcept { return stlab::detail::final_awaiter{}; }
+        auto final_suspend() noexcept {
+            return stlab::detail::final_awaiter<std::variant<T, std::exception_ptr>>{
+                stlab::detail::weak_state(_promise)};
+        }
 
         template <class U>
         void return_value(U&& val) {
@@ -2075,6 +2095,8 @@ struct std::coroutine_traits<stlab::future<T>, Args...> {
         }
         template <class U>
         U&& await_transform(U&& u) {
+            if (auto state = stlab::detail::weak_state(_promise).lock())
+                state->_co_handle.store(nullptr, std::memory_order_relaxed);
             return std::forward<U>(u);
         }
     };
@@ -2087,19 +2109,24 @@ struct std::coroutine_traits<stlab::future<void>, Args...> {
 
         stlab::future<void> get_return_object() {
             auto [pro, fut] = stlab::package<void(std::exception_ptr)>(
-                stlab::immediate_executor, [guard = stlab::detail::coroutine_guard{
-                                                std::coroutine_handle<promise_type>::from_promise(
-                                                    *this)}](const std::exception_ptr& ep) mutable {
-                    guard.release();
+                stlab::immediate_executor,
+                [](const std::exception_ptr& ep) mutable {
                     if (ep) std::rethrow_exception(ep);
                 });
+            if (auto state = stlab::detail::weak_state(pro).lock())
+                state->_co_handle.store(
+                    std::coroutine_handle<promise_type>::from_promise(*this).address(),
+                    std::memory_order_relaxed);
             _promise = std::move(pro);
             return std::move(fut);
         }
 
         auto initial_suspend() const noexcept { return std::suspend_never{}; }
 
-        auto final_suspend() noexcept { return stlab::detail::final_awaiter{}; }
+        auto final_suspend() noexcept {
+            return stlab::detail::final_awaiter<std::exception_ptr>{
+                stlab::detail::weak_state(_promise)};
+        }
 
         void return_void() { _promise(std::exception_ptr{}); }
 
@@ -2119,6 +2146,8 @@ struct std::coroutine_traits<stlab::future<void>, Args...> {
         }
         template <class U>
         U&& await_transform(U&& u) {
+            if (auto state = stlab::detail::weak_state(_promise).lock())
+                state->_co_handle.store(nullptr, std::memory_order_relaxed);
             return std::forward<U>(u);
         }
     };

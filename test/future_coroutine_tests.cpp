@@ -153,3 +153,32 @@ TEST_CASE("resume_on_already_ready_future_resumes_on_executor") {
     REQUIRE(result == 43);
     REQUIRE(executor_usage_count.load() >= 1);
 }
+
+namespace {
+
+std::coroutine_handle<> g_escaped_handle;
+
+struct escape_awaitable {
+    bool await_ready() const { return false; }
+    void await_suspend(std::coroutine_handle<> ch) { g_escaped_handle = ch; }
+    int await_resume() { return 0; }
+};
+
+future<int> escape_handle_then_resume() {
+    int x = co_await escape_awaitable{};
+    co_return x + 42;
+}
+
+} // namespace
+
+TEST_CASE("generic_await_escape_then_resume_after_future_reset") {
+    {
+        auto f = escape_handle_then_resume();
+        // Coroutine suspended at escape_awaitable; handle stored in global.
+        REQUIRE(g_escaped_handle);
+    }
+    // Future destroyed; we gave up ownership so guard did not destroy the handle.
+    REQUIRE(g_escaped_handle);
+    g_escaped_handle.resume();
+    // Coroutine completes; final_awaiter destroys the handle.
+}
