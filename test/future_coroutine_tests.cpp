@@ -8,7 +8,6 @@
 
 #include <atomic>
 #include <chrono>
-#include <iostream>
 #include <thread>
 #include <utility>
 
@@ -77,9 +76,7 @@ TEST_CASE("future_coroutine_move_only_failure") {
 }
 
 auto do_it(future<int> x, std::atomic_int& result) -> future<void> {
-    int v = co_await std::move(x);
-    result = v;
-    std::cout << v << '\n';
+    result = co_await std::move(x);
     co_return;
 }
 
@@ -121,26 +118,18 @@ TEST_CASE("resume_on_resumes_coroutine_on_given_executor") {
 namespace {
 
 future<int> resume_on_default_executor() {
-    std::cerr << "started\n";
     auto result = co_await async(default_executor, [] {
-        std::cerr << "async started\n";
         std::this_thread::sleep_for(std::chrono::seconds(1));
-        std::cerr << "async finished\n";
         return 42;
     });
-    std::cerr << "finished\n";
     co_return result;
 }
 
 future<int> resume_on_with_explicit_resume_on() {
-    std::cerr << "resume_on started\n";
     auto result = co_await resume_on(default_executor, async(default_executor, [] {
-                                         std::cerr << "resume_on async started\n";
                                          std::this_thread::sleep_for(std::chrono::seconds(1));
-                                         std::cerr << "resume_on async finished\n";
                                          return 42;
                                      }));
-    std::cerr << "resume_on finished\n";
     co_return result;
 }
 

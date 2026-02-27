@@ -773,8 +773,9 @@ class packaged_task {
     template <class T, class E>
     friend auto future_with_broken_promise(E) -> detail::reduced_t<T>;
 
-    friend auto detail::weak_state(const packaged_task<Args...>& p)
-        -> std::weak_ptr<detail::shared_task<Args...>>;
+    template <class... Brgs>
+    friend auto detail::weak_state(const packaged_task<Brgs...>& p)
+        -> std::weak_ptr<detail::shared_task<Brgs...>>;
 
 public:
     packaged_task() = default;
@@ -1998,11 +1999,15 @@ struct resume_on_awaiter_with_control {
     WeakPtr _weak;
 
     bool await_ready() const noexcept {
-        if constexpr (AllowSkipSuspend) return _input.is_ready();
-        return false;
+        if constexpr (AllowSkipSuspend) {
+            return _input.is_ready();
+        } else {
+            return false;
+        }
     }
     auto await_resume() { return std::move(_input).get_ready(); }
     void await_suspend(std::coroutine_handle<> ch) {
+        assert(_weak.lock() && "await_suspend: weak_state is gone");
         _weak.lock()->_co_handle.store(ch.address(), std::memory_order_relaxed);
         _input.on_completion(std::move(_executor), [weak = _weak]() noexcept {
             if (auto state = weak.lock()) {
@@ -2083,8 +2088,7 @@ struct std::coroutine_traits<stlab::future<T>, Args...> {
         auto await_transform(stlab::detail::resume_on_awaiter<R> a) {
             return stlab::detail::resume_on_awaiter_with_control<
                 R, decltype(stlab::detail::weak_state(_promise)), false>{
-                std::move(a._executor), std::move(a._input),
-                stlab::detail::weak_state(_promise)};
+                std::move(a._executor), std::move(a._input), stlab::detail::weak_state(_promise)};
         }
         template <class U>
         U&& await_transform(U&& u) {
@@ -2130,8 +2134,7 @@ struct std::coroutine_traits<stlab::future<void>, Args...> {
         auto await_transform(stlab::detail::resume_on_awaiter<R> a) {
             return stlab::detail::resume_on_awaiter_with_control<
                 R, decltype(stlab::detail::weak_state(_promise)), false>{
-                std::move(a._executor), std::move(a._input),
-                stlab::detail::weak_state(_promise)};
+                std::move(a._executor), std::move(a._input), stlab::detail::weak_state(_promise)};
         }
         template <class U>
         U&& await_transform(U&& u) {
