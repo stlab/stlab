@@ -785,9 +785,12 @@ public:
     auto operator=(packaged_task&& x) noexcept -> packaged_task& = default;
 
     /// Invokes the packaged callable with `args` and completes the associated future.
+    /// Clears _co_handle before reset so ~shared_task() will not destroy the coroutine; the
+    /// coroutine is destroyed in final_awaiter::await_suspend (coroutine is suspended there).
     template <class... A>
     void operator()(A&&... args) noexcept {
         if (auto p = _p.lock()) {
+            p->_co_handle = nullptr;
             _p.reset();
             (*p)(std::forward<A>(args)...);
         }
@@ -799,6 +802,7 @@ public:
     /// Completes the future with `error` without invoking the callable.
     void set_exception(const std::exception_ptr& error) noexcept {
         if (auto p = _p.lock()) {
+            p->_co_handle = nullptr;
             _p.reset();
             p->set_exception(error);
         }
@@ -1951,12 +1955,10 @@ namespace detail {
 
 template <class... Args>
 struct final_awaiter {
-    std::weak_ptr<shared_task<Args...>> _weak;
-
     bool await_ready() noexcept { return false; }
     void await_resume() noexcept {}
     void await_suspend(std::coroutine_handle<> h) noexcept {
-        _weak.lock()->_co_handle = h.address();
+        h.destroy();
     }
 };
 
@@ -2019,13 +2021,13 @@ auto resume_on(E&& executor, future<R>&& f) -> detail::resume_on_awaiter<R> {
 /**************************************************************************************************/
 // Coroutine ownership and destruction rules (implementation notes):
 //
-// We destroy the coroutine only while it is suspended, and only in one place: ~shared_task(), which
-// destroys the handle (noop if not coroutine-backed). The shared state stores _co_handle;
-// when suspended on a future we store the handle there so we can resume via weak_state. At
-// final_suspend we always store the handle in the shared state so ~shared_task() is the sole
-// destroy point. For non-future awaitables we clear _co_handle before suspending (give up
-// ownership for that suspend); at final_suspend we then store the handle again. initial_suspend
-// is suspend_never so we never own before the first suspend.
+// We destroy the coroutine only while it is suspended, in final_awaiter::await_suspend (h.destroy()).
+// Before invoking the packaged_task (in return_value/return_void/unhandled_exception), we clear
+// _co_handle in the shared state so ~shared_task() will not try to destroy the handle when the
+// future is later destroyed. When suspended on a future we store the handle in _co_handle so we
+// can resume via weak_state. For non-future awaitables we clear _co_handle before suspending
+// (give up ownership for that suspend). initial_suspend is suspend_never so we never own before
+// the first suspend.
 /**************************************************************************************************/
 
 template <class T, class... Args>
@@ -2050,8 +2052,8 @@ struct std::coroutine_traits<stlab::future<T>, Args...> {
         auto initial_suspend() const noexcept { return std::suspend_never{}; }
 
         auto final_suspend() noexcept {
-            return stlab::detail::final_awaiter<std::variant<T, std::exception_ptr>>{
-                stlab::detail::weak_state(_promise)};
+            assert(_promise.canceled() && "final_suspend: promise not fulfilled");
+            return stlab::detail::final_awaiter<std::variant<T, std::exception_ptr>>{};
         }
 
         template <class U>
@@ -2103,8 +2105,8 @@ struct std::coroutine_traits<stlab::future<void>, Args...> {
         auto initial_suspend() const noexcept { return std::suspend_never{}; }
 
         auto final_suspend() noexcept {
-            return stlab::detail::final_awaiter<std::exception_ptr>{
-                stlab::detail::weak_state(_promise)};
+            assert(_promise.canceled() && "final_suspend: promise not fulfilled");
+            return stlab::detail::final_awaiter<std::exception_ptr>{};
         }
 
         void return_void() { _promise(std::exception_ptr{}); }
