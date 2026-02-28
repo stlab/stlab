@@ -53,6 +53,8 @@ From the docker prompt
   sed -i 's/\r$//' ./about.sh
   sed -i 's/\r$//' ./CMakePresets.json
 
+
+cd /mnt/host/stlab
   
   cmake -S . -B build/hyde -G Ninja \
   -DCMAKE_CXX_STANDARD=20 \

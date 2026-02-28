@@ -8,6 +8,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <string>
 #include <thread>
 #include <utility>
 
@@ -20,7 +21,9 @@
 #include <stlab/test/model.hpp>
 
 #include "future_test_helper.hpp"
+#include "stlab/concurrency/immediate_executor.hpp"
 
+using namespace std;
 using namespace stlab;
 using namespace future_test_helper;
 
@@ -202,4 +205,52 @@ TEST_CASE("throwing_operation_in_coawait_future") {
         co_return 0;
     }();
     REQUIRE(std::move(f).get_ready() == 1);
+}
+#include <iostream>
+
+auto coroutine(future<int> f) -> future<int> {
+    std::cerr << "start\n";
+    int x = co_await std::move(f);
+    std::cerr << "finish\n";
+    co_return x + 5;
+}
+
+TEST_CASE("example_from_docs") {
+    {
+        auto [p, f] = package<int(int)>(immediate_executor, std::identity{});
+        (void)coroutine(std::move(f)); // drop the result to cancel
+        p(42);                         // fulfill the promise
+    }
+
+    auto f = stlab::async(default_executor, [] { return "world!\n"; });
+    f.on_completion([]() noexcept { std::cerr << "Hello "; });
+    std::cerr << await(std::move(f));
+}
+
+TEST_CASE("resume_on") {
+    string sequence;
+    auto f = [&]() -> future<int> {
+        sequence += "start;";
+        co_await resume_on([&](auto&& task) {
+            sequence += "resume;";
+            task();
+        });
+        sequence += "finish;";
+        co_return 42;
+    }();
+    REQUIRE(f.get_ready() == 42);
+    REQUIRE(sequence == "start;resume;finish;");
+}
+
+TEST_CASE("resume_on_with_cancel") {
+    string sequence;
+    (void)[&]()->future<void> {
+        sequence += "start;";
+        co_await resume_on(default_executor);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        co_await resume_on(default_executor);
+        sequence += "finish;";
+    }
+    ();
+    REQUIRE(sequence == "start;");
 }
