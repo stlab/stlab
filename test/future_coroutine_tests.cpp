@@ -190,3 +190,16 @@ TEST_CASE("generic_await_escape_then_resume_after_future_reset") {
     g_escaped_handle.resume();
     // Coroutine completes; final_awaiter destroys the handle.
 }
+
+TEST_CASE("throwing_operation_in_coawait_future") {
+    auto f = []() -> future<int> {
+        try {
+            co_await make_exceptional_future<void>(
+                std::make_exception_ptr(test_exception("failure")), default_executor);
+        } catch (const test_exception&) {
+            co_return 1;
+        }
+        co_return 0;
+    }();
+    REQUIRE(std::move(f).get_ready() == 1);
+}
