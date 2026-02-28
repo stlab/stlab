@@ -206,26 +206,6 @@ TEST_CASE("throwing_operation_in_coawait_future") {
     }();
     REQUIRE(std::move(f).get_ready() == 1);
 }
-#include <iostream>
-
-auto coroutine(future<int> f) -> future<int> {
-    std::cerr << "start\n";
-    int x = co_await std::move(f);
-    std::cerr << "finish\n";
-    co_return x + 5;
-}
-
-TEST_CASE("example_from_docs") {
-    {
-        auto [p, f] = package<int(int)>(immediate_executor, std::identity{});
-        (void)coroutine(std::move(f)); // drop the result to cancel
-        p(42);                         // fulfill the promise
-    }
-
-    auto f = stlab::async(default_executor, [] { return "world!\n"; });
-    f.on_completion([]() noexcept { std::cerr << "Hello "; });
-    std::cerr << await(std::move(f));
-}
 
 TEST_CASE("resume_on") {
     string sequence;
