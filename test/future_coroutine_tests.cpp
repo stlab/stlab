@@ -20,8 +20,8 @@
 #include <stlab/concurrency/ready_future.hpp>
 #include <stlab/test/model.hpp>
 
+#include "cooperative_executor.hpp"
 #include "future_test_helper.hpp"
-#include "stlab/concurrency/immediate_executor.hpp"
 
 using namespace std;
 using namespace stlab;
@@ -223,14 +223,14 @@ TEST_CASE("resume_on") {
 }
 
 TEST_CASE("resume_on_with_cancel") {
+    test::cooperative_executor coop;
     string sequence;
     (void)[&]()->future<void> {
         sequence += "start;";
-        co_await resume_on(default_executor);
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-        co_await resume_on(default_executor);
+        co_await resume_on(coop.executor());
         sequence += "finish;";
     }
-    ();
+    (); // drop the result to cancel
+    coop.execute_all();
     REQUIRE(sequence == "start;");
 }
