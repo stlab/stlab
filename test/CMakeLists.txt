@@ -67,6 +67,7 @@ add_executable(stlab.test.future
   future_when_any_arguments_tests.cpp
   future_when_any_range_tests.cpp
   main.cpp
+  cooperative_executor.hpp
   future_test_helper.hpp
   future_reduction_tests.cpp)
 

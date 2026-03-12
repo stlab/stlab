@@ -8,6 +8,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <string>
 #include <thread>
 #include <utility>
 
@@ -19,8 +20,10 @@
 #include <stlab/concurrency/ready_future.hpp>
 #include <stlab/test/model.hpp>
 
+#include "cooperative_executor.hpp"
 #include "future_test_helper.hpp"
 
+using namespace std;
 using namespace stlab;
 using namespace future_test_helper;
 
@@ -202,4 +205,32 @@ TEST_CASE("throwing_operation_in_coawait_future") {
         co_return 0;
     }();
     REQUIRE(std::move(f).get_ready() == 1);
+}
+
+TEST_CASE("resume_on") {
+    string sequence;
+    auto f = [&]() -> future<int> {
+        sequence += "start;";
+        co_await resume_on([&](auto&& task) {
+            sequence += "resume;";
+            task();
+        });
+        sequence += "finish;";
+        co_return 42;
+    }();
+    REQUIRE(f.get_ready() == 42);
+    REQUIRE(sequence == "start;resume;finish;");
+}
+
+TEST_CASE("resume_on_with_cancel") {
+    test::cooperative_executor coop;
+    string sequence;
+    (void)[&]()->future<void> {
+        sequence += "start;";
+        co_await resume_on(coop.executor());
+        sequence += "finish;";
+    }
+    (); // drop the result to cancel
+    coop.execute_all();
+    REQUIRE(sequence == "start;");
 }
