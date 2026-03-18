@@ -8,6 +8,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <memory>
 #include <string>
 #include <thread>
 #include <utility>
@@ -195,7 +196,7 @@ TEST_CASE("generic_await_escape_then_resume_after_future_reset") {
 }
 
 TEST_CASE("throwing_operation_in_coawait_future") {
-    auto f = []() -> future<int> {
+    auto coro = []() -> future<int> {
         try {
             co_await make_exceptional_future<void>(
                 std::make_exception_ptr(test_exception("failure")), default_executor);
@@ -203,13 +204,14 @@ TEST_CASE("throwing_operation_in_coawait_future") {
             co_return 1;
         }
         co_return 0;
-    }();
+    };
+    auto f = coro();
     REQUIRE(std::move(f).get_ready() == 1);
 }
 
 TEST_CASE("resume_on") {
     string sequence;
-    auto f = [&]() -> future<int> {
+    auto coro = [&]() -> future<int> {
         sequence += "start;";
         co_await resume_on([&](auto&& task) {
             sequence += "resume;";
@@ -217,7 +219,8 @@ TEST_CASE("resume_on") {
         });
         sequence += "finish;";
         co_return 42;
-    }();
+    };
+    auto f = coro();
     REQUIRE(f.get_ready() == 42);
     REQUIRE(sequence == "start;resume;finish;");
 }
@@ -225,12 +228,12 @@ TEST_CASE("resume_on") {
 TEST_CASE("resume_on_with_cancel") {
     test::cooperative_executor coop;
     string sequence;
-    (void)[&]()->future<void> {
+    auto coro = [&]() -> future<void> {
         sequence += "start;";
         co_await resume_on(coop.executor());
         sequence += "finish;";
-    }
-    (); // drop the result to cancel
+    };
+    (void)coro(); // drop the result to cancel
     coop.execute_all();
     REQUIRE(sequence == "start;");
 }
@@ -293,10 +296,11 @@ TEST_CASE("resume_on_generic_resumes_on_executor") {
     test::cooperative_executor coop;
     g_proxy_handle = nullptr;
 
-    auto f = [&]() -> future<int> {
+    auto coro = [&]() -> future<int> {
         int x = co_await resume_on(coop.executor(), manual_complete_awaitable{});
         co_return x + 35;
-    }();
+    };
+    auto f = coro();
 
     REQUIRE(g_proxy_handle);
     g_proxy_handle.resume();
@@ -312,12 +316,13 @@ TEST_CASE("resume_on_generic_ready_awaitable_resumes_on_executor") {
         task();
     };
 
-    auto f = [&]() -> future<int> {
+    auto coro = [&]() -> future<int> {
         sequence += "start;";
         int x = co_await resume_on(exec, ready_value_awaitable{99});
         sequence += "done;";
         co_return x;
-    }();
+    };
+    auto f = coro();
 
     REQUIRE(sequence == "start;exec;done;");
     REQUIRE(f.get_ready() == 99);
@@ -330,7 +335,7 @@ TEST_CASE("resume_on_generic_propagates_exception") {
         task();
     };
 
-    auto f = [&]() -> future<int> {
+    auto coro = [&]() -> future<int> {
         sequence += "start;";
         try {
             (void)co_await resume_on(exec, throwing_awaitable{});
@@ -340,7 +345,8 @@ TEST_CASE("resume_on_generic_propagates_exception") {
             co_return 1;
         }
         co_return 0;
-    }();
+    };
+    auto f = coro();
 
     REQUIRE(sequence == "start;exec;catch;");
     REQUIRE(f.get_ready() == 1);
@@ -351,7 +357,9 @@ TEST_CASE("resume_on_generic_suspend_propagates_exception") {
     string sequence;
     g_proxy_handle = nullptr;
 
-    auto f = [&]() -> future<int> {
+    // Named lambda so the closure outlives the first suspend (avoids ASan stack-use-after-scope
+    // from coroutine frame holding __closure that pointed at an IIFE temporary).
+    auto coro = [&]() -> future<int> {
         sequence += "start;";
         try {
             (void)co_await resume_on(coop.executor(), suspend_throwing_awaitable{});
@@ -361,7 +369,8 @@ TEST_CASE("resume_on_generic_suspend_propagates_exception") {
             co_return 1;
         }
         co_return 0;
-    }();
+    };
+    auto f = coro();
 
     REQUIRE(sequence == "start;");
     REQUIRE(g_proxy_handle);
@@ -372,17 +381,46 @@ TEST_CASE("resume_on_generic_suspend_propagates_exception") {
     REQUIRE(f.get_ready() == 1);
 }
 
+// Minimal repro variant: no [&] capture for sequence; use shared_ptr so coroutine doesn't hold stack ref.
+TEST_CASE("resume_on_generic_suspend_propagates_exception_no_ref_capture") {
+    test::cooperative_executor coop;
+    auto sequence = std::make_shared<std::string>();
+    g_proxy_handle = nullptr;
+
+    auto coro = [coop_ptr = &coop, sequence]() -> future<int> {
+        *sequence += "start;";
+        try {
+            (void)co_await resume_on(coop_ptr->executor(), suspend_throwing_awaitable{});
+        } catch (const test_exception& e) {
+            *sequence += "catch;";
+            REQUIRE(string(e.what()) == "generic resume_on suspend throw");
+            co_return 1;
+        }
+        co_return 0;
+    };
+    auto f = coro();
+
+    REQUIRE(*sequence == "start;");
+    REQUIRE(g_proxy_handle);
+    g_proxy_handle.resume();
+    coop.execute_all();
+
+    REQUIRE(*sequence == "start;catch;");
+    REQUIRE(f.get_ready() == 1);
+}
+
 TEST_CASE("resume_on_generic_void_awaitable_suspend_path") {
     test::cooperative_executor coop;
     string sequence;
     g_proxy_handle = nullptr;
 
-    auto f = [&]() -> future<int> {
+    auto coro = [&]() -> future<int> {
         sequence += "start;";
         co_await resume_on(coop.executor(), manual_complete_void_awaitable{});
         sequence += "done;";
         co_return 11;
-    }();
+    };
+    auto f = coro();
 
     REQUIRE(sequence == "start;");
     REQUIRE(g_proxy_handle);
@@ -437,11 +475,12 @@ TEST_CASE("resume_on_generic_with_cancel") {
     test::cooperative_executor coop;
     string sequence;
 
-    auto f = [&]() -> future<void> {
+    auto coro = [&]() -> future<void> {
         sequence += "start;";
         co_await resume_on(coop.executor(), manual_complete_awaitable{});
         sequence += "finish;";
-    }();
+    };
+    auto f = coro();
 
     REQUIRE(sequence == "start;");
     f.reset();
