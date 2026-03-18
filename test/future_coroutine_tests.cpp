@@ -328,6 +328,27 @@ TEST_CASE("resume_on_generic_ready_awaitable_resumes_on_executor") {
     REQUIRE(f.get_ready() == 99);
 }
 
+// std::suspend_never is a direct awaiter (no operator co_await); resume_on must handle it.
+// We use suspend_never (not suspend_always) so await_ready() is true and we take the
+// immediate-completion path; suspend_always would suspend the proxy with nothing to resume it.
+TEST_CASE("resume_on_generic_direct_awaiter_resumes_on_executor") {
+    string sequence;
+    auto exec = [&](auto&& task) {
+        sequence += "exec;";
+        task();
+    };
+
+    auto coro = [&]() -> future<void> {
+        sequence += "start;";
+        co_await resume_on(exec, std::suspend_never{});
+        sequence += "done;";
+    };
+    auto f = coro();
+
+    REQUIRE(sequence == "start;exec;done;");
+    (void)await(std::move(f));
+}
+
 TEST_CASE("resume_on_generic_propagates_exception") {
     string sequence;
     auto exec = [&](auto&& task) {

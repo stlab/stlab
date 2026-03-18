@@ -1954,18 +1954,28 @@ inline namespace STLAB_VERSION_NAMESPACE() {
 namespace detail {
 
 // --- Generic awaitable support for resume_on(executor, any_awaitable) ---
+// C++ coroutine protocol: awaitable is (1) has member operator co_await, (2) has free
+// operator co_await, or (3) is directly an awaiter (await_ready/await_suspend/await_resume).
 template <class A, class = void>
 struct has_member_co_await : std::false_type {};
 template <class A>
 struct has_member_co_await<A, std::void_t<decltype(std::declval<A>().operator co_await())>>
     : std::true_type {};
 
+template <class A, class = void>
+struct has_free_co_await : std::false_type {};
+template <class A>
+struct has_free_co_await<A, std::void_t<decltype(operator co_await(std::declval<A>()))>>
+    : std::true_type {};
+
 template <class A>
 auto get_awaiter(A&& a) {
     if constexpr (has_member_co_await<A>::value) {
         return std::forward<A>(a).operator co_await();
-    } else {
+    } else if constexpr (has_free_co_await<A>::value) {
         return operator co_await(std::forward<A>(a));
+    } else {
+        return std::forward<A>(a);  // direct awaiter (e.g. std::suspend_always)
     }
 }
 
