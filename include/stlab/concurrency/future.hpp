@@ -1953,6 +1953,98 @@ namespace stlab {
 inline namespace STLAB_VERSION_NAMESPACE() {
 namespace detail {
 
+// --- Generic awaitable support for resume_on(executor, any_awaitable) ---
+template <class A, class = void>
+struct has_member_co_await : std::false_type {};
+template <class A>
+struct has_member_co_await<A, std::void_t<decltype(std::declval<A>().operator co_await())>>
+    : std::true_type {};
+
+template <class A>
+auto get_awaiter(A&& a) {
+    if constexpr (has_member_co_await<A>::value) {
+        return std::forward<A>(a).operator co_await();
+    } else {
+        return operator co_await(std::forward<A>(a));
+    }
+}
+
+template <class A>
+using awaiter_t = decltype(get_awaiter(std::declval<A&>()));
+
+template <class A>
+using await_result_t = decltype(std::declval<awaiter_t<A>>().await_resume());
+
+template <class A>
+using await_result_storage_t = void_to_monostate_t<await_result_t<A>>;
+
+// Fire-and-forget return type for the proxy coroutine. No handle is retained after launch;
+// the proxy owns itself and self-destroys at final_suspend (suspend_never).
+struct proxy_fire_and_forget {
+    struct promise_type {
+        proxy_fire_and_forget get_return_object() { return {}; }
+        std::suspend_never initial_suspend() { return {}; }
+        std::suspend_never final_suspend() noexcept { return {}; }
+        void return_void() {}
+        void unhandled_exception() { std::terminate(); }
+    };
+};
+
+/// Proxy coroutine: runs co_await on the inner awaitable then invokes executor(resume_cb).
+/// Fire-and-forget: self-destroys at completion (final_suspend is suspend_never).
+template <class A, class E, class F>
+proxy_fire_and_forget resume_on_proxy_coro(E executor,
+                                           F resume_cb,
+                                           A awaitable,
+                                           std::optional<await_result_storage_t<A>>* result_ptr,
+                                           std::exception_ptr* exception_ptr) {
+    try {
+        if constexpr (std::is_void_v<await_result_t<A>>) {
+            co_await std::move(awaitable);
+            result_ptr->emplace(std::monostate{});
+        } else {
+            result_ptr->emplace(co_await std::move(awaitable));
+        }
+    } catch (...) {
+        if (exception_ptr) *exception_ptr = std::current_exception();
+    }
+    executor(std::move(resume_cb));
+}
+
+/// Controlled-path proxy coroutine: writes to awaiter storage only while weak_state is alive.
+template <class A, class E, class F, class WeakPtr>
+proxy_fire_and_forget resume_on_proxy_coro_controlled(
+    E executor,
+    F resume_cb,
+    A awaitable,
+    WeakPtr weak,
+    std::optional<await_result_storage_t<A>>* result_ptr,
+    std::exception_ptr* exception_ptr) {
+    // proceed with co_await; if weak_state is destroyed during suspension, the proxy is
+    // responsible for not writing to awaiter storage and not invoking the resume callback.
+    try {
+        if constexpr (std::is_void_v<await_result_t<A>>) {
+            co_await std::move(awaitable);
+            if (auto keepalive = weak.lock()) {
+                (void)keepalive;
+                result_ptr->emplace(std::monostate{});
+            }
+        } else {
+            auto tmp = co_await std::move(awaitable);
+            if (auto keepalive = weak.lock()) {
+                (void)keepalive;
+                result_ptr->emplace(std::move(tmp));
+            }
+        }
+    } catch (...) {
+        if (auto keepalive = weak.lock()) {
+            (void)keepalive;
+            if (exception_ptr) *exception_ptr = std::current_exception();
+        }
+    }
+    executor(std::move(resume_cb));
+}
+
 template <class... Args>
 struct final_awaiter {
     bool await_ready() noexcept { return false; }
@@ -2027,7 +2119,7 @@ struct resume_on_executor_awaiter_with_control {
     E _executor;
     WeakPtr _weak;
 
-    bool await_ready() const noexcept { return false; }
+    [[nodiscard]] bool await_ready() const noexcept { return false; }
     void await_resume() noexcept {}
     void await_suspend(std::coroutine_handle<> ch) {
         assert(_weak.lock() && "await_suspend: weak_state is gone");
@@ -2039,6 +2131,101 @@ struct resume_on_executor_awaiter_with_control {
     }
 };
 
+/// Awaitable that suspends and resumes the coroutine on the given executor when any awaitable
+/// completes. When the inner is ready without suspending, still resumes on the executor.
+template <class E, class A>
+struct resume_on_any_awaiter {
+    E _executor;
+    A _awaitable;
+    std::optional<await_result_storage_t<A>> _result;
+    std::exception_ptr _exception;
+
+    bool await_ready() const noexcept { return false; }
+
+    await_result_t<A> await_resume() {
+        if (_exception) std::rethrow_exception(_exception);
+        if constexpr (std::is_void_v<await_result_t<A>>) {
+            return;
+        } else {
+            return std::move(*_result);
+        }
+    }
+
+    void await_suspend(std::coroutine_handle<> ch) {
+        auto inner = get_awaiter(_awaitable);
+        if (inner.await_ready()) {
+            try {
+                if constexpr (std::is_void_v<await_result_t<A>>) {
+                    inner.await_resume();
+                    _result.emplace(std::monostate{});
+                } else {
+                    _result.emplace(inner.await_resume());
+                }
+            } catch (...) {
+                _exception = std::current_exception();
+            }
+            std::move(_executor)([ch]() noexcept { ch.resume(); });
+            return;
+        }
+        resume_on_proxy_coro(
+            std::move(_executor), [ch]() noexcept { ch.resume(); }, std::move(_awaitable), &_result,
+            &_exception);
+    }
+};
+
+/// resume_on_any_awaiter with weak_ptr check for use from coroutines (via await_transform).
+/// Keeps cancellation: when the returned future is destroyed while suspended, the coroutine
+/// is not resumed.
+template <class E, class A, class WeakPtr>
+struct resume_on_any_awaiter_with_control {
+    E _executor;
+    A _awaitable;
+    WeakPtr _weak;
+    std::optional<await_result_storage_t<A>> _result;
+    std::exception_ptr _exception;
+
+    bool await_ready() const noexcept { return false; }
+
+    await_result_t<A> await_resume() {
+        if (_exception) std::rethrow_exception(_exception);
+        if constexpr (std::is_void_v<await_result_t<A>>) {
+            return;
+        } else {
+            return std::move(*_result);
+        }
+    }
+
+    void await_suspend(std::coroutine_handle<> ch) {
+        assert(_weak.lock() && "await_suspend: weak_state is gone");
+        _weak.lock()->_co_handle = ch.address();
+        auto inner = get_awaiter(_awaitable);
+        if (inner.await_ready()) {
+            try {
+                if constexpr (std::is_void_v<await_result_t<A>>) {
+                    inner.await_resume();
+                    _result.emplace(std::monostate{});
+                } else {
+                    _result.emplace(inner.await_resume());
+                }
+            } catch (...) {
+                _exception = std::current_exception();
+            }
+            std::move(_executor)([weak = _weak]() noexcept {
+                if (auto state = weak.lock())
+                    std::coroutine_handle<>::from_address(state->_co_handle).resume();
+            });
+            return;
+        }
+        resume_on_proxy_coro_controlled(
+            std::move(_executor),
+            [weak = _weak]() noexcept {
+                if (auto state = weak.lock())
+                    std::coroutine_handle<>::from_address(state->_co_handle).resume();
+            },
+            std::move(_awaitable), _weak, &_result, &_exception);
+    }
+};
+
 } // namespace detail
 
 /// When the future completes, the current coroutine is resumed on `executor`; result/exception
@@ -2046,6 +2233,15 @@ struct resume_on_executor_awaiter_with_control {
 template <class E, class R>
 auto resume_on(E&& executor, future<R>&& f) -> detail::resume_on_awaiter<R, std::decay_t<E>> {
     return detail::resume_on_awaiter{std::forward<E>(executor), std::move(f)};
+}
+
+/// When the awaitable completes, the current coroutine is resumed on `executor`; works with any
+/// awaitable (not just future). Result/exception semantics are the same as `co_await std::move(a)`.
+template <class E, class A>
+auto resume_on(E&& executor, A&& awaitable)
+    -> detail::resume_on_any_awaiter<std::decay_t<E>, std::decay_t<A>> {
+    return detail::resume_on_any_awaiter<std::decay_t<E>, std::decay_t<A>>{
+        std::forward<E>(executor), std::forward<A>(awaitable), {}, {}};
 }
 
 /// Suspends and resumes the coroutine on the given executor. If used within a coroutine returning a
@@ -2071,7 +2267,7 @@ auto resume_on(E&& executor) -> detail::resume_on_executor_awaiter<std::decay_t<
 /**************************************************************************************************/
 
 template <class T, class... Args>
-struct std::coroutine_traits<stlab::future<T>, Args...> {
+struct std::coroutine_traits<stlab::future<T>, Args...> { // NOLINT(cert-dcl58-cpp)
     struct promise_type {
         stlab::packaged_task<std::variant<T, std::exception_ptr>> _promise;
 
@@ -2126,6 +2322,13 @@ struct std::coroutine_traits<stlab::future<T>, Args...> {
                 E, decltype(stlab::detail::weak_state(_promise))>{
                 std::move(a._executor), stlab::detail::weak_state(_promise)};
         }
+        template <class E, class A>
+        auto await_transform(stlab::detail::resume_on_any_awaiter<E, A> a) {
+            return stlab::detail::resume_on_any_awaiter_with_control<
+                E, A, decltype(stlab::detail::weak_state(_promise))>{
+                std::move(a._executor), std::move(a._awaitable),
+                stlab::detail::weak_state(_promise), std::move(a._result), std::move(a._exception)};
+        }
         template <class U>
         U&& await_transform(U&& u) {
             if (auto state = stlab::detail::weak_state(_promise).lock())
@@ -2178,6 +2381,13 @@ struct std::coroutine_traits<stlab::future<void>, Args...> {
             return stlab::detail::resume_on_executor_awaiter_with_control<
                 E, decltype(stlab::detail::weak_state(_promise))>{
                 std::move(a._executor), stlab::detail::weak_state(_promise)};
+        }
+        template <class E, class A>
+        auto await_transform(stlab::detail::resume_on_any_awaiter<E, A> a) {
+            return stlab::detail::resume_on_any_awaiter_with_control<
+                E, A, decltype(stlab::detail::weak_state(_promise))>{
+                std::move(a._executor), std::move(a._awaitable),
+                stlab::detail::weak_state(_promise), std::move(a._result), std::move(a._exception)};
         }
         template <class U>
         U&& await_transform(U&& u) {
