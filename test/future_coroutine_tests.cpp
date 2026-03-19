@@ -280,6 +280,22 @@ struct manual_complete_void_awaitable {
     manual_complete_void_awaitable& operator co_await() { return *this; }
 };
 
+// operator co_await() must run once on the suspend path (no probe + proxy double-call).
+inline std::atomic<int> g_co_await_invocation_count{0};
+
+struct co_await_counting_awaitable {
+    struct awaiter {
+        bool await_ready() const noexcept { return false; }
+        void await_suspend(std::coroutine_handle<> h) { g_proxy_handle = h; }
+        int await_resume() { return 99; }
+    };
+    // Unqualified so awaiter_t<A> (via get_awaiter(declval<A&>())) matches stlab's traits.
+    awaiter operator co_await() {
+        ++g_co_await_invocation_count;
+        return {};
+    }
+};
+
 struct detached_test_coro {
     struct promise_type {
         detached_test_coro get_return_object() { return {}; }
@@ -291,6 +307,26 @@ struct detached_test_coro {
 };
 
 } // namespace
+
+TEST_CASE("resume_on_generic_single_co_await_on_suspend_path") {
+    test::cooperative_executor coop;
+    g_proxy_handle = nullptr;
+    g_co_await_invocation_count.store(0);
+
+    auto coro = [&]() -> future<int> {
+        int x = co_await resume_on(coop.executor(), co_await_counting_awaitable{});
+        co_return x;
+    };
+    auto f = coro();
+
+    REQUIRE(g_proxy_handle);
+    REQUIRE(g_co_await_invocation_count.load() == 1);
+    g_proxy_handle.resume();
+    coop.execute_all();
+
+    REQUIRE(await(std::move(f)) == 99);
+    REQUIRE(g_co_await_invocation_count.load() == 1);
+}
 
 TEST_CASE("resume_on_generic_resumes_on_executor") {
     test::cooperative_executor coop;

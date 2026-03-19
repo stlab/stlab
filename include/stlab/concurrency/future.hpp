@@ -2000,20 +2000,22 @@ struct proxy_fire_and_forget {
     };
 };
 
-/// Proxy coroutine: runs co_await on the inner awaitable then invokes executor(resume_cb).
-/// Fire-and-forget: self-destroys at completion (final_suspend is suspend_never).
-template <class A, class E, class F>
+/// Proxy coroutine: runs co_await on the inner awaiter (already produced from the awaitable via
+/// get_awaiter) then invokes executor(resume_cb). Fire-and-forget: self-destroys at completion
+/// (final_suspend is suspend_never). Inner must be the awaiter from a single get_awaiter(awaitable)
+/// so operator co_await() is not invoked twice on the same awaitable.
+template <class A, class Inner, class E, class F>
 proxy_fire_and_forget resume_on_proxy_coro(E executor,
                                            F resume_cb,
-                                           A awaitable,
+                                           Inner inner,
                                            std::optional<await_result_storage_t<A>>* result_ptr,
                                            std::exception_ptr* exception_ptr) {
     try {
         if constexpr (std::is_void_v<await_result_t<A>>) {
-            co_await std::move(awaitable);
+            co_await std::move(inner);
             result_ptr->emplace(std::monostate{});
         } else {
-            result_ptr->emplace(co_await std::move(awaitable));
+            result_ptr->emplace(co_await std::move(inner));
         }
     } catch (...) {
         if (exception_ptr) *exception_ptr = std::current_exception();
@@ -2022,11 +2024,11 @@ proxy_fire_and_forget resume_on_proxy_coro(E executor,
 }
 
 /// Controlled-path proxy coroutine: writes to awaiter storage only while weak_state is alive.
-template <class A, class E, class F, class WeakPtr>
+template <class A, class Inner, class E, class F, class WeakPtr>
 proxy_fire_and_forget resume_on_proxy_coro_controlled(
     E executor,
     F resume_cb,
-    A awaitable,
+    Inner inner,
     WeakPtr weak,
     std::optional<await_result_storage_t<A>>* result_ptr,
     std::exception_ptr* exception_ptr) {
@@ -2034,13 +2036,13 @@ proxy_fire_and_forget resume_on_proxy_coro_controlled(
     // responsible for not writing to awaiter storage and not invoking the resume callback.
     try {
         if constexpr (std::is_void_v<await_result_t<A>>) {
-            co_await std::move(awaitable);
+            co_await std::move(inner);
             if (auto keepalive = weak.lock()) {
                 (void)keepalive;
                 result_ptr->emplace(std::monostate{});
             }
         } else {
-            auto tmp = co_await std::move(awaitable);
+            auto tmp = co_await std::move(inner);
             if (auto keepalive = weak.lock()) {
                 (void)keepalive;
                 result_ptr->emplace(std::move(tmp));
@@ -2162,7 +2164,7 @@ struct resume_on_any_awaiter {
     }
 
     void await_suspend(std::coroutine_handle<> ch) {
-        auto inner = get_awaiter(_awaitable);
+        auto inner = get_awaiter(std::move(_awaitable));
         if (inner.await_ready()) {
             try {
                 if constexpr (std::is_void_v<await_result_t<A>>) {
@@ -2177,8 +2179,8 @@ struct resume_on_any_awaiter {
             std::move(_executor)([ch]() noexcept { ch.resume(); });
             return;
         }
-        resume_on_proxy_coro(
-            std::move(_executor), [ch]() noexcept { ch.resume(); }, std::move(_awaitable), &_result,
+        resume_on_proxy_coro<std::decay_t<A>>(
+            std::move(_executor), [ch]() noexcept { ch.resume(); }, std::move(inner), &_result,
             &_exception);
     }
 };
@@ -2208,7 +2210,7 @@ struct resume_on_any_awaiter_with_control {
     void await_suspend(std::coroutine_handle<> ch) {
         assert(_weak.lock() && "await_suspend: weak_state is gone");
         _weak.lock()->_co_handle = ch.address();
-        auto inner = get_awaiter(_awaitable);
+        auto inner = get_awaiter(std::move(_awaitable));
         if (inner.await_ready()) {
             try {
                 if constexpr (std::is_void_v<await_result_t<A>>) {
@@ -2226,13 +2228,13 @@ struct resume_on_any_awaiter_with_control {
             });
             return;
         }
-        resume_on_proxy_coro_controlled(
+        resume_on_proxy_coro_controlled<std::decay_t<A>>(
             std::move(_executor),
             [weak = _weak]() noexcept {
                 if (auto state = weak.lock())
                     std::coroutine_handle<>::from_address(state->_co_handle).resume();
             },
-            std::move(_awaitable), _weak, &_result, &_exception);
+            std::move(inner), _weak, &_result, &_exception);
     }
 };
 
