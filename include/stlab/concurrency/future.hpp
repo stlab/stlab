@@ -2034,27 +2034,31 @@ proxy_fire_and_forget resume_on_proxy_coro_controlled(
     std::exception_ptr* exception_ptr) {
     // proceed with co_await; if weak_state is destroyed during suspension, the proxy is
     // responsible for not writing to awaiter storage and not invoking the resume callback.
+    bool was_alive = false;
     try {
         if constexpr (std::is_void_v<await_result_t<A>>) {
             co_await std::move(inner);
             if (auto keepalive = weak.lock()) {
                 (void)keepalive;
                 result_ptr->emplace(std::monostate{});
+                was_alive = true;
             }
         } else {
             auto tmp = co_await std::move(inner);
             if (auto keepalive = weak.lock()) {
                 (void)keepalive;
                 result_ptr->emplace(std::move(tmp));
+                was_alive = true;
             }
         }
     } catch (...) {
         if (auto keepalive = weak.lock()) {
             (void)keepalive;
             if (exception_ptr) *exception_ptr = std::current_exception();
+            was_alive = true;
         }
     }
-    executor(std::move(resume_cb));
+    if (was_alive) executor(std::move(resume_cb));
 }
 
 template <class... Args>
