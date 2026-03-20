@@ -15,7 +15,7 @@
 /**************************************************************************************************/
 
 namespace stlab {
-inline namespace STLAB_VERSION_NAMESPACE() {
+STLAB_VERSION_NAMESPACE_BEGIN()
 namespace unsafe {
 
 /**************************************************************************************************/
@@ -52,7 +52,7 @@ inline void skip_node(I location) {
 /**************************************************************************************************/
 
 } // namespace unsafe
-} // namespace STLAB_VERSION_NAMESPACE()
+STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/

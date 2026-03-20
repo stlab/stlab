@@ -36,6 +36,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1.213.0
         with:
@@ -54,6 +56,16 @@ jobs:
           bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
         env:
           JEKYLL_ENV: production
+      - name: Install Doxygen
+        uses: ssciwr/doxygen-install@501e53b879da7648ab392ee226f5b90e42148449
+      - name: Install Ninja
+        run: sudo apt-get update && sudo apt-get install -y ninja-build
+      - name: Build Doxygen into site
+        run: |
+          cmake --preset=doxygen
+          cmake --build --preset=doxygen
+          mkdir -p docs/_site/doxygen
+          cp -r build/doxygen/html/. docs/_site/doxygen/
       - name: Upload artifact
         # Automatically uploads an artifact from the './_site' directory by default
         uses: actions/upload-pages-artifact@v3

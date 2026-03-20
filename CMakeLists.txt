@@ -193,6 +193,17 @@ if(PROJECT_IS_TOP_LEVEL AND BUILD_TESTING)
   add_subdirectory(test)
 endif()
 
+option(STLAB_DOXYGEN "Generate API documentation with Doxygen (requires Doxygen on PATH)" OFF)
+if(PROJECT_IS_TOP_LEVEL AND STLAB_DOXYGEN)
+  # Hide implementation namespace detail:: (STLAB_VERSION_NAMESPACE_* is a no-op in Doxygen).
+  _cpp_library_setup_docs(
+    NAME "stlab"
+    VERSION "${PROJECT_VERSION}"
+    DESCRIPTION "Modern, modular C++ algorithms, data structures, and concurrency primitives"
+    DOCS_EXCLUDE_SYMBOLS "stlab::detail"
+  )
+endif()
+
 ########################################################
 # Installation Support (using cpp-library dependency auto-discovery)
 if(PROJECT_IS_TOP_LEVEL)

@@ -29,7 +29,7 @@
 /**************************************************************************************************/
 
 namespace stlab {
-inline namespace STLAB_VERSION_NAMESPACE() {
+STLAB_VERSION_NAMESPACE_BEGIN()
 
 /**************************************************************************************************/
 
@@ -163,7 +163,7 @@ auto blocking_get(future<T> x, const std::chrono::nanoseconds& timeout) -> declt
 
 /**************************************************************************************************/
 
-} // namespace STLAB_VERSION_NAMESPACE()
+STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/

@@ -26,6 +26,8 @@ This library provides futures and channels, high-level abstractions for implemen
 
 The complete documentation is available on the [STLab home page](http://stlab.cc).
 
+API reference (Doxygen, including [doxygen-awesome-css](https://github.com/jothepro/doxygen-awesome-css)) is built when `-DSTLAB_DOXYGEN=ON` is set, or via the CMake preset `doxygen` (`cmake --preset=doxygen` then `cmake --build --preset=doxygen`). Output is written under `build/doxygen/html`. On GitHub Pages, it is published under `/doxygen/` next to the Hyde/Jekyll site.
+
 Release changelogs are listed in [CHANGES.md](CHANGES.md).
 
 ## Tested on

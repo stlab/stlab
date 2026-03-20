@@ -17,7 +17,7 @@
 /**************************************************************************************************/
 
 namespace stlab {
-inline namespace STLAB_VERSION_NAMESPACE() {
+STLAB_VERSION_NAMESPACE_BEGIN()
 
 /**************************************************************************************************/
 
@@ -42,7 +42,7 @@ inline constexpr auto immediate_executor = detail::immediate_executor_type{};
 
 /**************************************************************************************************/
 
-} // namespace STLAB_VERSION_NAMESPACE()
+STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/

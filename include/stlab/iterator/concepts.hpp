@@ -11,13 +11,13 @@
 #include <stlab/iterator/set_next.hpp>
 
 namespace stlab {
-inline namespace STLAB_VERSION_NAMESPACE() {
+STLAB_VERSION_NAMESPACE_BEGIN()
 
 template <class I>
 concept forward_node_iterator = std::forward_iterator<I> && requires(I i) {
     { stlab::unsafe::set_next(i, i) };
 };
-}
+STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 #define STLAB_PRIVATE_CONCEPT_FORWARD_NODE_ITERATOR stlab::forward_node_iterator

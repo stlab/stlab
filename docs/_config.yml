@@ -22,6 +22,7 @@ remote_theme: adobe/hyde-theme@v3.0.0
 
 exclude:
   - _source
+  - Doxyfile
   - build
   - boost # from building examples
   - boost.tgz # from building examples

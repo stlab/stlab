@@ -10,7 +10,7 @@
 #ifndef STLAB_CONCURRENCY_TUPLE_ALGORITHM_HPP
 #define STLAB_CONCURRENCY_TUPLE_ALGORITHM_HPP
 
-#include <stlab/config.hpp> // for STLAB_VERSION_NAMESPACE
+#include <stlab/config.hpp> // for STLAB_VERSION_NAMESPACE_*
 
 // stdc++
 #include <cstddef>     // for size_t
@@ -22,7 +22,7 @@
 /**************************************************************************************************/
 
 namespace stlab {
-inline namespace STLAB_VERSION_NAMESPACE() {
+STLAB_VERSION_NAMESPACE_BEGIN()
 
 /**************************************************************************************************/
 
@@ -246,7 +246,7 @@ constexpr auto apply_indexed(F&& f, Tuple&& t) -> decltype(auto) {
 
 /**************************************************************************************************/
 
-} // namespace STLAB_VERSION_NAMESPACE()
+STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/

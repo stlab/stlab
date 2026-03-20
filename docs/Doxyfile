@@ -1,0 +1,35 @@
+# Configured by CMake (see _cpp_library_setup_docs in stlab/cpp-library).
+# Phase 1: relaxed warnings while Hyde remains the primary documentation.
+
+PROJECT_NAME = "@PROJECT_NAME@"
+PROJECT_BRIEF = "@PROJECT_BRIEF@"
+PROJECT_NUMBER = @PROJECT_VERSION@
+OUTPUT_DIRECTORY = @OUTPUT_DIR@
+GENERATE_LATEX = NO
+QUIET = YES
+WARN_IF_UNDOCUMENTED = NO
+WARN_AS_ERROR = NO
+INPUT = @INPUT_DIR@
+# Generated <stlab/config.hpp> (macros, version namespace) lives in the build tree
+INCLUDE_PATH = @CMAKE_BINARY_DIR@/include
+RECURSIVE = YES
+# stlab::detail supplied from CMake (DOCS_EXCLUDE_SYMBOLS)
+EXCLUDE_SYMBOLS = @EXCLUDE_SYMBOLS@
+
+# Version inline namespace is wrapped in macros; expand to nothing so docs show stlab:: only
+ENABLE_PREPROCESSING = YES
+MACRO_EXPANSION = YES
+EXPAND_ONLY_PREDEF = YES
+PREDEFINED = STLAB_VERSION_NAMESPACE_BEGIN()= STLAB_VERSION_NAMESPACE_END()=
+EXAMPLE_PATH = @EXAMPLES_PATH@
+HIDE_UNDOC_NAMESPACES = NO
+HTML_EXTRA_STYLESHEET = @AWESOME_CSS_PATH@/doxygen-awesome.css \
+ @AWESOME_CSS_PATH@/doxygen-awesome-sidebar-only.css \
+ @CPP_LIBRARY_ROOT@/templates/custom.css
+HTML_COLORSTYLE = LIGHT
+GENERATE_TREEVIEW = YES
+DISABLE_INDEX = NO
+FULL_SIDEBAR = NO
+DISTRIBUTE_GROUP_DOC = YES
+MAX_INITIALIZER_LINES = 0
+MULTILINE_CPP_IS_BRIEF = YES

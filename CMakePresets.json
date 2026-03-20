@@ -126,7 +126,7 @@
         },
         {
             "name": "docs",
-            "description": "Build documentation",
+            "description": "Hyde / Jekyll helper configure (see docs/; not Doxygen)",
             "binaryDir": "${sourceDir}/build/hyde",
             "cacheVariables": {
                 "CMAKE_CXX_STANDARD": "20",
@@ -137,6 +137,20 @@
                 "STLAB_THREAD_SYSTEM": "pthread",
                 "stlab.coverage": "OFF",
                 "CPM_SOURCE_CACHE": "${sourceDir}/.cache/cpm"
+            }
+        },
+        {
+            "name": "doxygen",
+            "description": "Doxygen API reference (doxygen-awesome); run build preset doxygen with target docs",
+            "inherits": "base-cpp20",
+            "cacheVariables": {
+                "BUILD_TESTING": "OFF",
+                "STLAB_DOXYGEN": "ON",
+                "STLAB_MAIN_EXECUTOR": "none",
+                "STLAB_NO_STD_COROUTINES": "ON",
+                "STLAB_TASK_SYSTEM": "portable",
+                "STLAB_THREAD_SYSTEM": "pthread",
+                "stlab.coverage": "OFF"
             }
         },
         {
@@ -241,6 +255,11 @@
             "name": "include-what-you-use",
             "configurePreset": "include-what-you-use",
             "jobs": 1
+        },
+        {
+            "name": "doxygen",
+            "configurePreset": "doxygen",
+            "targets": ["docs"]
         }
     ],
     "testPresets": [

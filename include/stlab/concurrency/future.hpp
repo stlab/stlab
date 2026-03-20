@@ -79,7 +79,7 @@ resume the current coroutine on a specific executor when the future completes.
 /**************************************************************************************************/
 
 namespace stlab {
-inline namespace STLAB_VERSION_NAMESPACE() {
+STLAB_VERSION_NAMESPACE_BEGIN()
 
 /**************************************************************************************************/
 
@@ -1940,7 +1940,7 @@ void shared_base<T, enable_if_not_copyable<void_to_monostate_t<T>>>::set_value(A
 
 /**************************************************************************************************/
 
-} // namespace STLAB_VERSION_NAMESPACE()
+STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/
@@ -1950,7 +1950,7 @@ void shared_base<T, enable_if_not_copyable<void_to_monostate_t<T>>>::set_value(A
 /**************************************************************************************************/
 
 namespace stlab {
-inline namespace STLAB_VERSION_NAMESPACE() {
+STLAB_VERSION_NAMESPACE_BEGIN()
 namespace detail {
 
 // --- Generic awaitable support for resume_on(executor, any_awaitable) ---
@@ -2319,7 +2319,7 @@ auto cancelable(const future<R>&) // Use co_await std::move(f); it is already ca
     return {};
 }
 
-} // namespace STLAB_VERSION_NAMESPACE()
+STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/

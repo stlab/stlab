@@ -38,7 +38,7 @@
 /**************************************************************************************************/
 
 namespace stlab {
-inline namespace STLAB_VERSION_NAMESPACE() {
+STLAB_VERSION_NAMESPACE_BEGIN()
 
 /**************************************************************************************************/
 
@@ -490,7 +490,7 @@ inline constexpr auto high_executor = detail::executor_type<detail::executor_pri
 
 /**************************************************************************************************/
 
-} // namespace STLAB_VERSION_NAMESPACE()
+STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/

@@ -139,3 +139,29 @@ jobs:
         run: |
           cd build/debug-portable-sanitizer
           ctest --output-on-failure --verbose
+
+  doxygen:
+    name: Doxygen API docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Install Doxygen
+        uses: ssciwr/doxygen-install@501e53b879da7648ab392ee226f5b90e42148449
+
+      - name: Install Ninja
+        run: sudo apt-get update && sudo apt-get install -y ninja-build
+
+      - name: Configure
+        run: cmake --preset=doxygen
+
+      - name: Build documentation
+        run: cmake --build --preset=doxygen
+
+      - name: Upload HTML artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: doxygen-html
+          path: build/doxygen/html
