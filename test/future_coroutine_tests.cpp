@@ -438,7 +438,8 @@ TEST_CASE("resume_on_generic_suspend_propagates_exception") {
     REQUIRE(f.get_ready() == 1);
 }
 
-// Minimal repro variant: no [&] capture for sequence; use shared_ptr so coroutine doesn't hold stack ref.
+// Minimal repro variant: no [&] capture for sequence; use shared_ptr so coroutine doesn't hold
+// stack ref.
 TEST_CASE("resume_on_generic_suspend_propagates_exception_no_ref_capture") {
     test::cooperative_executor coop;
     auto sequence = std::make_shared<std::string>();
@@ -544,4 +545,209 @@ TEST_CASE("resume_on_generic_with_cancel") {
     g_proxy_handle.resume();
     coop.execute_all();
     REQUIRE(sequence == "start;");
+}
+
+// --- cancelable(awaitable): resume_on(immediate_executor, …) + stlab::future only ---
+
+TEST_CASE("cancelable_single_co_await_on_suspend_path") {
+    test::cooperative_executor coop;
+    g_proxy_handle = nullptr;
+    g_co_await_invocation_count.store(0);
+
+    auto coro = [&]() -> future<int> {
+        int x = co_await cancelable(co_await_counting_awaitable{});
+        co_return x;
+    };
+    auto f = coro();
+
+    REQUIRE(g_proxy_handle);
+    REQUIRE(g_co_await_invocation_count.load() == 1);
+    g_proxy_handle.resume();
+    coop.execute_all();
+
+    REQUIRE(await(std::move(f)) == 99);
+    REQUIRE(g_co_await_invocation_count.load() == 1);
+}
+
+TEST_CASE("cancelable_completes_after_manual_resume") {
+    test::cooperative_executor coop;
+    g_proxy_handle = nullptr;
+
+    auto coro = [&]() -> future<int> {
+        int x = co_await cancelable(manual_complete_awaitable{});
+        co_return x + 35;
+    };
+    auto f = coro();
+
+    REQUIRE(g_proxy_handle);
+    g_proxy_handle.resume();
+    coop.execute_all();
+
+    REQUIRE(await(std::move(f)) == 42);
+}
+
+TEST_CASE("cancelable_ready_awaitable") {
+    string sequence;
+
+    auto coro = [&]() -> future<int> {
+        sequence += "start;";
+        int x = co_await cancelable(ready_value_awaitable{99});
+        sequence += "done;";
+        co_return x;
+    };
+    auto f = coro();
+
+    REQUIRE(sequence == "start;done;");
+    REQUIRE(f.get_ready() == 99);
+}
+
+TEST_CASE("cancelable_direct_awaiter") {
+    string sequence;
+
+    auto coro = [&]() -> future<void> {
+        sequence += "start;";
+        co_await cancelable(std::suspend_never{});
+        sequence += "done;";
+    };
+    auto f = coro();
+
+    REQUIRE(sequence == "start;done;");
+    (void)await(std::move(f));
+}
+
+TEST_CASE("cancelable_propagates_exception") {
+    string sequence;
+
+    auto coro = [&]() -> future<int> {
+        sequence += "start;";
+        try {
+            (void)co_await cancelable(throwing_awaitable{});
+        } catch (const test_exception& e) {
+            sequence += "catch;";
+            REQUIRE(string(e.what()) == "generic resume_on throw");
+            co_return 1;
+        }
+        co_return 0;
+    };
+    auto f = coro();
+
+    REQUIRE(sequence == "start;catch;");
+    REQUIRE(f.get_ready() == 1);
+}
+
+TEST_CASE("cancelable_suspend_propagates_exception") {
+    test::cooperative_executor coop;
+    string sequence;
+    g_proxy_handle = nullptr;
+
+    auto coro = [&]() -> future<int> {
+        sequence += "start;";
+        try {
+            (void)co_await cancelable(suspend_throwing_awaitable{});
+        } catch (const test_exception& e) {
+            sequence += "catch;";
+            REQUIRE(string(e.what()) == "generic resume_on suspend throw");
+            co_return 1;
+        }
+        co_return 0;
+    };
+    auto f = coro();
+
+    REQUIRE(sequence == "start;");
+    REQUIRE(g_proxy_handle);
+    g_proxy_handle.resume();
+    coop.execute_all();
+
+    REQUIRE(sequence == "start;catch;");
+    REQUIRE(f.get_ready() == 1);
+}
+
+TEST_CASE("cancelable_void_awaitable_suspend_path") {
+    test::cooperative_executor coop;
+    string sequence;
+    g_proxy_handle = nullptr;
+
+    auto coro = [&]() -> future<int> {
+        sequence += "start;";
+        co_await cancelable(manual_complete_void_awaitable{});
+        sequence += "done;";
+        co_return 11;
+    };
+    auto f = coro();
+
+    REQUIRE(sequence == "start;");
+    REQUIRE(g_proxy_handle);
+    g_proxy_handle.resume();
+    coop.execute_all();
+
+    REQUIRE(sequence == "start;done;");
+    REQUIRE(await(std::move(f)) == 11);
+}
+
+TEST_CASE("cancelable_with_cancel") {
+    test::cooperative_executor coop;
+    string sequence;
+
+    auto coro = [&]() -> future<void> {
+        sequence += "start;";
+        co_await cancelable(manual_complete_awaitable{});
+        sequence += "finish;";
+    };
+    auto f = coro();
+
+    REQUIRE(sequence == "start;");
+    f.reset();
+    g_proxy_handle.resume();
+    coop.execute_all();
+    REQUIRE(sequence == "start;");
+}
+
+// --- cancelable(): single shared owner suspends without scheduled resumption ---
+
+TEST_CASE("cancelable_void_unique_suspends_without_resume") {
+    g_proxy_handle = nullptr;
+    string sequence;
+
+    auto coro = [&]() -> future<void> {
+        sequence += "before;";
+        co_await manual_complete_awaitable{};
+        sequence += "between;";
+        co_await cancelable();
+        sequence += "after;";
+        co_return;
+    };
+    auto f = coro();
+
+    REQUIRE(sequence == "before;");
+    REQUIRE(g_proxy_handle);
+    // Drop the consumer handle while suspended at the manual point.
+    f.reset();
+    g_proxy_handle.resume(); // resume
+
+    REQUIRE(sequence == "before;between;");
+}
+
+TEST_CASE("cancelable_void_skips_suspend_when_future_is_shared") {
+    g_proxy_handle = nullptr;
+    string sequence;
+
+    auto coro = [&]() -> future<void> {
+        sequence += "before;";
+        co_await manual_complete_awaitable{};
+        sequence += "between;";
+        co_await cancelable();
+        sequence += "after;";
+        co_return;
+    };
+    auto f = coro();
+    auto g = f;
+
+    REQUIRE(sequence == "before;");
+    REQUIRE(g_proxy_handle);
+    // Drop a consumer handle while suspended at the manual point.
+    // will still continue execution because held by g.
+    f.reset();
+    g_proxy_handle.resume(); // resume
+
+    REQUIRE(sequence == "before;between;after;");
 }

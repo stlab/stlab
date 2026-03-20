@@ -1975,7 +1975,7 @@ auto get_awaiter(A&& a) {
     } else if constexpr (has_free_co_await<A>::value) {
         return operator co_await(std::forward<A>(a));
     } else {
-        return std::forward<A>(a);  // direct awaiter (e.g. std::suspend_always)
+        return std::forward<A>(a); // direct awaiter (e.g. std::suspend_always)
     }
 }
 
@@ -2242,6 +2242,30 @@ struct resume_on_any_awaiter_with_control {
     }
 };
 
+/// Operand for `co_await cancelable(awaitable)` and `co_await cancelable()` (no arguments). Only
+/// `stlab::future` promise types define `await_transform` for it (otherwise `co_await` is
+/// ill-formed). The `void` specialization is produced by `cancelable()`; other `A` wrap an awaitable.
+template <class A>
+struct cancelable_requires_stlab_future_coroutine {
+    A _awaitable;
+};
+
+template <>
+struct cancelable_requires_stlab_future_coroutine<void> {};
+
+/// If `weak_state` is still valid (the shared state exists — at least one `future` still references
+/// it), `await_ready()` is true: no suspension; execution continues past the checkpoint. If the
+/// weak pointer has expired (no `future` still references the shared state), the coroutine suspends
+/// and `await_suspend` destroys it (`ch.destroy()`); there is no scheduled resumption.
+template <class WeakPtr>
+struct cancelable_unique_checkpoint_awaiter {
+    WeakPtr _weak;
+
+    [[nodiscard]] bool await_ready() const noexcept { return !_weak.expired(); }
+    void await_resume() noexcept {}
+    void await_suspend(std::coroutine_handle<> ch) { ch.destroy(); }
+};
+
 } // namespace detail
 
 /// When the future completes, the current coroutine is resumed on `executor`; result/exception
@@ -2267,6 +2291,34 @@ auto resume_on(E&& executor) -> detail::resume_on_executor_awaiter<std::decay_t<
     return detail::resume_on_executor_awaiter<std::decay_t<E>>{std::forward<E>(executor)};
 }
 
+/// Same semantics as `co_await resume_on(immediate_executor, awaitable)` inside a coroutine
+/// returning `stlab::future`, but only valid there (cancellation via `weak_state`; invalid outside
+/// stlab future coroutines—see `cancelable_requires_stlab_future_coroutine`).
+template <class A, std::enable_if_t<!detail::is_future_v<std::decay_t<A>>, int> = 0>
+auto cancelable(A&& awaitable)
+    -> detail::cancelable_requires_stlab_future_coroutine<std::decay_t<A>> {
+    return {std::forward<A>(awaitable)};
+}
+
+template <class R>
+auto cancelable(future<R>&) // Use co_await std::move(f); it is already cancelable.
+    -> future<R> = delete;
+
+template <class R>
+auto cancelable(future<R>&&) // Use co_await std::move(f); it is already cancelable.
+    -> future<R> = delete;
+
+template <class R>
+auto cancelable(const future<R>&) // Use co_await std::move(f); it is already cancelable.
+    -> future<R> = delete;
+
+/// Checkpoint: if no `future` still references the shared state (`weak_state` expired), the
+/// coroutine is destroyed when the checkpoint is reached. If at least one `future` still exists,
+/// execution continues without suspending.
+[[nodiscard]] inline auto cancelable() -> detail::cancelable_requires_stlab_future_coroutine<void> {
+    return {};
+}
+
 } // namespace STLAB_VERSION_NAMESPACE()
 } // namespace stlab
 
@@ -2280,6 +2332,9 @@ auto resume_on(E&& executor) -> detail::resume_on_executor_awaiter<std::decay_t<
 // suspended on a future we store the handle in _co_handle so we can resume via weak_state. For
 // non-future awaitables we clear _co_handle before suspending (give up ownership for that suspend).
 // initial_suspend is suspend_never so we never own before the first suspend.
+// `co_await cancelable()` with no arguments: if weak_state is expired (last future already
+// released), await_suspend destroys the coroutine handle directly — not via _co_handle. If the weak
+// is still valid, await_ready avoids suspension so execution continues.
 /**************************************************************************************************/
 
 template <class T, class... Args>
@@ -2345,6 +2400,20 @@ struct std::coroutine_traits<stlab::future<T>, Args...> { // NOLINT(cert-dcl58-c
                 std::move(a._executor), std::move(a._awaitable),
                 stlab::detail::weak_state(_promise), std::move(a._result), std::move(a._exception)};
         }
+        auto await_transform(stlab::detail::cancelable_requires_stlab_future_coroutine<void>) {
+            return stlab::detail::cancelable_unique_checkpoint_awaiter<
+                decltype(stlab::detail::weak_state(_promise))>{stlab::detail::weak_state(_promise)};
+        }
+        template <class A, std::enable_if_t<!std::is_void_v<A>, int> = 0>
+        auto await_transform(stlab::detail::cancelable_requires_stlab_future_coroutine<A> c) {
+            return stlab::detail::resume_on_any_awaiter_with_control<
+                decltype(stlab::immediate_executor), A,
+                decltype(stlab::detail::weak_state(_promise))>{stlab::immediate_executor,
+                                                               std::move(c._awaitable),
+                                                               stlab::detail::weak_state(_promise),
+                                                               {},
+                                                               {}};
+        }
         template <class U>
         U&& await_transform(U&& u) {
             if (auto state = stlab::detail::weak_state(_promise).lock())
@@ -2404,6 +2473,20 @@ struct std::coroutine_traits<stlab::future<void>, Args...> {
                 E, A, decltype(stlab::detail::weak_state(_promise))>{
                 std::move(a._executor), std::move(a._awaitable),
                 stlab::detail::weak_state(_promise), std::move(a._result), std::move(a._exception)};
+        }
+        auto await_transform(stlab::detail::cancelable_requires_stlab_future_coroutine<void>) {
+            return stlab::detail::cancelable_unique_checkpoint_awaiter<
+                decltype(stlab::detail::weak_state(_promise))>{stlab::detail::weak_state(_promise)};
+        }
+        template <class A, std::enable_if_t<!std::is_void_v<A>, int> = 0>
+        auto await_transform(stlab::detail::cancelable_requires_stlab_future_coroutine<A> c) {
+            return stlab::detail::resume_on_any_awaiter_with_control<
+                decltype(stlab::immediate_executor), A,
+                decltype(stlab::detail::weak_state(_promise))>{stlab::immediate_executor,
+                                                               std::move(c._awaitable),
+                                                               stlab::detail::weak_state(_promise),
+                                                               {},
+                                                               {}};
         }
         template <class U>
         U&& await_transform(U&& u) {
