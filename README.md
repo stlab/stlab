@@ -28,6 +28,8 @@ The complete documentation is available on the [STLab home page](http://stlab.cc
 
 API reference (Doxygen, including [doxygen-awesome-css](https://github.com/jothepro/doxygen-awesome-css)) is built when `-DSTLAB_DOXYGEN=ON` is set, or via the CMake preset `doxygen` (`cmake --preset=doxygen` then `cmake --build --preset=doxygen`). Output is written under `build/doxygen/html`. On GitHub Pages, it is published under `/doxygen/` next to the Hyde/Jekyll site.
 
+Formulas in comments use Doxygen’s math markup (e.g. `\f$O(n)\f$` inline, `\f[` / `\f]` for display); HTML output enables **MathJax 3** so no LaTeX toolchain is required locally or in CI.
+
 Release changelogs are listed in [CHANGES.md](CHANGES.md).
 
 ## Tested on

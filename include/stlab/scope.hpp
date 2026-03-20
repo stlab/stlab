@@ -10,7 +10,11 @@
 #define STLAB_SCOPE_HPP
 
 /*! @file scope.hpp
- *  @brief RAII scope helpers (`scope`, mutex guard).
+ *  @brief Bind an object’s lifetime to a callable’s execution (`scope`).
+ *
+ *  @par Motivation
+ *  A plain extra `{ }` block does not document intent. `scope` constructs `T` from the leading
+ *  arguments, runs the last argument as a nullary function while `T` is alive, then destroys `T`.
  */
 
 /**************************************************************************************************/
@@ -50,13 +54,17 @@ auto scope_call(Tuple&& t, std::index_sequence<S...>) {
 
 /**************************************************************************************************/
 
+/// Scopes the lifetime of an instance of `T`. All but the last arguments construct `T`; the last
+/// argument is a nullary function invoked while `T` is alive. `T` is destroyed after that function
+/// returns.
 template <typename T, typename... Args>
 inline auto scope(Args&&... args) {
     return detail::scope_call<T>(std::forward_as_tuple(std::forward<Args>(args)...),
                                  std::make_index_sequence<sizeof...(args) - 1>());
 }
 
-/* Workaround until VS2017 bug is fixed */
+/// @overload
+/// @brief Workaround until VS2017 bug is fixed; prefer the variadic `scope` when possible.
 template <typename T, typename F>
 inline auto scope(std::mutex& m, F&& f) {
     T scoped(m);

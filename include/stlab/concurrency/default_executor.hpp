@@ -10,7 +10,14 @@
 #define STLAB_CONCURRENCY_DEFAULT_EXECUTOR_HPP
 
 /*! @file default_executor.hpp
- *  @brief Default thread-pool style executors (platform task system).
+ *  @brief Thread-pool executors mapping to the OS scheduler (libdispatch, Windows pool, portable).
+ *
+ *  Use `high_executor`, `default_executor`, and `low_executor` for priority hints; ordering is
+ *  best-effort, not strict.
+ *
+ *  @note If you use the default executor, call `pre_exit()` before process exit so teardown does
+ *  not race global destructors or other exit handlers. Alternatively, `std::quick_exit()` may be
+ *  appropriate for your program.
  */
 
 #include <stlab/config.hpp>

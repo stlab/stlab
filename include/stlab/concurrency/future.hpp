@@ -1561,6 +1561,10 @@ struct make_when_any<void> {
 
 /// Returns a future that completes when any of the given futures is ready; `f` receives the value
 /// and the index of the future that completed first (as a second argument of type `std::size_t`).
+///
+/// @par Details
+/// Every input future’s value type must be convertible to the first parameter of `f`. An empty
+/// variadic pack is not supported—use the iterator-range overload with an empty range if needed.
 template <class E, class F, class T, class... Ts>
 auto when_any(E&& executor, F&& f, future<T>&& arg, future<Ts>&&... args) {
     return make_when_any<T>::make(std::forward<E>(executor), std::forward<F>(f), std::move(arg),

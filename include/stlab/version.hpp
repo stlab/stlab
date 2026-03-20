@@ -10,7 +10,10 @@
 #define STLAB_VERSION_HPP
 
 /*! @file version.hpp
- *  @brief Library version number macros.
+ *  @brief Preprocessor macros for the library version.
+ *
+ *  @note This header changes with every stlab release; including it forces recompilation when the
+ *  library version changes.
  */
 
 #include <stlab/config.hpp>

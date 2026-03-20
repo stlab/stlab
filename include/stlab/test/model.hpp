@@ -37,6 +37,7 @@ STLAB_VERSION_NAMESPACE_BEGIN()
 
 /**************************************************************************************************/
 
+/// Shared counters for `annotate` special-member and comparison instrumentation.
 struct annotate_counters {
     std::atomic_size_t _dtor{0};
     std::atomic_size_t _copy_ctor{0};
@@ -74,6 +75,8 @@ struct annotate_counters {
     }
 };
 
+/// Test type that increments `annotate_counters` on construction, destruction, copy/move, swap, and
+/// equality (always compares equal).
 struct annotate {
     annotate_counters* _counters;
     explicit annotate(annotate_counters& counters) : _counters(&counters) {}
@@ -163,6 +166,7 @@ struct regular {
 
 /**************************************************************************************************/
 
+/// Move-only polymorphic test type with equality comparison.
 class move_only {
 private:
     int _member{0};

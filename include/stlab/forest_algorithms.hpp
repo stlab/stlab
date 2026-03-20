@@ -4,7 +4,7 @@
 #define STLAB_FOREST_ALGORITHMS_HPP
 
 /*! @file forest_algorithms.hpp
- *  @brief Higher-level forest algorithms (`stlab::forests`).
+ *  @brief Forest utilities in namespace `stlab::forests` (shape checks, flatten/transcribe, etc.).
  */
 
 /**************************************************************************************************/

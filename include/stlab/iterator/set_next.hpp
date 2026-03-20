@@ -30,11 +30,13 @@ namespace unsafe {
 
 /**************************************************************************************************/
 
+/// Hook for intrusive iterators: specialize to set the successor of the node at `x` to `y`.
 template <typename I> // I models NodeIterator
 struct set_next_fn;   // Must be specialized
 
 /**************************************************************************************************/
 
+/// Sets the successor of the node referenced by `x` to `y` (via `set_next_fn<I>`).
 template <typename I> // I models NodeIterator
 inline void set_next(const I& x, const I& y) {
     set_next_fn<I>()(x, y);
@@ -49,11 +51,13 @@ inline void splice_node_range(I location, I first, I last) {
     set_next(last, successor);
 }
 
+/// Skips the node after `location` by linking `location` to the node after next.
 template <typename I> // I models ForwardNodeIterator
 inline void skip_next_node(I location) {
     set_next(location, std::next(std::next(location)));
 }
 
+/// Removes the node at `location` from the intrusive list (bidirectional iterator).
 template <typename I> // I models BidirectionalNodeIterator
 inline void skip_node(I location) {
     set_next(std::prev(location), std::next(location));

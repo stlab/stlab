@@ -161,6 +161,8 @@ public:
         _impl(std::make_shared<detail::serial_instance_t>(
             [_e = std::move(e)](auto&& f) { _e(std::forward<decltype(f)>(f)); }, mode)) {}
 
+    /// Returns an executor that enqueues `void() noexcept` tasks on this queue (no futures;
+    /// suitable for fire-and-forget work on the serial context).
     [[nodiscard]] auto executor() const {
         return [_impl =
                     _impl](auto&& f) -> std::enable_if_t<std::is_nothrow_invocable_v<decltype(f)>> {

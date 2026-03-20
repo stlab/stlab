@@ -9,7 +9,7 @@
 #define STLAB_ALGORITHM_REVERSE_HPP
 
 /*! @file reverse.hpp
- *  @brief Reverse algorithms for iterators and intrusive forward sequences.
+ *  @brief Reverse algorithms for iterators and intrusive forward / bidirectional sequences.
  */
 
 #include <algorithm>

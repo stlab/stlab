@@ -9,7 +9,10 @@
 #define STLAB_PRE_EXIT_HPP
 
 /*! @file pre_exit.hpp
- *  @brief Pre-exit handler registration (`at_pre_exit`, `pre_exit`).
+ *  @brief Register and run operations that must execute before program exit.
+ *
+ *  Register handlers with `at_pre_exit()`; call `pre_exit()` once before the process terminates
+ *  (e.g. before `std::exit()` or when leaving `main()`).
  */
 
 /**************************************************************************************************/
@@ -28,7 +31,7 @@ inline namespace v2 {
 
 /**************************************************************************************************/
 
-/// Pre-exit handler type.
+/// Function type invoked during `pre_exit()` (must not throw when compiled as `noexcept`).
 #if __cpp_noexcept_function_type >= 201510L
 using pre_exit_handler = void (*)() noexcept;
 #else

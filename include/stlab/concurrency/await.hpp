@@ -153,18 +153,24 @@ auto await_for(const future<T>& x, const std::chrono::nanoseconds& timeout) -> f
 
 /**************************************************************************************************/
 
+/// @deprecated Use `await()` instead.
+///
+/// @warning Blocks a thread until `x` is ready; prefer continuations to avoid contention and
+/// deadlocks.
 template <class T>
 [[deprecated("Use await instead.")]]
 auto blocking_get(future<T> x) -> T {
     return await(std::move(x));
 }
 
+/// @deprecated Use `await_for()` instead.
 template <class T>
 [[deprecated("Use await_for instead.")]]
 auto blocking_get_for(future<T> x, const std::chrono::nanoseconds& timeout) -> future<T> {
-    await_for(std::move(x), timeout);
+    return await_for(std::move(x), timeout);
 }
 
+/// @deprecated Use `await_for()` and `get_try()` instead.
 template <class T>
 [[deprecated("Use await_for instead.")]]
 auto blocking_get(future<T> x, const std::chrono::nanoseconds& timeout) -> decltype(x.get_try()) {

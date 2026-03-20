@@ -91,6 +91,9 @@ auto is_trailing(const I& i) {
 
 /**************************************************************************************************/
 
+/// Returns the trailing-edge iterator of the parent of the subtree containing `i`.
+///
+/// @note Time complexity is linear in the number of nodes visited along the search.
 template <class I> // I models FullorderIterator
 auto find_parent(I i) -> I {
     do {
@@ -824,6 +827,9 @@ public:
 
     void swap(forest& x) noexcept { std::swap(*this, x); }
 
+    /// Returns the node count; constant time when `size_valid()` is true, otherwise a full walk.
+    ///
+    /// @note Some splices can invalidate cached sizes on source and destination forests.
     auto size() const -> size_type;
     auto max_size() const -> size_type { return size_type(-1); }
     auto size_valid() const -> bool { return _size != 0 || empty(); }
@@ -868,8 +874,12 @@ public:
         assert(empty()); // Make sure our erase is correct
     }
 
+    /// Erases the node at `position` (children become siblings of the former parent’s subtree) or
+    /// the half-open range `[first, last)`.
+    /// @{
     auto erase(const iterator& position) -> iterator;
     auto erase(const iterator& first, const iterator& last) -> iterator;
+    /// @}
 
     auto insert(const iterator& position, T x) -> iterator {
         iterator result(new node_t(std::move(x)), forest_edge::leading);

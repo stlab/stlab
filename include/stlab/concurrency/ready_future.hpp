@@ -34,6 +34,7 @@ STLAB_VERSION_NAMESPACE_BEGIN()
 
 /**************************************************************************************************/
 
+/// Creates a `future` that is already completed with value `x` (or completed for `void`).
 template <typename T, typename E>
 auto make_ready_future(T&& x, E executor) -> future<std::decay_t<T>> {
     auto p = package<std::decay_t<T>(std::decay_t<T>)>(
@@ -74,6 +75,7 @@ struct _make_exceptional_future<void> {
 
 } // namespace detail
 
+/// Creates a `future` that is already completed with exception `error`.
 template <typename T, typename E>
 auto make_exceptional_future(const std::exception_ptr& error, E executor) -> future<T> {
     return detail::_make_exceptional_future<T>{}(error, std::move(executor));

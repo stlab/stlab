@@ -33,6 +33,7 @@ STLAB_VERSION_NAMESPACE_BEGIN()
 
 /**************************************************************************************************/
 
+/// Type alias: `T`, or the referent type if `T` is `std::reference_wrapper<U>`.
 template <class T>
 struct unwrap_reference {
     using type = T;
@@ -58,6 +59,7 @@ constexpr bool is_reference_wrapper_v = is_reference_wrapper<T>::value;
 
 /**************************************************************************************************/
 
+/// @brief Unwraps `val`, forwarding through `std::reference_wrapper` when present.
 template <typename T>
 auto unwrap(T& val) -> T& {
     return val;

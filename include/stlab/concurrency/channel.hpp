@@ -10,7 +10,11 @@
 #define STLAB_CONCURRENCY_CHANNEL_HPP
 
 /*! @file channel.hpp
- *  @brief Process-oriented channels (sender/receiver) and related types.
+ *  @brief CSP-style channels (sender/receiver) for reusable processing graphs.
+ *
+ *  Channels pair a sending side with receivers; each receiver can host a process run when values
+ *  arrive. They can be split, zipped, merged, and composed into graphs that outlive a single run,
+ *  unlike one-shot futures-only pipelines.
  */
 
 #include <stlab/config.hpp>

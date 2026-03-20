@@ -113,6 +113,7 @@ struct index_sequence_transform<Seq, F, Index, 1> {
 
 /**************************************************************************************************/
 
+/// @brief If `P` is true, casts `t` to an rvalue; otherwise keeps an lvalue reference.
 template <bool P, class T>
 constexpr auto move_if(T&& t) noexcept -> detail::move_if_helper_t<P, T> {
     return static_cast<detail::move_if_helper_t<P, T>>(t);
@@ -120,7 +121,9 @@ constexpr auto move_if(T&& t) noexcept -> detail::move_if_helper_t<P, T> {
 
 /**************************************************************************************************/
 
-/// Invokes `f(arg0)`, `f(arg1)`, ... `f(argN)`.
+/// Invokes `f(arg0)`, `f(arg1)`, … `f(argN)`.
+/// @param f Unary function invoked once per argument.
+/// @param args Arguments passed one-by-one to `f`.
 template <class F, class... Args>
 void for_each_argument(F&& f, Args&&... args) {
     return (void)std::initializer_list<int>{(std::forward<F>(f)(args), 0)...};
@@ -128,8 +131,16 @@ void for_each_argument(F&& f, Args&&... args) {
 
 /**************************************************************************************************/
 
-/// Returns a copy of the argument. Used to pass an lvalue to function taking an rvalue or to
-/// copy a type with an `explicit` copy-constructor.
+/// Returns a copy of the argument. Used to pass an lvalue to a function taking an rvalue, or to
+/// copy a type with an `explicit` copy constructor.
+///
+/// @par Example
+/// @code
+/// void f(std::vector<int>&&);
+/// std::vector<int> c = ...;
+/// f(copy(c)); // pass a copy of c
+/// f(move(c)); // sink c
+/// @endcode
 template <typename T>
 constexpr auto copy(T&& value) noexcept(noexcept(std::decay_t<T>{static_cast<T&&>(value)}))
     -> std::decay_t<T> {

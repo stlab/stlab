@@ -6,6 +6,10 @@ PROJECT_BRIEF = "@PROJECT_BRIEF@"
 PROJECT_NUMBER = @PROJECT_VERSION@
 OUTPUT_DIRECTORY = @OUTPUT_DIR@
 GENERATE_LATEX = NO
+# HTML math: \f$...\f$ (inline) and \f[...\f] (display) via MathJax in the browser.
+# No local LaTeX install required (avoids _formulas.tex / latex failures on CI and minimal setups).
+USE_MATHJAX = YES
+MATHJAX_VERSION = MathJax_3
 QUIET = YES
 WARN_IF_UNDOCUMENTED = NO
 WARN_AS_ERROR = NO
