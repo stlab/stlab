@@ -78,8 +78,10 @@ jobs:
             -DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/cmake/Platform/Emscripten-STLab.cmake
 
       - name: Setup MSVC
-        if: ${{ startsWith(matrix.config.os, 'windows') }}
-        uses: ilammy/msvc-dev-cmd@v1
+        if: ${{ startsWith(matrix.config.os, 'windows') }}  
+        uses: TheMrMilchmann/setup-msvc-dev@v4
+        with:
+          arch: x64
 
       - name: Configure // Windows
         if: ${{ startsWith(matrix.config.os, 'windows') }}

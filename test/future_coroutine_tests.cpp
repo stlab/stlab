@@ -8,6 +8,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <memory>
 #include <string>
 #include <thread>
 #include <utility>
@@ -195,7 +196,7 @@ TEST_CASE("generic_await_escape_then_resume_after_future_reset") {
 }
 
 TEST_CASE("throwing_operation_in_coawait_future") {
-    auto f = []() -> future<int> {
+    auto coro = []() -> future<int> {
         try {
             co_await make_exceptional_future<void>(
                 std::make_exception_ptr(test_exception("failure")), default_executor);
@@ -203,13 +204,14 @@ TEST_CASE("throwing_operation_in_coawait_future") {
             co_return 1;
         }
         co_return 0;
-    }();
+    };
+    auto f = coro();
     REQUIRE(std::move(f).get_ready() == 1);
 }
 
 TEST_CASE("resume_on") {
     string sequence;
-    auto f = [&]() -> future<int> {
+    auto coro = [&]() -> future<int> {
         sequence += "start;";
         co_await resume_on([&](auto&& task) {
             sequence += "resume;";
@@ -217,7 +219,8 @@ TEST_CASE("resume_on") {
         });
         sequence += "finish;";
         co_return 42;
-    }();
+    };
+    auto f = coro();
     REQUIRE(f.get_ready() == 42);
     REQUIRE(sequence == "start;resume;finish;");
 }
@@ -225,12 +228,526 @@ TEST_CASE("resume_on") {
 TEST_CASE("resume_on_with_cancel") {
     test::cooperative_executor coop;
     string sequence;
-    (void)[&]()->future<void> {
+    auto coro = [&]() -> future<void> {
         sequence += "start;";
         co_await resume_on(coop.executor());
         sequence += "finish;";
-    }
-    (); // drop the result to cancel
+    };
+    (void)coro(); // drop the result to cancel
     coop.execute_all();
     REQUIRE(sequence == "start;");
+}
+
+// --- Generic resume_on(executor, any_awaitable) tests ---
+
+namespace {
+
+std::coroutine_handle<> g_proxy_handle;
+
+struct manual_complete_awaitable {
+    bool await_ready() const { return false; }
+    void await_suspend(std::coroutine_handle<> ch) { g_proxy_handle = ch; }
+    int await_resume() { return 7; }
+    manual_complete_awaitable& operator co_await() { return *this; }
+};
+
+struct ready_value_awaitable {
+    int value;
+    bool await_ready() const { return true; }
+    void await_suspend(std::coroutine_handle<>) {}
+    int await_resume() { return value; }
+    ready_value_awaitable& operator co_await() { return *this; }
+};
+
+struct throwing_awaitable {
+    bool await_ready() const { return true; }
+    void await_suspend(std::coroutine_handle<>) {}
+    int await_resume() { throw test_exception("generic resume_on throw"); }
+    throwing_awaitable& operator co_await() { return *this; }
+};
+
+struct suspend_throwing_awaitable {
+    bool await_ready() const { return false; }
+    void await_suspend(std::coroutine_handle<> ch) { g_proxy_handle = ch; }
+    int await_resume() { throw test_exception("generic resume_on suspend throw"); }
+    suspend_throwing_awaitable& operator co_await() { return *this; }
+};
+
+struct manual_complete_void_awaitable {
+    bool await_ready() const { return false; }
+    void await_suspend(std::coroutine_handle<> ch) { g_proxy_handle = ch; }
+    void await_resume() {}
+    manual_complete_void_awaitable& operator co_await() { return *this; }
+};
+
+// operator co_await() must run once on the suspend path (no probe + proxy double-call).
+inline std::atomic<int> g_co_await_invocation_count{0};
+
+struct co_await_counting_awaitable {
+    struct awaiter {
+        bool await_ready() const noexcept { return false; }
+        void await_suspend(std::coroutine_handle<> h) { g_proxy_handle = h; }
+        int await_resume() { return 99; }
+    };
+    // Unqualified so awaiter_t<A> (via get_awaiter(declval<A&>())) matches stlab's traits.
+    awaiter operator co_await() {
+        ++g_co_await_invocation_count;
+        return {};
+    }
+};
+
+struct detached_test_coro {
+    struct promise_type {
+        detached_test_coro get_return_object() { return {}; }
+        std::suspend_never initial_suspend() noexcept { return {}; }
+        std::suspend_never final_suspend() noexcept { return {}; }
+        void return_void() noexcept {}
+        void unhandled_exception() { std::terminate(); }
+    };
+};
+
+} // namespace
+
+TEST_CASE("resume_on_generic_single_co_await_on_suspend_path") {
+    test::cooperative_executor coop;
+    g_proxy_handle = nullptr;
+    g_co_await_invocation_count.store(0);
+
+    auto coro = [&]() -> future<int> {
+        int x = co_await resume_on(coop.executor(), co_await_counting_awaitable{});
+        co_return x;
+    };
+    auto f = coro();
+
+    REQUIRE(g_proxy_handle);
+    REQUIRE(g_co_await_invocation_count.load() == 1);
+    g_proxy_handle.resume();
+    coop.execute_all();
+
+    REQUIRE(await(std::move(f)) == 99);
+    REQUIRE(g_co_await_invocation_count.load() == 1);
+}
+
+TEST_CASE("resume_on_generic_resumes_on_executor") {
+    test::cooperative_executor coop;
+    g_proxy_handle = nullptr;
+
+    auto coro = [&]() -> future<int> {
+        int x = co_await resume_on(coop.executor(), manual_complete_awaitable{});
+        co_return x + 35;
+    };
+    auto f = coro();
+
+    REQUIRE(g_proxy_handle);
+    g_proxy_handle.resume();
+    coop.execute_all();
+
+    REQUIRE(await(std::move(f)) == 42);
+}
+
+TEST_CASE("resume_on_generic_ready_awaitable_resumes_on_executor") {
+    string sequence;
+    auto exec = [&](auto&& task) {
+        sequence += "exec;";
+        task();
+    };
+
+    auto coro = [&]() -> future<int> {
+        sequence += "start;";
+        int x = co_await resume_on(exec, ready_value_awaitable{99});
+        sequence += "done;";
+        co_return x;
+    };
+    auto f = coro();
+
+    REQUIRE(sequence == "start;exec;done;");
+    REQUIRE(f.get_ready() == 99);
+}
+
+// std::suspend_never is a direct awaiter (no operator co_await); resume_on must handle it.
+// We use suspend_never (not suspend_always) so await_ready() is true and we take the
+// immediate-completion path; suspend_always would suspend the proxy with nothing to resume it.
+TEST_CASE("resume_on_generic_direct_awaiter_resumes_on_executor") {
+    string sequence;
+    auto exec = [&](auto&& task) {
+        sequence += "exec;";
+        task();
+    };
+
+    auto coro = [&]() -> future<void> {
+        sequence += "start;";
+        co_await resume_on(exec, std::suspend_never{});
+        sequence += "done;";
+    };
+    auto f = coro();
+
+    REQUIRE(sequence == "start;exec;done;");
+    (void)await(std::move(f));
+}
+
+TEST_CASE("resume_on_generic_propagates_exception") {
+    string sequence;
+    auto exec = [&](auto&& task) {
+        sequence += "exec;";
+        task();
+    };
+
+    auto coro = [&]() -> future<int> {
+        sequence += "start;";
+        try {
+            (void)co_await resume_on(exec, throwing_awaitable{});
+        } catch (const test_exception& e) {
+            sequence += "catch;";
+            REQUIRE(string(e.what()) == "generic resume_on throw");
+            co_return 1;
+        }
+        co_return 0;
+    };
+    auto f = coro();
+
+    REQUIRE(sequence == "start;exec;catch;");
+    REQUIRE(f.get_ready() == 1);
+}
+
+TEST_CASE("resume_on_generic_suspend_propagates_exception") {
+    test::cooperative_executor coop;
+    string sequence;
+    g_proxy_handle = nullptr;
+
+    // Named lambda so the closure outlives the first suspend (avoids ASan stack-use-after-scope
+    // from coroutine frame holding __closure that pointed at an IIFE temporary).
+    auto coro = [&]() -> future<int> {
+        sequence += "start;";
+        try {
+            (void)co_await resume_on(coop.executor(), suspend_throwing_awaitable{});
+        } catch (const test_exception& e) {
+            sequence += "catch;";
+            REQUIRE(string(e.what()) == "generic resume_on suspend throw");
+            co_return 1;
+        }
+        co_return 0;
+    };
+    auto f = coro();
+
+    REQUIRE(sequence == "start;");
+    REQUIRE(g_proxy_handle);
+    g_proxy_handle.resume();
+    coop.execute_all();
+
+    REQUIRE(sequence == "start;catch;");
+    REQUIRE(f.get_ready() == 1);
+}
+
+// Minimal repro variant: no [&] capture for sequence; use shared_ptr so coroutine doesn't hold
+// stack ref.
+TEST_CASE("resume_on_generic_suspend_propagates_exception_no_ref_capture") {
+    test::cooperative_executor coop;
+    auto sequence = std::make_shared<std::string>();
+    g_proxy_handle = nullptr;
+
+    auto coro = [coop_ptr = &coop, sequence]() -> future<int> {
+        *sequence += "start;";
+        try {
+            (void)co_await resume_on(coop_ptr->executor(), suspend_throwing_awaitable{});
+        } catch (const test_exception& e) {
+            *sequence += "catch;";
+            REQUIRE(string(e.what()) == "generic resume_on suspend throw");
+            co_return 1;
+        }
+        co_return 0;
+    };
+    auto f = coro();
+
+    REQUIRE(*sequence == "start;");
+    REQUIRE(g_proxy_handle);
+    g_proxy_handle.resume();
+    coop.execute_all();
+
+    REQUIRE(*sequence == "start;catch;");
+    REQUIRE(f.get_ready() == 1);
+}
+
+TEST_CASE("resume_on_generic_void_awaitable_suspend_path") {
+    test::cooperative_executor coop;
+    string sequence;
+    g_proxy_handle = nullptr;
+
+    auto coro = [&]() -> future<int> {
+        sequence += "start;";
+        co_await resume_on(coop.executor(), manual_complete_void_awaitable{});
+        sequence += "done;";
+        co_return 11;
+    };
+    auto f = coro();
+
+    REQUIRE(sequence == "start;");
+    REQUIRE(g_proxy_handle);
+    g_proxy_handle.resume();
+    coop.execute_all();
+
+    REQUIRE(sequence == "start;done;");
+    REQUIRE(await(std::move(f)) == 11);
+}
+
+TEST_CASE("resume_on_generic_non_controlled_suspend_path") {
+    test::cooperative_executor coop;
+    string sequence;
+    g_proxy_handle = nullptr;
+
+    auto run = [&]() -> detached_test_coro {
+        sequence += "start;";
+        int x = co_await resume_on(coop.executor(), manual_complete_awaitable{});
+        sequence += "done:" + to_string(x) + ";";
+    };
+
+    run();
+    REQUIRE(sequence == "start;");
+    REQUIRE(g_proxy_handle);
+
+    g_proxy_handle.resume();
+    coop.execute_all();
+
+    REQUIRE(sequence == "start;done:7;");
+}
+
+TEST_CASE("resume_on_generic_non_controlled_ready_path") {
+    string sequence;
+    auto exec = [&](auto&& task) {
+        sequence += "exec;";
+        task();
+    };
+
+    auto run = [&]() -> detached_test_coro {
+        sequence += "start;";
+        int x = co_await resume_on(exec, ready_value_awaitable{5});
+        sequence += "done:" + to_string(x) + ";";
+    };
+
+    run();
+    REQUIRE(sequence == "start;exec;done:5;");
+}
+
+TEST_CASE("resume_on_generic_with_cancel") {
+    // Cancellation: reset() drops the future and destroys the coroutine so it never completes.
+    // Uses generic resume_on(executor, awaitable) with a suspending awaitable.
+    test::cooperative_executor coop;
+    string sequence;
+
+    auto coro = [&]() -> future<void> {
+        sequence += "start;";
+        co_await resume_on(coop.executor(), manual_complete_awaitable{});
+        sequence += "finish;";
+    };
+    auto f = coro();
+
+    REQUIRE(sequence == "start;");
+    f.reset();
+    g_proxy_handle.resume();
+    coop.execute_all();
+    REQUIRE(sequence == "start;");
+}
+
+// --- cancelable(awaitable): resume_on(immediate_executor, …) + stlab::future only ---
+
+TEST_CASE("cancelable_single_co_await_on_suspend_path") {
+    test::cooperative_executor coop;
+    g_proxy_handle = nullptr;
+    g_co_await_invocation_count.store(0);
+
+    auto coro = [&]() -> future<int> {
+        int x = co_await cancelable(co_await_counting_awaitable{});
+        co_return x;
+    };
+    auto f = coro();
+
+    REQUIRE(g_proxy_handle);
+    REQUIRE(g_co_await_invocation_count.load() == 1);
+    g_proxy_handle.resume();
+    coop.execute_all();
+
+    REQUIRE(await(std::move(f)) == 99);
+    REQUIRE(g_co_await_invocation_count.load() == 1);
+}
+
+TEST_CASE("cancelable_completes_after_manual_resume") {
+    test::cooperative_executor coop;
+    g_proxy_handle = nullptr;
+
+    auto coro = [&]() -> future<int> {
+        int x = co_await cancelable(manual_complete_awaitable{});
+        co_return x + 35;
+    };
+    auto f = coro();
+
+    REQUIRE(g_proxy_handle);
+    g_proxy_handle.resume();
+    coop.execute_all();
+
+    REQUIRE(await(std::move(f)) == 42);
+}
+
+TEST_CASE("cancelable_ready_awaitable") {
+    string sequence;
+
+    auto coro = [&]() -> future<int> {
+        sequence += "start;";
+        int x = co_await cancelable(ready_value_awaitable{99});
+        sequence += "done;";
+        co_return x;
+    };
+    auto f = coro();
+
+    REQUIRE(sequence == "start;done;");
+    REQUIRE(f.get_ready() == 99);
+}
+
+TEST_CASE("cancelable_direct_awaiter") {
+    string sequence;
+
+    auto coro = [&]() -> future<void> {
+        sequence += "start;";
+        co_await cancelable(std::suspend_never{});
+        sequence += "done;";
+    };
+    auto f = coro();
+
+    REQUIRE(sequence == "start;done;");
+    (void)await(std::move(f));
+}
+
+TEST_CASE("cancelable_propagates_exception") {
+    string sequence;
+
+    auto coro = [&]() -> future<int> {
+        sequence += "start;";
+        try {
+            (void)co_await cancelable(throwing_awaitable{});
+        } catch (const test_exception& e) {
+            sequence += "catch;";
+            REQUIRE(string(e.what()) == "generic resume_on throw");
+            co_return 1;
+        }
+        co_return 0;
+    };
+    auto f = coro();
+
+    REQUIRE(sequence == "start;catch;");
+    REQUIRE(f.get_ready() == 1);
+}
+
+TEST_CASE("cancelable_suspend_propagates_exception") {
+    test::cooperative_executor coop;
+    string sequence;
+    g_proxy_handle = nullptr;
+
+    auto coro = [&]() -> future<int> {
+        sequence += "start;";
+        try {
+            (void)co_await cancelable(suspend_throwing_awaitable{});
+        } catch (const test_exception& e) {
+            sequence += "catch;";
+            REQUIRE(string(e.what()) == "generic resume_on suspend throw");
+            co_return 1;
+        }
+        co_return 0;
+    };
+    auto f = coro();
+
+    REQUIRE(sequence == "start;");
+    REQUIRE(g_proxy_handle);
+    g_proxy_handle.resume();
+    coop.execute_all();
+
+    REQUIRE(sequence == "start;catch;");
+    REQUIRE(f.get_ready() == 1);
+}
+
+TEST_CASE("cancelable_void_awaitable_suspend_path") {
+    test::cooperative_executor coop;
+    string sequence;
+    g_proxy_handle = nullptr;
+
+    auto coro = [&]() -> future<int> {
+        sequence += "start;";
+        co_await cancelable(manual_complete_void_awaitable{});
+        sequence += "done;";
+        co_return 11;
+    };
+    auto f = coro();
+
+    REQUIRE(sequence == "start;");
+    REQUIRE(g_proxy_handle);
+    g_proxy_handle.resume();
+    coop.execute_all();
+
+    REQUIRE(sequence == "start;done;");
+    REQUIRE(await(std::move(f)) == 11);
+}
+
+TEST_CASE("cancelable_with_cancel") {
+    test::cooperative_executor coop;
+    string sequence;
+
+    auto coro = [&]() -> future<void> {
+        sequence += "start;";
+        co_await cancelable(manual_complete_awaitable{});
+        sequence += "finish;";
+    };
+    auto f = coro();
+
+    REQUIRE(sequence == "start;");
+    f.reset();
+    g_proxy_handle.resume();
+    coop.execute_all();
+    REQUIRE(sequence == "start;");
+}
+
+// --- cancelable(): single shared owner suspends without scheduled resumption ---
+
+TEST_CASE("cancelable_void_unique_suspends_without_resume") {
+    g_proxy_handle = nullptr;
+    string sequence;
+
+    auto coro = [&]() -> future<void> {
+        sequence += "before;";
+        co_await manual_complete_awaitable{};
+        sequence += "between;";
+        co_await cancelable();
+        sequence += "after;";
+        co_return;
+    };
+    auto f = coro();
+
+    REQUIRE(sequence == "before;");
+    REQUIRE(g_proxy_handle);
+    // Drop the consumer handle while suspended at the manual point.
+    f.reset();
+    g_proxy_handle.resume(); // resume
+
+    REQUIRE(sequence == "before;between;");
+}
+
+TEST_CASE("cancelable_void_skips_suspend_when_future_is_shared") {
+    g_proxy_handle = nullptr;
+    string sequence;
+
+    auto coro = [&]() -> future<void> {
+        sequence += "before;";
+        co_await manual_complete_awaitable{};
+        sequence += "between;";
+        co_await cancelable();
+        sequence += "after;";
+        co_return;
+    };
+    auto f = coro();
+    auto g = f;
+
+    REQUIRE(sequence == "before;");
+    REQUIRE(g_proxy_handle);
+    // Drop a consumer handle while suspended at the manual point.
+    // will still continue execution because held by g.
+    f.reset();
+    g_proxy_handle.resume(); // resume
+
+    REQUIRE(sequence == "before;between;after;");
 }
