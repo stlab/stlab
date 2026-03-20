@@ -9,6 +9,10 @@
 #ifndef STLAB_CONCURRENCY_AWAIT_HPP
 #define STLAB_CONCURRENCY_AWAIT_HPP
 
+/*! @file await.hpp
+ *  @brief Blocking wait helpers for futures (`await`, `blocking_get`, etc.).
+ */
+
 #include <stlab/config.hpp>
 
 #include <chrono>
@@ -27,6 +31,12 @@
 #endif
 
 /**************************************************************************************************/
+
+/** @defgroup stlab_concurrency_await await
+ *  @ingroup stlab_concurrency
+ *  @brief Blocking wait helpers for futures (`await`, `blocking_get`, etc.).
+ *  @{
+ */
 
 namespace stlab {
 STLAB_VERSION_NAMESPACE_BEGIN()
@@ -167,5 +177,7 @@ STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/
+
+/** @} */
 
 #endif // STLAB_CONCURRENCY_AWAIT_HPP

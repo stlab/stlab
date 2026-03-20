@@ -9,6 +9,10 @@
 #ifndef STLAB_CONCURRENCY_SYSTEM_TIMER_HPP
 #define STLAB_CONCURRENCY_SYSTEM_TIMER_HPP
 
+/*! @file system_timer.hpp
+ *  @brief System timer / delayed execution (platform run loop or portable thread).
+ */
+
 /**************************************************************************************************/
 
 #include <cassert>
@@ -34,6 +38,12 @@
 #include <stlab/concurrency/task.hpp>
 
 /**************************************************************************************************/
+
+/** @defgroup stlab_concurrency_system_timer system_timer
+ *  @ingroup stlab_concurrency
+ *  @brief System timer / delayed execution (platform run loop or portable thread).
+ *  @{
+ */
 
 namespace stlab {
 STLAB_VERSION_NAMESPACE_BEGIN()
@@ -309,6 +319,7 @@ struct system_timer_type {
 
 /**************************************************************************************************/
 
+/// Schedules `void() noexcept` tasks on a system timer / run loop (platform-dependent).
 inline constexpr auto system_timer = detail::system_timer_type{};
 
 /**************************************************************************************************/
@@ -317,6 +328,8 @@ STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/
+
+/** @} */
 
 #endif
 

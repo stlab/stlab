@@ -9,6 +9,10 @@
 #ifndef STLAB_CONCURRENCY_CHANNEL_HPP
 #define STLAB_CONCURRENCY_CHANNEL_HPP
 
+/*! @file channel.hpp
+ *  @brief Process-oriented channels (sender/receiver) and related types.
+ */
+
 #include <stlab/config.hpp>
 
 #include <algorithm>
@@ -35,6 +39,12 @@
 #include <stlab/memory.hpp>
 
 /**************************************************************************************************/
+
+/** @defgroup stlab_concurrency_channel channel
+ *  @ingroup stlab_concurrency
+ *  @brief Process-oriented channels (sender/receiver) and related types.
+ *  @{
+ */
 
 namespace stlab {
 STLAB_VERSION_NAMESPACE_BEGIN()
@@ -1716,5 +1726,7 @@ STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/
+
+/** @} */
 
 #endif

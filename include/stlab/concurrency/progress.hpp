@@ -9,9 +9,19 @@
 #ifndef STLAB_CONCURRENCY_PROGRESS_HPP
 #define STLAB_CONCURRENCY_PROGRESS_HPP
 
+/*! @file progress.hpp
+ *  @brief Progress tracking wrapper for concurrent tasks.
+ */
+
 #include <atomic>
 #include <functional>
 #include <memory>
+
+/** @defgroup stlab_concurrency_progress progress
+ *  @ingroup stlab_concurrency
+ *  @brief Progress tracking wrapper for concurrent tasks.
+ *  @{
+ */
 
 namespace stlab {
 namespace detail {
@@ -104,5 +114,7 @@ public:
     size_t completed() const { return _tracker->completed(); }
 };
 } // namespace stlab
+
+/** @} */
 
 #endif

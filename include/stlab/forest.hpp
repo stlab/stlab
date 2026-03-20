@@ -8,6 +8,10 @@
 #ifndef STLAB_FOREST_HPP
 #define STLAB_FOREST_HPP
 
+/*! @file forest.hpp
+ *  @brief Forest (tree-of-sequences) iterators, ranges, and algorithms.
+ */
+
 /**************************************************************************************************/
 
 #include <array>
@@ -23,6 +27,12 @@
 #include <stlab/iterator/set_next.hpp>
 
 /**************************************************************************************************/
+
+/** @defgroup stlab_forest forest
+ *  @ingroup stlab
+ *  @brief Forest (tree-of-sequences) iterators, ranges, and algorithms.
+ *  @{
+ */
 
 namespace stlab {
 STLAB_VERSION_NAMESPACE_BEGIN()
@@ -1024,8 +1034,7 @@ auto forest<T>::splice(const iterator& position, forest<T>& x) -> iterator {
 /**************************************************************************************************/
 
 template <class T>
-auto forest<T>::splice(const iterator& position, forest<T>& x, iterator i) ->
-    typename forest<T>::iterator {
+auto forest<T>::splice(const iterator& position, forest<T>& x, iterator i) -> iterator {
     i.edge() = forest_edge::leading;
     return splice(position, x, child_iterator(i), ++child_iterator(i), has_children(i) ? 0 : 1);
 }
@@ -1045,12 +1054,12 @@ auto forest<T>::insert(iterator pos, const const_child_iterator& f, const const_
 /**************************************************************************************************/
 
 template <class T>
-auto forest<T>::splice(const iterator& pos,
+auto forest<T>::splice(const iterator& position,
                        forest<T>& x,
                        const child_iterator& first,
                        const child_iterator& last,
                        size_type count) -> iterator {
-    if (first == last || first.base() == pos) return pos;
+    if (first == last || first.base() == position) return position;
 
     if (&x != this) {
         if (count) {
@@ -1066,8 +1075,8 @@ auto forest<T>::splice(const iterator& pos,
 
     unsafe::set_next(std::prev(first), last);
 
-    unsafe::set_next(std::prev(pos), first.base());
-    unsafe::set_next(back, pos);
+    unsafe::set_next(std::prev(position), first.base());
+    unsafe::set_next(back, position);
 
     return first.base();
 }
@@ -1075,9 +1084,11 @@ auto forest<T>::splice(const iterator& pos,
 /**************************************************************************************************/
 
 template <class T>
-auto forest<T>::splice(const iterator& pos, forest<T>& x, child_iterator first, child_iterator last)
-    -> typename forest<T>::iterator {
-    return splice(pos, x, first, last, 0);
+auto forest<T>::splice(const iterator& position,
+                       forest<T>& x,
+                       child_iterator first,
+                       child_iterator last) -> iterator {
+    return splice(position, x, first, last, 0);
 }
 
 /**************************************************************************************************/
@@ -1251,6 +1262,8 @@ STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/
+
+/** @} */
 
 #endif // STLAB_FOREST_HPP
 

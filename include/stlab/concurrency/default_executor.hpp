@@ -9,6 +9,10 @@
 #ifndef STLAB_CONCURRENCY_DEFAULT_EXECUTOR_HPP
 #define STLAB_CONCURRENCY_DEFAULT_EXECUTOR_HPP
 
+/*! @file default_executor.hpp
+ *  @brief Default thread-pool style executors (platform task system).
+ */
+
 #include <stlab/config.hpp>
 
 #include <cassert>
@@ -36,6 +40,12 @@
 #endif
 
 /**************************************************************************************************/
+
+/** @defgroup stlab_concurrency_default_executor default_executor
+ *  @ingroup stlab_concurrency
+ *  @brief Default thread-pool style executors (platform task system).
+ *  @{
+ */
 
 namespace stlab {
 STLAB_VERSION_NAMESPACE_BEGIN()
@@ -484,8 +494,11 @@ struct executor_type {
 
 /**************************************************************************************************/
 
+/// Default task pool executor using low thread priority (when using the portable or Windows task system).
 inline constexpr auto low_executor = detail::executor_type<detail::executor_priority::low>{};
+/// Default concurrent executor used by `stlab::async` and related APIs when none is specified.
 inline constexpr auto default_executor = detail::executor_type<detail::executor_priority::medium>{};
+/// Default task pool executor using high thread priority (when using the portable or Windows task system).
 inline constexpr auto high_executor = detail::executor_type<detail::executor_priority::high>{};
 
 /**************************************************************************************************/
@@ -494,6 +507,8 @@ STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/
+
+/** @} */
 
 #endif // STLAB_CONCURRENCY_DEFAULT_EXECUTOR_HPP
 

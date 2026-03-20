@@ -9,6 +9,10 @@
 #ifndef STLAB_FUNCTIONAL_HPP
 #define STLAB_FUNCTIONAL_HPP
 
+/*! @file functional.hpp
+ *  @brief Reference unwrapping and related functional helpers.
+ */
+
 /**************************************************************************************************/
 
 #include <stlab/config.hpp>
@@ -17,6 +21,12 @@
 #include <type_traits>
 
 /**************************************************************************************************/
+
+/** @defgroup stlab_functional functional
+ *  @ingroup stlab
+ *  @brief Reference unwrapping and related functional helpers.
+ *  @{
+ */
 
 namespace stlab {
 STLAB_VERSION_NAMESPACE_BEGIN()
@@ -74,6 +84,8 @@ STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/
+
+/** @} */
 
 #endif
 

@@ -9,6 +9,10 @@
 #ifndef STLAB_SCOPE_HPP
 #define STLAB_SCOPE_HPP
 
+/*! @file scope.hpp
+ *  @brief RAII scope helpers (`scope`, mutex guard).
+ */
+
 /**************************************************************************************************/
 
 #include <stlab/config.hpp>
@@ -18,6 +22,12 @@
 #include <utility>
 
 /**************************************************************************************************/
+
+/** @defgroup stlab_scope scope
+ *  @ingroup stlab
+ *  @brief RAII scope helpers (`scope`, mutex guard).
+ *  @{
+ */
 
 namespace stlab {
 STLAB_VERSION_NAMESPACE_BEGIN()
@@ -59,6 +69,8 @@ STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/
+
+/** @} */
 
 #endif
 

@@ -9,6 +9,10 @@
 #ifndef STLAB_CONCURRENCY_MAIN_EXECUTOR_HPP
 #define STLAB_CONCURRENCY_MAIN_EXECUTOR_HPP
 
+/*! @file main_executor.hpp
+ *  @brief Main-thread / UI-thread executor (Qt, libdispatch, Emscripten, etc.).
+ */
+
 #include <stlab/config.hpp>
 
 #if STLAB_MAIN_EXECUTOR(QT5) || STLAB_MAIN_EXECUTOR(QT6)
@@ -30,6 +34,12 @@
 #endif
 
 /**************************************************************************************************/
+
+/** @defgroup stlab_concurrency_main_executor main_executor
+ *  @ingroup stlab_concurrency
+ *  @brief Main-thread / UI-thread executor (Qt, libdispatch, Emscripten, etc.).
+ *  @{
+ */
 
 namespace stlab {
 STLAB_VERSION_NAMESPACE_BEGIN()
@@ -162,6 +172,7 @@ struct main_executor_type {
 
 } // namespace detail
 
+/// Runs tasks on the process main thread (Qt, libdispatch main queue, or Emscripten main loop as configured).
 inline constexpr auto main_executor = detail::main_executor_type{};
 
 /**************************************************************************************************/
@@ -170,5 +181,7 @@ STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/
+
+/** @} */
 
 #endif // STLAB_CONCURRENCY_MAIN_EXECUTOR_HPP

@@ -9,6 +9,10 @@
 #ifndef STLAB_UTILITY_HPP
 #define STLAB_UTILITY_HPP
 
+/*! @file utility.hpp
+ *  @brief Type utilities (`move`, `copy`, `static_max`, etc.).
+ */
+
 /**************************************************************************************************/
 
 #include <stlab/config.hpp>
@@ -20,6 +24,12 @@
 #include <utility>          // for index_sequence, forward
 
 /**************************************************************************************************/
+
+/** @defgroup stlab_utility utility
+ *  @ingroup stlab
+ *  @brief Type utilities (`move`, `copy`, `static_max`, etc.).
+ *  @{
+ */
 
 namespace stlab {
 STLAB_VERSION_NAMESPACE_BEGIN()
@@ -143,6 +153,8 @@ STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/
+
+/** @} */
 
 #endif
 

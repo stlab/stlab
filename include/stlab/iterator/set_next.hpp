@@ -8,11 +8,21 @@
 #ifndef STLAB_ITERATOR_SET_NEXT_HPP
 #define STLAB_ITERATOR_SET_NEXT_HPP
 
+/*! @file set_next.hpp
+ *  @brief Intrusive forward/bidirectional iterator helpers (`set_next`, splice, skip).
+ */
+
 #include <iterator>
 
 #include <stlab/config.hpp>
 
 /**************************************************************************************************/
+
+/** @defgroup stlab_iterator_set_next set_next
+ *  @ingroup stlab_iterator
+ *  @brief Intrusive forward/bidirectional iterator helpers (`set_next`, splice, skip).
+ *  @{
+ */
 
 namespace stlab {
 STLAB_VERSION_NAMESPACE_BEGIN()
@@ -57,7 +67,7 @@ STLAB_VERSION_NAMESPACE_END()
 
 /**************************************************************************************************/
 
-/**************************************************************************************************/
+/** @} */
 
 #endif // STLAB_ITERATOR_SET_NEXT_HPP
 

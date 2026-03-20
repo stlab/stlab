@@ -9,11 +9,21 @@
 #ifndef STLAB_CONCURRENCY_TRAITS_HPP
 #define STLAB_CONCURRENCY_TRAITS_HPP
 
+/*! @file traits.hpp
+ *  @brief Type traits and detection helpers used by the concurrency library.
+ */
+
 #include <stlab/config.hpp>
 
 #include <type_traits>
 
 /**************************************************************************************************/
+
+/** @defgroup stlab_concurrency_traits traits
+ *  @ingroup stlab_concurrency
+ *  @brief Type traits and detection helpers used by the concurrency library.
+ *  @{
+ */
 
 namespace stlab {
 STLAB_VERSION_NAMESPACE_BEGIN()
@@ -99,6 +109,8 @@ STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/
+
+/** @} */
 
 #endif
 

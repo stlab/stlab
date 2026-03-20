@@ -194,6 +194,8 @@ if(PROJECT_IS_TOP_LEVEL AND BUILD_TESTING)
 endif()
 
 option(STLAB_DOXYGEN "Generate API documentation with Doxygen (requires Doxygen on PATH)" OFF)
+# Directory passed to docs/Doxyfile for additional INPUT (e.g. root @defgroup stlab).
+set(STLAB_DOXYGEN_EXTRA_INPUT "${CMAKE_SOURCE_DIR}/docs/doxygen")
 if(PROJECT_IS_TOP_LEVEL AND STLAB_DOXYGEN)
   # Hide implementation namespace detail:: (STLAB_VERSION_NAMESPACE_* is a no-op in Doxygen).
   _cpp_library_setup_docs(

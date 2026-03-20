@@ -9,6 +9,10 @@
 #ifndef STLAB_CONCURRENCY_EXECUTOR_BASE_HPP
 #define STLAB_CONCURRENCY_EXECUTOR_BASE_HPP
 
+/*! @file executor_base.hpp
+ *  @brief Executor type aliases and scheduling helpers.
+ */
+
 #include <stlab/config.hpp>
 
 #include <chrono>
@@ -18,6 +22,12 @@
 #include <stlab/concurrency/task.hpp>
 
 /**************************************************************************************************/
+
+/** @defgroup stlab_concurrency_executor_base executor_base
+ *  @ingroup stlab_concurrency
+ *  @brief Executor type aliases and scheduling helpers.
+ *  @{
+ */
 
 namespace stlab {
 STLAB_VERSION_NAMESPACE_BEGIN()
@@ -86,6 +96,8 @@ STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/
+
+/** @} */
 
 #endif
 

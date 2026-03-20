@@ -8,10 +8,21 @@
 #ifndef STLAB_PRE_EXIT_HPP
 #define STLAB_PRE_EXIT_HPP
 
+/*! @file pre_exit.hpp
+ *  @brief Pre-exit handler registration (`at_pre_exit`, `pre_exit`).
+ */
+
 /**************************************************************************************************/
 
 // The namespace for pre_exit cannot be changed without an ABI break. If making an ABI breaking
 // change in this file it needs to be done in a way supporting this version as well.
+
+/** @defgroup stlab_pre_exit pre_exit
+ *  @ingroup stlab
+ *  @brief Pre-exit handler registration (`at_pre_exit`, `pre_exit`).
+ *  @{
+ */
+
 namespace stlab {
 inline namespace v2 {
 
@@ -46,6 +57,8 @@ inline void at_pre_exit(pre_exit_handler f) { stlab_at_pre_exit(f); }
 } // namespace stlab
 
 /**************************************************************************************************/
+
+/** @} */
 
 #endif
 

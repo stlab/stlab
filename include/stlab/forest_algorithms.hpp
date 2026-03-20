@@ -3,6 +3,10 @@
 #ifndef STLAB_FOREST_ALGORITHMS_HPP
 #define STLAB_FOREST_ALGORITHMS_HPP
 
+/*! @file forest_algorithms.hpp
+ *  @brief Higher-level forest algorithms (`stlab::forests`).
+ */
+
 /**************************************************************************************************/
 
 // stdc++
@@ -13,7 +17,11 @@
 
 /**************************************************************************************************/
 
-/**************************************************************************************************/
+/** @defgroup stlab_forest_algorithms forest_algorithms
+ *  @ingroup stlab
+ *  @brief Higher-level forest algorithms (`stlab::forests`).
+ *  @{
+ */
 
 namespace stlab::forests {
 
@@ -137,7 +145,7 @@ auto unflatten(I first, I last, F& f) {
 
 /**************************************************************************************************/
 
-/**************************************************************************************************/
+/** @} */
 
 #endif // STLAB_FOREST_ALGORITHMS_HPP
 

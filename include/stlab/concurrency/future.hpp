@@ -42,6 +42,9 @@
 /**************************************************************************************************/
 
 /**
+ * @file future.hpp
+ * @brief Futures, packaged tasks, channels, and coroutine integration.
+ *
 Asynchronous one-shot results: futures and packaged tasks.
 
 `future<T>` is the consumer side: it eventually holds a value or an exception.
@@ -77,6 +80,12 @@ resume the current coroutine on a specific executor when the future completes.
 */
 
 /**************************************************************************************************/
+
+/** @defgroup stlab_concurrency_future future
+ *  @ingroup stlab_concurrency
+ *  @brief Futures, packaged tasks, channels, and coroutine integration.
+ *  @{
+ */
 
 namespace stlab {
 STLAB_VERSION_NAMESPACE_BEGIN()
@@ -838,10 +847,11 @@ class STLAB_NODISCARD() future<T, enable_if_copyable<void_to_monostate_t<T>>> {
     template <class U, class E>
     friend auto future_with_broken_promise(E) -> detail::reduced_t<U>;
 
+    /** @cond stlab_future_detail_friends */
     friend struct detail::shared_base<type>;
-
     template <class, class>
     friend struct detail::value_;
+    /** @endcond */
 
 public:
     /// The type of the value this future holds.
@@ -1066,10 +1076,11 @@ class STLAB_NODISCARD() future<T, enable_if_not_copyable<void_to_monostate_t<T>>
     template <class U, class E>
     friend auto future_with_broken_promise(E) -> detail::reduced_t<U>;
 
+    /** @cond stlab_future_detail_friends */
     friend struct detail::shared_base<T>;
-
     template <class, class>
     friend struct detail::value_;
+    /** @endcond */
 
 public:
     /// The type of the value this future holds.
@@ -2510,5 +2521,7 @@ template <class R>
 auto operator co_await(stlab::future<R>& f) = delete;
 
 #endif // STLAB_STD_COROUTINES()
+
+/** @} */
 
 #endif

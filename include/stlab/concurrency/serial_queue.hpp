@@ -9,6 +9,10 @@
 #ifndef STLAB_CONCURRENCY_SERIAL_QUEUE_HPP
 #define STLAB_CONCURRENCY_SERIAL_QUEUE_HPP
 
+/*! @file serial_queue.hpp
+ *  @brief Serial executor and scheduling modes built on futures.
+ */
+
 /**************************************************************************************************/
 
 #include <stlab/config.hpp>
@@ -29,6 +33,12 @@
 #include <stlab/concurrency/task.hpp>
 
 /**************************************************************************************************/
+
+/** @defgroup stlab_concurrency_serial_queue serial_queue
+ *  @ingroup stlab_concurrency
+ *  @brief Serial executor and scheduling modes built on futures.
+ *  @{
+ */
 
 namespace stlab {
 STLAB_VERSION_NAMESPACE_BEGIN()
@@ -170,6 +180,8 @@ STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/
+
+/** @} */
 
 #endif
 

@@ -8,6 +8,10 @@
 #ifndef STLAB_ALGORITHM_REVERSE_HPP
 #define STLAB_ALGORITHM_REVERSE_HPP
 
+/*! @file reverse.hpp
+ *  @brief Reverse algorithms for iterators and intrusive forward sequences.
+ */
+
 #include <algorithm>
 #include <utility>
 
@@ -16,6 +20,12 @@
 #include <stlab/iterator/set_next.hpp>
 
 /**************************************************************************************************/
+
+/** @defgroup stlab_algorithm_reverse reverse
+ *  @ingroup stlab_algorithm
+ *  @brief Reverse algorithms for iterators and intrusive forward sequences.
+ *  @{
+ */
 
 namespace stlab {
 STLAB_VERSION_NAMESPACE_BEGIN()
@@ -117,6 +127,8 @@ STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/
+
+/** @} */
 
 #endif // STLAB_ALGORITHM_REVERSE_HPP
 

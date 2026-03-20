@@ -49,3 +49,4 @@ stlab/config.hpp
 /.cpm-cache
 /.cache
 compile_commands.json
+/build-doxy

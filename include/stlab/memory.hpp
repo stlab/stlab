@@ -9,12 +9,22 @@
 #ifndef STLAB_MEMORY_HPP
 #define STLAB_MEMORY_HPP
 
+/*! @file memory.hpp
+ *  @brief Small memory-related utilities (`make_weak_ptr`).
+ */
+
 /**************************************************************************************************/
 
 #include <memory>
 #include <stlab/config.hpp>
 
 /**************************************************************************************************/
+
+/** @defgroup stlab_memory memory
+ *  @ingroup stlab
+ *  @brief Small memory-related utilities (`make_weak_ptr`).
+ *  @{
+ */
 
 namespace stlab {
 STLAB_VERSION_NAMESPACE_BEGIN()
@@ -32,5 +42,7 @@ STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/
+
+/** @} */
 
 #endif

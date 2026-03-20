@@ -9,10 +9,16 @@ GENERATE_LATEX = NO
 QUIET = YES
 WARN_IF_UNDOCUMENTED = NO
 WARN_AS_ERROR = NO
-INPUT = @INPUT_DIR@
+# Document headers under project include/ (cpp-library sets @INPUT_DIR@ to that directory).
+# Extra path supplies @defgroup stlab (root module page).
+INPUT = @INPUT_DIR@ \
+    @STLAB_DOXYGEN_EXTRA_INPUT@
+RECURSIVE = YES
+# Strip the INPUT root so the Files tree shows stlab/... instead of include/stlab/...
+FULL_PATH_NAMES = YES
+STRIP_FROM_PATH = @INPUT_DIR@
 # Generated <stlab/config.hpp> (macros, version namespace) lives in the build tree
 INCLUDE_PATH = @CMAKE_BINARY_DIR@/include
-RECURSIVE = YES
 # stlab::detail supplied from CMake (DOCS_EXCLUDE_SYMBOLS)
 EXCLUDE_SYMBOLS = @EXCLUDE_SYMBOLS@
 
@@ -20,9 +26,12 @@ EXCLUDE_SYMBOLS = @EXCLUDE_SYMBOLS@
 ENABLE_PREPROCESSING = YES
 MACRO_EXPANSION = YES
 EXPAND_ONLY_PREDEF = YES
-PREDEFINED = STLAB_VERSION_NAMESPACE_BEGIN()= STLAB_VERSION_NAMESPACE_END()=
+PREDEFINED = STLAB_VERSION_NAMESPACE_BEGIN()= STLAB_VERSION_NAMESPACE_END()= __cpp_has_concepts=202002L
 EXAMPLE_PATH = @EXAMPLES_PATH@
 HIDE_UNDOC_NAMESPACES = NO
+# Friend declarations to stlab::detail (EXCLUDE_SYMBOLS) otherwise produce
+# "class for member ... cannot be found" on future<>::friend struct detail::...
+HIDE_FRIEND_COMPOUNDS = YES
 HTML_EXTRA_STYLESHEET = @AWESOME_CSS_PATH@/doxygen-awesome.css \
  @AWESOME_CSS_PATH@/doxygen-awesome-sidebar-only.css \
  @CPP_LIBRARY_ROOT@/templates/custom.css

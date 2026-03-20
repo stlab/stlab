@@ -9,6 +9,10 @@
 #ifndef STLAB_CONCURRENCY_HPP
 #define STLAB_CONCURRENCY_HPP
 
+/*! @file concurrency.hpp
+ *  @brief Umbrella include for the concurrency module.
+ */
+
 #include <stlab/concurrency/channel.hpp>
 #include <stlab/concurrency/default_executor.hpp>
 #include <stlab/concurrency/executor_base.hpp>

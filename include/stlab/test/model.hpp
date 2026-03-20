@@ -9,6 +9,10 @@
 #ifndef STLAB_MODEL_HPP
 #define STLAB_MODEL_HPP
 
+/*! @file model.hpp
+ *  @brief Test-only instrumented types for verifying move/copy/destroy behavior.
+ */
+
 /**************************************************************************************************/
 
 #include <stlab/config.hpp>
@@ -21,6 +25,12 @@
 #include <stlab/concurrency/await.hpp>
 
 /**************************************************************************************************/
+
+/** @defgroup stlab_test_model model
+ *  @ingroup stlab_test
+ *  @brief Test-only instrumented types for verifying move/copy/destroy behavior.
+ *  @{
+ */
 
 namespace stlab {
 STLAB_VERSION_NAMESPACE_BEGIN()
@@ -181,6 +191,8 @@ STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/
+
+/** @} */
 
 #endif
 

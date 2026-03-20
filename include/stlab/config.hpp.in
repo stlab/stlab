@@ -7,6 +7,10 @@
 #ifndef STLAB_CONFIG_HPP
 #define STLAB_CONFIG_HPP
 
+/*! @file config.hpp
+ *  @brief Generated configuration, feature, and version-namespace macros.
+ */
+
 // Version information generated from CMake project version
 #define STLAB_VERSION_MAJOR() @PROJECT_VERSION_MAJOR@
 #define STLAB_VERSION_MINOR() @PROJECT_VERSION_MINOR@

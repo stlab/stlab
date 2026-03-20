@@ -9,12 +9,22 @@
 #ifndef STLAB_CONCURRENCY_IMMEDIATE_EXECUTOR_HPP
 #define STLAB_CONCURRENCY_IMMEDIATE_EXECUTOR_HPP
 
+/*! @file immediate_executor.hpp
+ *  @brief Synchronous inline executor.
+ */
+
 #include <stlab/config.hpp>
 
 #include <type_traits>
 #include <utility>
 
 /**************************************************************************************************/
+
+/** @defgroup stlab_concurrency_immediate_executor immediate_executor
+ *  @ingroup stlab_concurrency
+ *  @brief Synchronous inline executor.
+ *  @{
+ */
 
 namespace stlab {
 STLAB_VERSION_NAMESPACE_BEGIN()
@@ -38,6 +48,7 @@ struct immediate_executor_type {
 
 /**************************************************************************************************/
 
+/// Invokes work inline on the calling thread (synchronous executor).
 inline constexpr auto immediate_executor = detail::immediate_executor_type{};
 
 /**************************************************************************************************/
@@ -46,6 +57,8 @@ STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/
+
+/** @} */
 
 #endif
 

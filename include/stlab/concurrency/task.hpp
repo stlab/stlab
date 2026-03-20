@@ -9,6 +9,10 @@
 #ifndef STLAB_CONCURRENCY_TASK_HPP
 #define STLAB_CONCURRENCY_TASK_HPP
 
+/*! @file task.hpp
+ *  @brief Move-only callable wrapper for executor scheduling (`task<Signature>`).
+ */
+
 /**************************************************************************************************/
 
 #include <algorithm>
@@ -23,6 +27,12 @@
 #include <stlab/config.hpp>
 
 /**************************************************************************************************/
+
+/** @defgroup stlab_concurrency_task task
+ *  @ingroup stlab_concurrency
+ *  @brief Move-only callable wrapper for executor scheduling (`task<Signature>`).
+ *  @{
+ */
 
 namespace stlab {
 STLAB_VERSION_NAMESPACE_BEGIN()
@@ -305,6 +315,8 @@ STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/
+
+/** @} */
 
 #endif
 
