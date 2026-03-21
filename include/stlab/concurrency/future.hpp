@@ -45,7 +45,8 @@
  * @file future.hpp
  * @brief Futures, packaged tasks, channels, and coroutine integration.
  *
-Asynchronous one-shot results: futures and packaged tasks.
+ * @details
+ * Asynchronous one-shot results: futures and packaged tasks.
 
 `future<T>` is the consumer side: it eventually holds a value or an exception.
 `packaged_task<Args...>` is the producer side: an invocable that, when called,

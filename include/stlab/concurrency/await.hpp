@@ -10,7 +10,15 @@
 #define STLAB_CONCURRENCY_AWAIT_HPP
 
 /*! @file await.hpp
- *  @brief Blocking wait helpers for futures (`await`, `blocking_get`, etc.).
+ *  @brief Blocking wait helpers for futures (`await`, `await_for`, deprecated `blocking_get`, …).
+ *
+ *  @details
+ *  Prefer **continuations** on futures; blocking waits can increase contention, grow the thread
+ *  pool, or deadlock. For discussion of these issues, see Sean Parent’s talk
+ *  [“C++ Seasoning”](https://youtu.be/Z86b3Rd09sE).
+ *
+ *  On the portable task system, `invoke_waiting` may wake the pool or add a worker before a
+ *  blocking-style wait runs (see implementation).
  */
 
 #include <stlab/config.hpp>

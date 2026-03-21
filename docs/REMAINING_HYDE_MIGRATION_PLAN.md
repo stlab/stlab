@@ -31,7 +31,7 @@
 
 ## Phased execution (recommended order)
 
-### Phase 1 — Module and file overviews (high leverage, small diff)
+### Phase 1 — Module and file overviews (high leverage, small diff) — **done**
 
 1. From Hyde **`index.md` bodies**, expand `@file` blocks for headers that still lack the narrative: e.g. [`channel.hpp`](../include/stlab/concurrency/channel.hpp) (CSP + processing graphs), confirm [`default_executor.hpp`](../include/stlab/concurrency/default_executor.hpp), [`await.hpp`](../include/stlab/concurrency/await.hpp), [`future.hpp`](../include/stlab/concurrency/future.hpp) top-level `index` themes.
 2. Add **`@details`** to **`@defgroup stlab`**, **`stlab_concurrency`**, **`stlab_test`**, **`stlab_algorithm`** in [`stlab_groups.hpp`](doxygen/stlab_groups.hpp) using text from `docs/include/stlab/index.md`, `concurrency/index.md`, `test/index.md`, `algorithm/index.md`.

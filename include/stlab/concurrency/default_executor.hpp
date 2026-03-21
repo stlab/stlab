@@ -12,12 +12,17 @@
 /*! @file default_executor.hpp
  *  @brief Thread-pool executors mapping to the OS scheduler (libdispatch, Windows pool, portable).
  *
- *  Use `high_executor`, `default_executor`, and `low_executor` for priority hints; ordering is
- *  best-effort, not strict.
+ *  @details
+ *  Maps to the OS thread pool when the platform provides one; otherwise uses the library's
+ *  portable implementation. Common configurations include Apple (Grand Central Dispatch),
+ *  Windows thread pools, and Emscripten/WebAssembly builds per `STLAB_TASK_SYSTEM`.
  *
- *  @note If you use the default executor, call `pre_exit()` before process exit so teardown does
- *  not race global destructors or other exit handlers. Alternatively, `std::quick_exit()` may be
- *  appropriate for your program.
+ *  Submit work through `high_executor`, `default_executor`, or `low_executor` as **priority
+ *  hints**; the runtime prefers high, then default, then low, but order is not strict under load.
+ *
+ *  @note Call `pre_exit()` before normal process exit when using these executors so detached tasks
+ *  do not overlap teardown of globals or other exit handlers (the implementation registers a
+ *  pre-exit hook). `std::quick_exit()` is an alternative when it fits your program.
  */
 
 #include <stlab/config.hpp>

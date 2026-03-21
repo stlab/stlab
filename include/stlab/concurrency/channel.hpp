@@ -12,9 +12,14 @@
 /*! @file channel.hpp
  *  @brief CSP-style channels (sender/receiver) for reusable processing graphs.
  *
- *  Channels pair a sending side with receivers; each receiver can host a process run when values
- *  arrive. They can be split, zipped, merged, and composed into graphs that outlive a single run,
- *  unlike one-shot futures-only pipelines.
+ *  @details
+ *  [Channels](https://en.wikipedia.org/wiki/Channel_(programming)) follow the tradition of
+ *  [communicating sequential processes (CSP)](https://en.wikipedia.org/wiki/Communicating_sequential_processes).
+ *  They let you build **processing graphs** that can be run many times, unlike wiring that uses
+ *  only one-shot futures.
+ *
+ *  Each channel has sending and receiving ends. A receiver can attach a **process** that runs when
+ *  values arrive. Channels support split, zip, zip-with, and merge style composition.
  */
 
 #include <stlab/config.hpp>

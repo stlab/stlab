@@ -2,6 +2,8 @@
 
 ASL libraries will be migrated here in the `stlab` namespace, new libraries will be created here.
 
+**STLab** is a set of C++ libraries (namespace `stlab`) under the [Boost Software License 1.0](https://www.boost.org/LICENSE_1_0.txt). This repository provides headers, CMake packages, tests, and API reference (Doxygen). Versioned releases are on [GitHub Releases](https://github.com/stlab/stlab/releases).
+
 # Using the STLab Libraries
 
 The recommended approach to using the libraries is to use [CPM](https://github.com/cpm-cmake/CPM.cmake) and add the following to your `CMakeLists.txt`:
