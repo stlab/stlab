@@ -28,14 +28,14 @@
 
 /**************************************************************************************************/
 
+namespace stlab {
+STLAB_VERSION_NAMESPACE_BEGIN()
+
 /** @defgroup stlab_concurrency_task task
  *  @ingroup stlab_concurrency
  *  @brief Move-only callable wrapper for executor scheduling (`task<Signature>`).
  *  @{
  */
-
-namespace stlab {
-STLAB_VERSION_NAMESPACE_BEGIN()
 
 /**************************************************************************************************/
 
@@ -311,12 +311,12 @@ using task = typename noexcept_deducer<task_, F>::type;
 
 /**************************************************************************************************/
 
+/** @} */
+
 STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/
-
-/** @} */
 
 #endif
 

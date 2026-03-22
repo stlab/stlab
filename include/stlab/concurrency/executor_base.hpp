@@ -23,14 +23,14 @@
 
 /**************************************************************************************************/
 
+namespace stlab {
+STLAB_VERSION_NAMESPACE_BEGIN()
+
 /** @defgroup stlab_concurrency_executor_base executor_base
  *  @ingroup stlab_concurrency
  *  @brief Executor type aliases and scheduling helpers.
  *  @{
  */
-
-namespace stlab {
-STLAB_VERSION_NAMESPACE_BEGIN()
 
 /**************************************************************************************************/
 
@@ -92,12 +92,12 @@ auto operator&(F&& f, executor e) -> executor_task_pair<F> {
 
 /**************************************************************************************************/
 
+/** @} */
+
 STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/
-
-/** @} */
 
 #endif
 

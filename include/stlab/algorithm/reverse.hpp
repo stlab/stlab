@@ -21,14 +21,14 @@
 
 /**************************************************************************************************/
 
+namespace stlab {
+STLAB_VERSION_NAMESPACE_BEGIN()
+
 /** @defgroup stlab_algorithm_reverse reverse
  *  @ingroup stlab_algorithm
  *  @brief Reverse algorithms for iterators and intrusive forward sequences.
  *  @{
  */
-
-namespace stlab {
-STLAB_VERSION_NAMESPACE_BEGIN()
 
 /**************************************************************************************************/
 
@@ -123,12 +123,12 @@ auto reverse_until(I f, I m, I l) -> std::pair<I, I> {
 
 /**************************************************************************************************/
 
+/** @} */
+
 STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/
-
-/** @} */
 
 #endif // STLAB_ALGORITHM_REVERSE_HPP
 

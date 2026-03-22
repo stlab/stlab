@@ -27,14 +27,14 @@
 
 /**************************************************************************************************/
 
+namespace stlab {
+STLAB_VERSION_NAMESPACE_BEGIN()
+
 /** @defgroup stlab_scope scope
  *  @ingroup stlab
  *  @brief RAII scope helpers (`scope`, mutex guard).
  *  @{
  */
-
-namespace stlab {
-STLAB_VERSION_NAMESPACE_BEGIN()
 
 /**************************************************************************************************/
 
@@ -73,12 +73,12 @@ inline auto scope(std::mutex& m, F&& f) {
 
 /**************************************************************************************************/
 
+/** @} */
+
 STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/
-
-/** @} */
 
 #endif
 

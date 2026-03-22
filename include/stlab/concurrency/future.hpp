@@ -82,14 +82,20 @@ resume the current coroutine on a specific executor when the future completes.
 
 /**************************************************************************************************/
 
+namespace stlab {
+STLAB_VERSION_NAMESPACE_BEGIN()
+
 /** @defgroup stlab_concurrency_future future
  *  @ingroup stlab_concurrency
  *  @brief Futures, packaged tasks, channels, and coroutine integration.
+ *
+ *  @details
+ *  The long-form overview (lifecycle, cancellation, continuations, coroutines) is in the
+ *  file-level comment at the top of this header. This module groups the public API
+ *  declared here: `future`, `packaged_task`, `package`, `async`, `when_all`, `when_any`,
+ *  `resume_on`, channel aliases, and related helpers.
  *  @{
  */
-
-namespace stlab {
-STLAB_VERSION_NAMESPACE_BEGIN()
 
 /**************************************************************************************************/
 
@@ -869,10 +875,12 @@ public:
 
     /// Exchanges the shared states of `x` and `y`.
     inline friend void swap(future& x, future& y) noexcept { x.swap(y); }
-    /// True if `x` and `y` share the same shared state.
+
+    /// Equality compares identity of the shared state (the underlying `shared_ptr`), not the value.
+    /** @{ */
     inline friend auto operator==(const future& x, const future& y) -> bool { return x._p == y._p; }
-    /// True if `x` and `y` do not share the same shared state.
     inline friend auto operator!=(const future& x, const future& y) -> bool { return !(x == y); }
+    /** @} */
 
     /// True if this future has an associated shared state.
     [[nodiscard]] auto valid() const -> bool { return static_cast<bool>(_p); }
@@ -887,6 +895,11 @@ public:
                 invoke_void_to_monostate_result([&] { return std::move(p).get_ready(); }));
         });
     }
+
+    /// @name Pipe operators (`operator|`, `operator^`)
+    /// `operator|` forwards to `then` (including `executor_task_pair`); `operator^` forwards to
+    /// `recover`. Overloads mirror the matching `then` / `recover` overloads (lvalue vs rvalue,
+    /// default vs explicit executor).
 
     /// Pipe operator: same as `then(f)`.
     template <class F>
@@ -1046,6 +1059,8 @@ public:
     /// Same as `get_ready()` but may move the value when this is the only reference.
     auto get_ready() && { return monostate_to_void(_p->get_ready_r(unique_usage(_p))); }
 
+    /// @deprecated Use `exception()` once the future is ready (`is_ready()`). Legacy optional
+    /// exception before readiness.
     [[deprecated("Use exception() instead")]] [[nodiscard]] auto error()
         const& -> std::optional<std::exception_ptr> {
         return _p->_exception ? std::optional<std::exception_ptr>{_p->_exception} : std::nullopt;
@@ -1098,10 +1113,12 @@ public:
 
     /// Exchanges the shared states of `x` and `y`.
     inline friend void swap(future& x, future& y) noexcept { x.swap(y); }
-    /// True if `x` and `y` share the same shared state.
+
+    /// Equality compares identity of the shared state (the underlying `shared_ptr`), not the value.
+    /** @{ */
     inline friend auto operator==(const future& x, const future& y) -> bool { return x._p == y._p; }
-    /// True if `x` and `y` do not share the same shared state.
     inline friend auto operator!=(const future& x, const future& y) -> bool { return !(x == y); }
+    /** @} */
 
     /// True if this future has an associated shared state.
     [[nodiscard]] auto valid() const -> bool { return static_cast<bool>(_p); }
@@ -1114,6 +1131,10 @@ public:
             return std::move(_f)(*std::move(p).get_try());
         });
     }
+
+    /// @name Pipe operators (`operator|`, `operator^`)
+    /// `operator|` forwards to `then` (including `executor_task_pair`); `operator^` forwards to
+    /// `recover`. Move-only futures only expose rvalue overloads (each use consumes `*this`).
 
     /// Pipe operator: same as `then(f)`.
     template <class F>
@@ -1210,6 +1231,8 @@ public:
     /// Same as `get_ready()` but may move the value when this is the only reference.
     auto get_ready() && { return monostate_to_void(_p->get_ready_r(unique_usage(_p))); }
 
+    /// @deprecated Use `exception()` once the future is ready (`is_ready()`). Legacy optional
+    /// exception before readiness.
     [[deprecated("Use exception() instead")]] [[nodiscard]] auto error()
         const& -> std::optional<std::exception_ptr> {
         return _p->_exception ? std::optional<std::exception_ptr>{_p->_exception} : std::nullopt;
@@ -1223,6 +1246,8 @@ public:
     }
 };
 
+/// Creates a `packaged_task` and its `future` for signature `Sig`, using `executor` to run `f` when
+/// the task is invoked.
 template <class Sig, class E, class F>
 auto package(E executor, F&& f)
     -> std::pair<detail::packaged_task_from_signature_t<Sig>, detail::reduced_result_t<Sig>> {
@@ -1498,8 +1523,12 @@ void attach_when_args(E&& executor, std::shared_ptr<P>& p, Ts... a) {
 
 /**************************************************************************************************/
 
-/// Returns a future that completes when all `args` are ready; `f` is invoked with their values (or
-/// first exception).
+/// Returns a future that completes when all input futures are ready; `f` receives their values.
+///
+/// @details
+/// If any input completes with an exception, that error ends the combined operation (remaining work
+/// is canceled per the implementation). A variadic empty pack is not supported; use the
+/// iterator-range overload if you need the empty case.
 template <class E, class F, class... Ts>
 auto when_all(const E& executor, F f, future<Ts>... args) {
     using vt_t = voidless_tuple<Ts...>;
@@ -1830,6 +1859,11 @@ struct create_range_of_futures<R, T, C, enable_if_not_copyable<T>> {
 
 /// Returns a future that completes when all futures in `[range.first, range.second)` are ready; `f`
 /// receives their values.
+///
+/// @details
+/// If `range` is empty, the continuation is still scheduled on `executor` with an empty result
+/// collection (no futures to wait on). For a non-empty range, elements that are move-only are moved
+/// out of the iterators while attaching continuations.
 template <class E, class F, class I>
 auto when_all(const E& executor, F f, std::pair<I, I> range) {
     using param_t = typename std::iterator_traits<I>::value_type::result_type;
@@ -1855,6 +1889,10 @@ auto when_all(const E& executor, F f, std::pair<I, I> range) {
 /// Returns a future that completes when any future in `[range.first, range.second)` is ready; `f`
 /// receives the result and the index of the future that completed first (as a second argument of
 /// type `std::size_t`).
+///
+/// @details
+/// If `range` is empty, returns an already-failed future via `future_with_broken_promise` (there is
+/// no candidate to complete first).
 template <class E, class F, class I>
 auto when_any(const E& executor, F&& f, std::pair<I, I> range) {
     using param_t = typename std::iterator_traits<I>::value_type::result_type;
@@ -1874,6 +1912,10 @@ auto when_any(const E& executor, F&& f, std::pair<I, I> range) {
 /**************************************************************************************************/
 
 /// Runs `f` with `args` on `executor` and returns a future for the result.
+///
+/// @details
+/// The packaged task is submitted by invoking `executor` with the task; the returned future
+/// completes when `f` returns or throws (exceptions become the future's error).
 template <class E, class F, class... Args>
 auto async(const E& executor, F&& f, Args&&... args)
     -> detail::reduced_t<detail::result_t<std::decay_t<F>, std::decay_t<Args>...>> {
@@ -1956,6 +1998,8 @@ void shared_base<T, enable_if_not_copyable<void_to_monostate_t<T>>>::set_value(A
 
 /**************************************************************************************************/
 
+/** @} */
+
 STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
@@ -1967,6 +2011,11 @@ STLAB_VERSION_NAMESPACE_END()
 
 namespace stlab {
 STLAB_VERSION_NAMESPACE_BEGIN()
+
+/** @addtogroup stlab_concurrency_future
+ *  @{
+ */
+
 namespace detail {
 
 // --- Generic awaitable support for resume_on(executor, any_awaitable) ---
@@ -2335,6 +2384,8 @@ auto cancelable(const future<R>&) // Use co_await std::move(f); it is already ca
     return {};
 }
 
+/** @} */
+
 STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
@@ -2352,6 +2403,10 @@ STLAB_VERSION_NAMESPACE_END()
 // released), await_suspend destroys the coroutine handle directly — not via _co_handle. If the weak
 // is still valid, await_ready avoids suspension so execution continues.
 /**************************************************************************************************/
+
+/** @addtogroup stlab_concurrency_future
+ *  @{
+ */
 
 template <class T, class... Args>
 struct std::coroutine_traits<stlab::future<T>, Args...> { // NOLINT(cert-dcl58-cpp)
@@ -2525,8 +2580,8 @@ auto operator co_await(stlab::future<R>&& f) {
 template <class R>
 auto operator co_await(stlab::future<R>& f) = delete;
 
-#endif // STLAB_STD_COROUTINES()
-
 /** @} */
+
+#endif // STLAB_STD_COROUTINES()
 
 #endif

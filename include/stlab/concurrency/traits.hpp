@@ -19,14 +19,14 @@
 
 /**************************************************************************************************/
 
+namespace stlab {
+STLAB_VERSION_NAMESPACE_BEGIN()
+
 /** @defgroup stlab_concurrency_traits traits
  *  @ingroup stlab_concurrency
  *  @brief Type traits and detection helpers used by the concurrency library.
  *  @{
  */
-
-namespace stlab {
-STLAB_VERSION_NAMESPACE_BEGIN()
 
 /**************************************************************************************************/
 
@@ -102,6 +102,8 @@ using detected_t = typename detector<nonesuch, void, Op, Args...>::type;
 
 /**************************************************************************************************/
 
+/** @} */
+
 STLAB_VERSION_NAMESPACE_END()
 
 /**************************************************************************************************/
@@ -109,8 +111,6 @@ STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/
-
-/** @} */
 
 #endif
 

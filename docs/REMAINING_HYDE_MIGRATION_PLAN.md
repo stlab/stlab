@@ -37,7 +37,7 @@
 2. Add **`@details`** to **`@defgroup stlab`**, **`stlab_concurrency`**, **`stlab_test`**, **`stlab_algorithm`** in [`stlab_groups.hpp`](doxygen/stlab_groups.hpp) using text from `docs/include/stlab/index.md`, `concurrency/index.md`, `test/index.md`, `algorithm/index.md`.
 3. Update [`README.md`](../README.md) only if a non-Doxygen audience still needs a one-paragraph “what is stlab” (avoid duplicating entire Hyde pages).
 
-### Phase 2 — `forest.hpp` (largest remaining volume)
+### Phase 2 — `forest.hpp` (largest remaining volume) — **done**
 
 Use [`docs/hyde_source_inventory.md`](hyde_source_inventory.md) as a **checklist** (read-only).
 
@@ -45,11 +45,15 @@ Use [`docs/hyde_source_inventory.md`](hyde_source_inventory.md) as a **checklist
 2. **Tier B:** Supporting types (`child_iterator`, `edge_iterator`, `child_adaptor`, …): class-level `@brief` + `@details` summarizing purpose; add member `@brief` only where Hyde had non-generic text.
 3. **Tier C:** Free functions with extra Hyde body (`find_parent`, range helpers): ensure `@file` or function `@details` cover algorithmic / complexity notes already agreed in earlier migration.
 
-### Phase 3 — `future.hpp`
+**Done in source:** `@file` / `@defgroup` narratives; class-level doc for `forest<T>` (fullorder, size, erase semantics); iterator adaptor briefs; edge/pivot helpers; `find_parent` / `erase` / `size` details; range helpers (`child_*`, `preorder_range`, …). Member-level Hyde boilerplate skipped per plan.
+
+### Phase 3 — `future.hpp` — **done**
 
 1. File-level: ensure the big module comment + `@file` reflect Hyde library themes (lifecycle, cancellation, coroutines)—merge, don’t duplicate paragraph-for-paragraph if already present.
 2. Free functions / class templates still only documented in Hyde: `when_all`, error handling, deprecated paths—attach **`@deprecated`** + `@details` in source to match Hyde intent.
 3. **Overload-heavy** operators (`==`, `|`): prefer **one** grouped `/** @{ */` comment or `@overload` pattern consistent with the file.
+
+**Done in source:** `@defgroup` `@details` (pointer to file narrative); `when_all` / `when_any` / `async` `@details`; `package` brief; `\deprecated` on `error()`; `operator==`/`!=` grouped with `@{` `@}`; `@name` subsection for pipe operators on both `future` specializations.
 
 ### Phase 4 — `channel.hpp`
 

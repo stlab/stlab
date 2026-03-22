@@ -23,14 +23,14 @@
 
 /**************************************************************************************************/
 
+namespace stlab {
+STLAB_VERSION_NAMESPACE_BEGIN()
+
 /** @defgroup stlab_concurrency_ready_future ready_future
  *  @ingroup stlab_concurrency
  *  @brief Factory functions for already-resolved futures.
  *  @{
  */
-
-namespace stlab {
-STLAB_VERSION_NAMESPACE_BEGIN()
 
 /**************************************************************************************************/
 
@@ -83,11 +83,11 @@ auto make_exceptional_future(const std::exception_ptr& error, E executor) -> fut
 
 /**************************************************************************************************/
 
+/** @} */
+
 STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/
-
-/** @} */
 
 #endif // STLAB_CONCURRENCY_READY_FUTURE_HPP

@@ -25,14 +25,14 @@
 
 /**************************************************************************************************/
 
+namespace stlab {
+STLAB_VERSION_NAMESPACE_BEGIN()
+
 /** @defgroup stlab_concurrency_tuple_algorithm tuple_algorithm
  *  @ingroup stlab_concurrency
  *  @brief Tuple algorithms and utilities (including for future combiners).
  *  @{
  */
-
-namespace stlab {
-STLAB_VERSION_NAMESPACE_BEGIN()
 
 /**************************************************************************************************/
 
@@ -256,11 +256,11 @@ constexpr auto apply_indexed(F&& f, Tuple&& t) -> decltype(auto) {
 
 /**************************************************************************************************/
 
+/** @} */
+
 STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/
-
-/** @} */
 
 #endif

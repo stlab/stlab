@@ -17,14 +17,15 @@
 #include <functional>
 #include <memory>
 
+namespace stlab {
+namespace detail {
+
 /** @defgroup stlab_concurrency_progress progress
  *  @ingroup stlab_concurrency
  *  @brief Progress tracking wrapper for concurrent tasks.
  *  @{
  */
 
-namespace stlab {
-namespace detail {
 class tracker_server {
     std::atomic_size_t _task_number = {0};
     std::atomic_size_t _done_tasks = {0};
@@ -89,7 +90,14 @@ struct tracker_client {
         return r;
     }
 };
+
+/** @} */
+
 } // namespace detail
+
+/** @addtogroup stlab_concurrency_progress
+ *  @{
+ */
 
 class progress_tracker {
     std::shared_ptr<detail::tracker_server> _tracker;
@@ -113,8 +121,9 @@ public:
 
     size_t completed() const { return _tracker->completed(); }
 };
-} // namespace stlab
 
 /** @} */
+
+} // namespace stlab
 
 #endif

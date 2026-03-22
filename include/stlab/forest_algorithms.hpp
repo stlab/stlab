@@ -17,13 +17,13 @@
 
 /**************************************************************************************************/
 
+namespace stlab::forests {
+
 /** @defgroup stlab_forest_algorithms forest_algorithms
  *  @ingroup stlab
  *  @brief Higher-level forest algorithms (`stlab::forests`).
  *  @{
  */
-
-namespace stlab::forests {
 
 /**************************************************************************************************/
 // "Congruent" would be a nice name here, but in geometry that also implies reflection.
@@ -141,11 +141,11 @@ auto unflatten(I first, I last, F& f) {
 
 /**************************************************************************************************/
 
+/** @} */
+
 } // namespace stlab::forests
 
 /**************************************************************************************************/
-
-/** @} */
 
 #endif // STLAB_FOREST_ALGORITHMS_HPP
 

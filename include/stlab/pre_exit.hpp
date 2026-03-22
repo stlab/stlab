@@ -20,23 +20,19 @@
 // The namespace for pre_exit cannot be changed without an ABI break. If making an ABI breaking
 // change in this file it needs to be done in a way supporting this version as well.
 
+namespace stlab {
+inline namespace v2 {
+
 /** @defgroup stlab_pre_exit pre_exit
  *  @ingroup stlab
  *  @brief Pre-exit handler registration (`at_pre_exit`, `pre_exit`).
  *  @{
  */
 
-namespace stlab {
-inline namespace v2 {
-
 /**************************************************************************************************/
 
-/// Function type invoked during `pre_exit()` (must not throw when compiled as `noexcept`).
-#if __cpp_noexcept_function_type >= 201510L
+/// Function type invoked during `pre_exit()`.
 using pre_exit_handler = void (*)() noexcept;
-#else
-using pre_exit_handler = void (*)();
-#endif
 
 /// An `extern "C"` vector for `pre-exit()` to make it simpler to
 /// export the function from a shared library.
@@ -56,12 +52,12 @@ inline void at_pre_exit(pre_exit_handler f) { stlab_at_pre_exit(f); }
 
 /**************************************************************************************************/
 
+/** @} */
+
 } // namespace v2
 } // namespace stlab
 
 /**************************************************************************************************/
-
-/** @} */
 
 #endif
 

@@ -25,14 +25,14 @@
 
 /**************************************************************************************************/
 
+namespace stlab {
+STLAB_VERSION_NAMESPACE_BEGIN()
+
 /** @defgroup stlab_utility utility
  *  @ingroup stlab
  *  @brief Type utilities (`move`, `copy`, `static_max`, etc.).
  *  @{
  */
-
-namespace stlab {
-STLAB_VERSION_NAMESPACE_BEGIN()
 
 /**************************************************************************************************/
 
@@ -160,12 +160,12 @@ constexpr auto move(T&& t) noexcept -> std::remove_reference_t<T>&& {
 
 /**************************************************************************************************/
 
+/** @} */
+
 STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/
-
-/** @} */
 
 #endif
 

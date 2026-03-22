@@ -53,14 +53,14 @@
 
 /**************************************************************************************************/
 
+namespace stlab {
+STLAB_VERSION_NAMESPACE_BEGIN()
+
 /** @defgroup stlab_concurrency_default_executor default_executor
  *  @ingroup stlab_concurrency
  *  @brief Default thread-pool style executors (platform task system).
  *  @{
  */
-
-namespace stlab {
-STLAB_VERSION_NAMESPACE_BEGIN()
 
 /**************************************************************************************************/
 
@@ -515,12 +515,12 @@ inline constexpr auto high_executor = detail::executor_type<detail::executor_pri
 
 /**************************************************************************************************/
 
+/** @} */
+
 STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/
-
-/** @} */
 
 #endif // STLAB_CONCURRENCY_DEFAULT_EXECUTOR_HPP
 

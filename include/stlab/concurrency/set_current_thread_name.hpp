@@ -28,13 +28,13 @@
   #error "Unspecified or unknown thread mode set."
 #endif
 
+namespace stlab {
+
 /** @defgroup stlab_concurrency_set_current_thread_name set_current_thread_name
  *  @ingroup stlab_concurrency
  *  @brief Set the current thread name (platform-specific).
  *  @{
  */
-
-namespace stlab {
 
 inline void set_current_thread_name(const char* name) {
 #if STLAB_THREADS(WIN32)
@@ -60,8 +60,8 @@ inline void set_current_thread_name(const char* name) {
 #endif
 }
 
-} // namespace stlab
-
 /** @} */
+
+} // namespace stlab
 
 #endif

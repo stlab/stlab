@@ -18,15 +18,15 @@
 
 /**************************************************************************************************/
 
+namespace stlab {
+STLAB_VERSION_NAMESPACE_BEGIN()
+namespace unsafe {
+
 /** @defgroup stlab_iterator_set_next set_next
  *  @ingroup stlab_iterator
  *  @brief Intrusive forward/bidirectional iterator helpers (`set_next`, splice, skip).
  *  @{
  */
-
-namespace stlab {
-STLAB_VERSION_NAMESPACE_BEGIN()
-namespace unsafe {
 
 /**************************************************************************************************/
 
@@ -65,13 +65,13 @@ inline void skip_node(I location) {
 
 /**************************************************************************************************/
 
+/** @} */
+
 } // namespace unsafe
 STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/
-
-/** @} */
 
 #endif // STLAB_ITERATOR_SET_NEXT_HPP
 

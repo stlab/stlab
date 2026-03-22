@@ -40,14 +40,14 @@
 
 /**************************************************************************************************/
 
+namespace stlab {
+STLAB_VERSION_NAMESPACE_BEGIN()
+
 /** @defgroup stlab_concurrency_await await
  *  @ingroup stlab_concurrency
  *  @brief Blocking wait helpers for futures (`await`, `blocking_get`, etc.).
  *  @{
  */
-
-namespace stlab {
-STLAB_VERSION_NAMESPACE_BEGIN()
 
 /**************************************************************************************************/
 
@@ -187,11 +187,11 @@ auto blocking_get(future<T> x, const std::chrono::nanoseconds& timeout) -> declt
 
 /**************************************************************************************************/
 
+/** @} */
+
 STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/
-
-/** @} */
 
 #endif // STLAB_CONCURRENCY_AWAIT_HPP

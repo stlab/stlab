@@ -14,23 +14,24 @@
 #include <stlab/config.hpp>
 #include <stlab/iterator/set_next.hpp>
 
+namespace stlab {
+STLAB_VERSION_NAMESPACE_BEGIN()
+
 /** @defgroup stlab_iterator_concepts concepts
  *  @ingroup stlab_iterator
  *  @brief Iterator concepts when the compiler supports C++20 concepts.
  *  @{
  */
 
-namespace stlab {
-STLAB_VERSION_NAMESPACE_BEGIN()
-
 template <class I>
 concept forward_node_iterator = std::forward_iterator<I> && requires(I i) {
     { stlab::unsafe::set_next(i, i) };
 };
-STLAB_VERSION_NAMESPACE_END()
-} // namespace stlab
 
 /** @} */
+
+STLAB_VERSION_NAMESPACE_END()
+} // namespace stlab
 
 #define STLAB_PRIVATE_CONCEPT_FORWARD_NODE_ITERATOR stlab::forward_node_iterator
 

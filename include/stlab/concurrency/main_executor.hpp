@@ -35,14 +35,14 @@
 
 /**************************************************************************************************/
 
+namespace stlab {
+STLAB_VERSION_NAMESPACE_BEGIN()
+
 /** @defgroup stlab_concurrency_main_executor main_executor
  *  @ingroup stlab_concurrency
  *  @brief Main-thread / UI-thread executor (Qt, libdispatch, Emscripten, etc.).
  *  @{
  */
-
-namespace stlab {
-STLAB_VERSION_NAMESPACE_BEGIN()
 
 /**************************************************************************************************/
 
@@ -177,11 +177,11 @@ inline constexpr auto main_executor = detail::main_executor_type{};
 
 /**************************************************************************************************/
 
+/** @} */
+
 STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/
-
-/** @} */
 
 #endif // STLAB_CONCURRENCY_MAIN_EXECUTOR_HPP
