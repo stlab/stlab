@@ -24,6 +24,7 @@ target_sources( stlab INTERFACE
     concurrency/utility.hpp
 
     iterator/set_next.hpp
+    iterator/concepts.hpp
 
     test/model.hpp
 
