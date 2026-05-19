@@ -55,10 +55,12 @@ Use [`docs/hyde_source_inventory.md`](hyde_source_inventory.md) as a **checklist
 
 **Done in source:** `@defgroup` `@details` (pointer to file narrative); `when_all` / `when_any` / `async` `@details`; `package` brief; `\deprecated` on `error()`; `operator==`/`!=` grouped with `@{` `@}`; `@name` subsection for pipe operators on both `future` specializations.
 
-### Phase 4 — `channel.hpp`
+### Phase 4 — `channel.hpp` — **done**
 
 1. `sender`, `receiver`, `buffer_size`, process types: class-level docs from Hyde `index.md` + critical methods (`operator()`, `operator|`, `close`, `ready`).
 2. Deprecations (`join`, `merge` vs `merge_channel`, etc.): mirror Hyde warnings in `@deprecated` / `@details`.
+
+**Done in source:** `@defgroup` `@details` pointer; `receiver` / `sender` (copyable and move-only) class narratives; `buffer_size` and merge-strategy tags; `function_process` briefs; `channel`, `zip`, `zip_with`, `merge_channel` `@details`; `\deprecated` + `@details` on `join` / `merge`; critical `operator|`, `close`, `ready`, `set_ready`, `free_buffer` method docs.
 
 ### Phase 5 — Smaller headers and leftovers
 
