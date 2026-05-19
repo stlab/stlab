@@ -11,6 +11,11 @@
 
 /*! @file serial_queue.hpp
  *  @brief Serial executor and scheduling modes built on futures.
+ *
+ *  @details
+ *  `serial_queue_t` wraps an underlying executor so tasks run one-at-a-time (or in queued batches,
+ *  depending on `schedule_mode`). Use `executor()` for fire-and-forget work; use `operator()` to
+ *  schedule via `async` and obtain a `future` for the result.
  */
 
 /**************************************************************************************************/
@@ -40,12 +45,21 @@ STLAB_VERSION_NAMESPACE_BEGIN()
 /** @defgroup stlab_concurrency_serial_queue serial_queue
  *  @ingroup stlab_concurrency
  *  @brief Serial executor and scheduling modes built on futures.
+ *
+ *  @details
+ *  See `serial_queue.hpp` for `serial_queue_t` and `schedule_mode`.
  *  @{
  */
 
 /**************************************************************************************************/
 
-enum class schedule_mode : std::uint8_t { single, all };
+/// How the serial queue drains its task deque when kicked.
+enum class schedule_mode : std::uint8_t {
+    /// Run one task, then reschedule; fair interleaving with newly enqueued work.
+    single,
+    /// Swap out the entire queue and run it to completion before accepting the next batch.
+    all
+};
 
 /**************************************************************************************************/
 
@@ -152,17 +166,22 @@ public:
 
 /**************************************************************************************************/
 
+/// Executor wrapper that runs enqueued tasks serially on top of `e`.
 class serial_queue_t {
     std::shared_ptr<detail::serial_instance_t> _impl;
 
 public:
+    /// Constructs a serial queue using underlying executor `e` and drain mode `mode`.
     template <typename Executor>
     explicit serial_queue_t(Executor e, schedule_mode mode = schedule_mode::single) :
         _impl(std::make_shared<detail::serial_instance_t>(
             [_e = std::move(e)](auto&& f) { _e(std::forward<decltype(f)>(f)); }, mode)) {}
 
-    /// Returns an executor that enqueues `void() noexcept` tasks on this queue (no futures;
-    /// suitable for fire-and-forget work on the serial context).
+    /// Returns an executor that enqueues `void() noexcept` tasks on this queue.
+    ///
+    /// @details
+    /// Like other executors, `operator()` returns `void` — tasks are not cancelable and no
+    /// `future` carries their result. Suitable for fire-and-forget work on the serial context.
     [[nodiscard]] auto executor() const {
         return [_impl =
                     _impl](auto&& f) -> std::enable_if_t<std::is_nothrow_invocable_v<decltype(f)>> {
@@ -170,6 +189,11 @@ public:
         };
     }
 
+    /// Schedules `f(args...)` on this queue via `async` and returns the resulting `future`.
+    ///
+    /// @details
+    /// Retain the returned `future` until the task completes; destroying it early cancels work
+    /// that has not yet run.
     template <typename F, typename... Args>
     auto operator()(F&& f, Args&&... args) const {
         return async(executor(), std::forward<F>(f), std::forward<Args>(args)...);

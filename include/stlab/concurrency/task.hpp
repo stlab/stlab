@@ -11,6 +11,11 @@
 
 /*! @file task.hpp
  *  @brief Move-only callable wrapper for executor scheduling (`task<Signature>`).
+ *
+ *  @details
+ *  `task<F>` type-erases a callable with a fixed signature for use by executors and serial queues.
+ *  Tasks are move-only (mutable `operator()` supports moving arguments through for single-shot
+ *  invocation). Small callables may be stored inline; larger ones are heap-allocated.
  */
 
 /**************************************************************************************************/
@@ -34,16 +39,19 @@ STLAB_VERSION_NAMESPACE_BEGIN()
 /** @defgroup stlab_concurrency_task task
  *  @ingroup stlab_concurrency
  *  @brief Move-only callable wrapper for executor scheduling (`task<Signature>`).
+ *
+ *  @details
+ *  Use the `task` alias (`task<F>` deduces `noexcept` from the signature). See `task.hpp`.
  *  @{
  */
 
 /**************************************************************************************************/
 
-/*
-    tasks are functions with a mutable call operator to support moving items through for single
-    invocations.
-*/
-
+/// Type-erased, move-only callable with signature `R(Args...)` (or `noexcept` variant).
+///
+/// @details
+/// Mutable `operator()` supports moving arguments through for single invocations. Compare to
+/// `nullptr` when empty; use `target()` / `target_type()` for runtime type queries.
 template <bool NoExcept, class R, class... Args>
 class task_ {
     template <class F>
@@ -306,6 +314,7 @@ struct noexcept_deducer<T, R(Args...) noexcept> {
     using type = T<true, R, Args...>;
 };
 
+/// `task_` with `noexcept` deduced from the function type `F` (e.g. `void()` vs `void() noexcept`).
 template <class F>
 using task = typename noexcept_deducer<task_, F>::type;
 

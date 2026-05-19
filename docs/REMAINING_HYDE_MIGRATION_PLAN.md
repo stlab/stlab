@@ -62,11 +62,13 @@ Use [`docs/hyde_source_inventory.md`](hyde_source_inventory.md) as a **checklist
 
 **Done in source:** `@defgroup` `@details` pointer; `receiver` / `sender` (copyable and move-only) class narratives; `buffer_size` and merge-strategy tags; `function_process` briefs; `channel`, `zip`, `zip_with`, `merge_channel` `@details`; `\deprecated` + `@details` on `join` / `merge`; critical `operator|`, `close`, `ready`, `set_ready`, `free_buffer` method docs.
 
-### Phase 5 — Smaller headers and leftovers
+### Phase 5 — Smaller headers and leftovers — **done**
 
 - [`forest_algorithms.hpp`](../include/stlab/forest_algorithms.hpp): `@file` + `@details` from Hyde `forest_algorithms` pages; briefs on `equal_shape`, `transcribe`, `flatten`, `unflatten` as needed.
 - [`serial_queue.hpp`](../include/stlab/concurrency/serial_queue.hpp), [`task.hpp`](../include/stlab/concurrency/task.hpp), [`progress.hpp`](../include/stlab/concurrency/progress.hpp), etc.: only where inventory shows substantive Hyde-only text.
 - [`test/model.hpp`](../include/stlab/test/model.hpp): class-level `@details` from Hyde class `index.md` bodies if still missing.
+
+**Done in source:** `forest_algorithms` file/group narratives plus `equal_shape`, `transcribe`/`transcriber`, `flatten`/`unflatten`, `transcribe_iterator`; `serial_queue_t` / `schedule_mode` / `executor` / `operator()` from Hyde; `task` file/group/`task_`/`task` alias; `annotate` / `regular` / `move_only` class `@details`. **`progress.hpp` skipped** (Hyde inventory had no substantive bodies).
 
 ### Phase 6 — Remove the old site tree
 
