@@ -189,7 +189,7 @@ message(STATUS "stlab: Task System: ${STLAB_TASK_SYSTEM}")
 message(STATUS "stlab: Main Executor: ${STLAB_MAIN_EXECUTOR}")
 
 if(PROJECT_IS_TOP_LEVEL AND BUILD_TESTING)
-  CPMAddPackage("gh:doctest/doctest@2.4.12")
+  CPMAddPackage("gh:doctest/doctest@2.5.2")
   add_subdirectory(test)
 endif()
 
