@@ -20,9 +20,16 @@ github_username: stlab
 remote_theme: adobe/hyde-theme@v3.0.0
 #theme: jekyll-theme-adobe-hyde
 
+# Required by hyde-theme SCSS: root.scss uses map.merge(header map, $theme-vars).
+# Without header_image, Sass fails with "Expected $args to contain a key".
+adobe_hyde:
+  header_image: stlab-logo-long.svg
+
 exclude:
   - _source
   - Doxyfile
+  # Doxyfile INPUT only (stlab_groups.hpp); API HTML is merged into _site/doxygen/ by build-site.sh
+  - doxygen
   - build
   - boost # from building examples
   - boost.tgz # from building examples
@@ -39,6 +46,10 @@ exclude:
   - CMakeLists.txt
   - Gemfile
   - Gemfile.lock
+# Preserved across jekyll build --watch cleans (API HTML copied by build-site.sh / sync-doxygen.sh)
+keep_files:
+  - doxygen
+
 excerpt_separator: <!--more-->
 markdown: kramdown
 utterances:

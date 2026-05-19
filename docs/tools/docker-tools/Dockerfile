@@ -6,11 +6,15 @@ FROM ubuntu:latest
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
   apt-utils \
+  cmake \
+  doxygen \
   fswatch \
+  graphviz \
   g++ \
   git \
   libreadline-dev \
   make \
+  ninja-build \
   nodejs \
   npm \
   rbenv \
@@ -31,10 +35,10 @@ RUN useradd -ms /bin/bash app
 USER app
 WORKDIR /home/app
 
-# Set UTF language (assumed by jekyll)
-ENV LC_ALL="C.UTF-8"
-ENV LANG="en_US.UTF-8"
-ENV LANGUAGE="en_US.UTF-8"
+# UTF-8 locale (C.UTF-8 is available on Ubuntu without locale-gen; Jekyll needs UTF-8)
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
+ENV LANGUAGE=C.UTF-8
 
 # Install ruby environment
 RUN echo 'eval "$(rbenv init -)"' >> ~/.bashrc

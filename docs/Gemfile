@@ -4,6 +4,9 @@ gem 'jekyll-redirect-from', group: [:jekyll_plugins]
 gem 'jekyll-compose', group: [:jekyll_plugins]
 gem "jekyll-remote-theme", group: [:jekyll_plugins]
 
+# sass-embedded 1.80+ breaks adobe/hyde-theme SCSS (meta.load-css / map.merge); pin until theme updates
+gem "sass-embedded", "~> 1.77.8"
+
 # missing jekyll dependencies
 gem 'csv'
 gem 'base64'

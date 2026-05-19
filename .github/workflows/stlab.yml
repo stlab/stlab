@@ -151,8 +151,8 @@ jobs:
       - name: Install Doxygen
         uses: ssciwr/doxygen-install@501e53b879da7648ab392ee226f5b90e42148449
 
-      - name: Install Ninja
-        run: sudo apt-get update && sudo apt-get install -y ninja-build
+      - name: Install Ninja and Graphviz
+        run: sudo apt-get update && sudo apt-get install -y ninja-build graphviz
 
       - name: Configure
         run: cmake --preset=doxygen

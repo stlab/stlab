@@ -1,28 +1,26 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# Install/update Jekyll gems. Preserves Gemfile.lock by default (use --lock to refresh it).
+set -euo pipefail
 
-POSITIONAL=()
-OPTIONS=""
-while [[ $# -gt 0 ]]
-do
-key="$1"
-
-case $key in
-    -l|--lock)
-        LOCK=YES
-        shift # past argument
-    ;;
-    *)    # unknown option
-        POSITIONAL+=("$1") # save it in an array for later
-        shift # past argument
-    ;;
-esac
+REFRESH_LOCK=0
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -l | --lock)
+      REFRESH_LOCK=1
+      shift
+      ;;
+    *)
+      shift
+      ;;
+  esac
 done
-set -- "${POSITIONAL[@]}" # restore positional parameters
 
-cd ./docs
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
+cd "${REPO_ROOT}/docs"
 
-rm ./Gemfile.lock
-bundle lock --update
-bundle install
-
-# git submodule update --recursive --remote
+if [[ "${REFRESH_LOCK}" -eq 1 ]]; then
+  bundle lock --update
+else
+  bundle install
+fi

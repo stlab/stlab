@@ -15,7 +15,7 @@ Specify the ruby version to match the latest stable - https://www.ruby-lang.org/
 macOS and Linux:
 
 ```bash
-VERSION="1.0.5"
+VERSION="1.0.8"
 VOLUME="stlab.libraries"
 RUBY_VERSION="3.4.4"
 ```
@@ -23,7 +23,7 @@ RUBY_VERSION="3.4.4"
 Windows:
 
 ```powershell
-$VERSION="1.0.5"
+$VERSION="1.0.8"
 $VOLUME="stlab.libraries"
 $RUBY_VERSION="3.4.4"
 
@@ -88,28 +88,38 @@ The hex number is the docker image container ID and may be different. Going fore
 ```
 cd /mnt/host
 git config --global --add safe.directory /mnt/host
-./docs/tools/docs/update.sh
+./docs/tools/docs/update.sh    # bundle install only; use --lock to refresh Gemfile.lock
 ```
 
 ## Build the documentation site
 
-To build or rebuild the complete documentation site locally, execute the following from the docker prompt:
+To build or rebuild the **full** site (Jekyll blog/pages **and** Doxygen API under `/doxygen/`, same as [stlab.cc](https://stlab.cc) and CI), from the docker prompt:
 
-```
+```bash
 cd /mnt/host
-./docs/tools/docs/prepare.sh
+./docs/tools/docs/build-site.sh
 ```
+
+`prepare.sh` is a thin wrapper around `build-site.sh`. Useful flags:
+
+- `--skip-doxygen` — Jekyll only (fast markdown/theme edits)
+- `--skip-jekyll` — rebuild API docs and recopy into `docs/_site/doxygen/` after editing `include/stlab/**/*.hpp`
+- `--refresh-releases` — refresh `docs/_data/releases.json` from the GitHub API before building
+
+All commands assume the repository is bind-mounted at `/mnt/host` (see `docker run` above).
 
 ## Run a local server for the site
 
-Once the site has been prepared, you can run it to see how it looks. From the docker prompt enter:
+From the docker prompt:
 
-```
+```bash
 cd /mnt/host
 ./docs/tools/docs/start.sh
 ```
 
-To view the site, open a browser to `http://localhost:3000`. The site will auto-rebuild and refresh as files are changed.
+`start.sh` runs a full `build-site.sh` once, then Jekyll `--watch` plus browser-sync on `docs/_site/`. Open `http://localhost:3000` (API docs at `http://localhost:3000/doxygen/`).
+
+**Note:** `docs/doxygen/` (only `stlab_groups.hpp`) is excluded from Jekyll. API HTML is copied into `_site/doxygen/` by `build-site.sh`; `start.sh` keeps it across `jekyll --watch` rebuilds (`keep_files` + `sync-doxygen.sh` guard). After editing header Doxygen comments, run `./docs/tools/docs/build-site.sh --skip-jekyll` to refresh API HTML.
 
 ## Tips
 
@@ -128,3 +138,11 @@ docker exec -it <container id> bash
 - 1.0.3 — Updating Jekyll to 4.2.0 and moving to GitHub Actions.
 - 1.0.4 - Updating docs for new header directory structure. The gem installs are no longer baked into the image, this was causing too many issues.
 - 1.0.5 - Updating to Ruby 3.4.4 and Jekyll 5.1.0.
+- 1.0.6 - CMake, Ninja, and Doxygen for unified `build-site.sh` (Jekyll + API docs in one output tree).
+- 1.0.7 - Use `C.UTF-8` for all locale variables (fixes bash `setlocale` warnings on `en_US.UTF-8`).
+- 1.0.8 - Graphviz (`dot`) for Doxygen diagrams; use `bundle install` in `update.sh` (no longer deletes `Gemfile.lock` by default).
+
+### Troubleshooting `build-site.sh`
+
+- **`dot: not found` / Doxygen graph errors:** Rebuild the Docker image (1.0.8+). Then remove stale output and rebuild: `rm -rf build/doxygen/html && ./docs/tools/docs/build-site.sh` (or only `--skip-jekyll` if Jekyll already succeeded).
+- **Jekyll SCSS `Expected $args to contain a key`:** Ensure `adobe_hyde.header_image` is set in [`docs/_config.yml`](../../_config.yml) (the theme’s `root.scss` must pass two maps to `map.merge`). Then run `./docs/tools/docs/update.sh` and rebuild.
