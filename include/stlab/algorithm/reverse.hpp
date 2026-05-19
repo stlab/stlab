@@ -10,6 +10,10 @@
 
 /*! @file reverse.hpp
  *  @brief Reverse algorithms for iterators and intrusive forward / bidirectional sequences.
+ *
+ *  @details
+ *  Algorithms for reversing node ranges and iterator sequences, including helpers that splice
+ *  intrusive lists via `stlab/iterator/set_next.hpp`.
  */
 
 #include <algorithm>

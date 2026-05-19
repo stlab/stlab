@@ -11,6 +11,12 @@
 
 /*! @file traits.hpp
  *  @brief Type traits and detection helpers used by the concurrency library.
+ *
+ *  @details
+ *  `smart_is_copy_constructible` corrects `std::is_copy_constructible` for types such as
+ *  `std::vector<std::unique_ptr<T>>`. Specialize `smart_test` for other cases (see
+ *  `test/traits_test.cpp`). Used by `future` and `channel` to pick copyable vs move-only
+ *  specializations.
  */
 
 #include <stlab/config.hpp>
@@ -37,6 +43,7 @@ using all_true = std::is_same<bool_pack<true, v...>, bool_pack<v..., true>>;
 
 /**************************************************************************************************/
 
+/// Trait adapter; specialize for types where `std::is_copy_constructible` is wrong.
 template <template <typename> class test, typename T>
 struct smart_test : test<T> {};
 

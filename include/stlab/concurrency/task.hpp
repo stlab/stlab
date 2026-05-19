@@ -13,9 +13,14 @@
  *  @brief Move-only callable wrapper for executor scheduling (`task<Signature>`).
  *
  *  @details
- *  `task<F>` type-erases a callable with a fixed signature for use by executors and serial queues.
- *  Tasks are move-only (mutable `operator()` supports moving arguments through for single-shot
- *  invocation). Small callables may be stored inline; larger ones are heap-allocated.
+ *  `task<F>` type-erases any callable target (function, lambda, `std::bind`, member pointer, etc.)
+ *  with a fixed signature. It is similar to `std::function` but **not copyable**, which suits
+ *  move-only and single-shot targets (common in messaging and executor queues). An empty task
+ *  compares equal to `nullptr`; invoking it throws `std::bad_function_call`.
+ *
+ *  Mutable `operator()` allows moving arguments through for one invocation. Small targets (function
+ *  pointers, `std::reference_wrapper`, `std::function`) may use small-buffer optimization; larger
+ *  callables are heap-allocated.
  */
 
 /**************************************************************************************************/

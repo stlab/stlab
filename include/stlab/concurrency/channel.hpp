@@ -20,6 +20,16 @@
  *
  *  Each channel has sending and receiving ends. A receiver can attach a **process** that runs when
  *  values arrive. Channels support split, zip, zip-with, and merge style composition.
+ *
+ *  **Processes** may be:
+ *  - a function object (unary for a single upstream, or n-ary matching upstream arity), or
+ *  - an **await-process** type with `await(...)`, `yield()`, and `state() const` returning
+ *    `process_state_scheduled` (`process_state` plus a `chrono::nanoseconds` deadline).
+ *
+ *  Optional await-process members: `close()` when upstream closes while awaiting; `set_error(exception_ptr)`
+ *  when upstream throws. While `state()` is `process_state::await`, values arrive via `await`; when
+ *  it is `process_state::yield`, the runtime calls `yield()` (subject to buffer limits and timers
+ *  encoded in the scheduled time point).
  */
 
 #include <stlab/config.hpp>
@@ -71,12 +81,7 @@ template <typename>
 class receiver;
 
 /**************************************************************************************************/
-/*
- * close on a process is called when a process is in an await state to signal that no more data is
- * coming. In response to a close, a process can switch to a yield state to yield values, otherwise
- * it is destructed. await_try is await if a value is available, otherwise yield (allowing for an
- * interruptable task).
- */
+
 /// Scheduling hint for a process: wait for input (`await`) or run to produce output (`yield`).
 enum class process_state : std::uint8_t { await, yield };
 
@@ -85,11 +90,22 @@ enum class message_t : std::uint8_t { argument, error };
 
 /**************************************************************************************************/
 
+/// `process_state` plus a deadline returned from `process::state()`.
+///
+/// @details
+/// The runtime uses the pair to choose `await` vs `yield()` and optional timers. If `first` is
+/// `yield` and the time point is in the past, `yield()` runs next; if it is in the future, a timer
+/// fires `yield()` when it expires. For `await`, a past/now time point can trigger `yield()` when no
+/// value arrives; a future time point starts a timeout that yields if no value arrives before it
+/// expires (cancelled when a value does arrive). Optional `close()` is invoked when upstream closes
+/// while awaiting; optional `set_error(exception_ptr)` receives upstream exceptions.
 using process_state_scheduled = std::pair<process_state, std::chrono::nanoseconds>;
 
+/// Always await the next upstream value (no yield timeout).
 constexpr process_state_scheduled await_forever{process_state::await,
                                                 std::chrono::nanoseconds::max()};
 
+/// Yield as soon as the scheduler permits.
 constexpr process_state_scheduled yield_immediate{process_state::yield,
                                                   std::chrono::nanoseconds::min()};
 
@@ -1320,7 +1336,7 @@ struct channel_<E, void> {
 
 /**************************************************************************************************/
 
-/// Creates a `sender`/`receiver` pair (or a lone `receiver<void>`) on `executor`.
+/// Creates a `sender`/`receiver` pair on `executor` (`receiver<void>` only when `T` is `void`).
 template <typename T, typename E>
 auto channel(E executor) {
     return detail::channel_<E, T>::create(std::move(executor));

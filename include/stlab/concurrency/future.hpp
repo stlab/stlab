@@ -78,6 +78,17 @@ Coroutines: a function returning `future<T>` can use `co_return` and `co_await`.
 Use `co_await std::move(f)` to await a future (resumption happens in the thread
 that completes the future). Use `co_await resume_on(executor, std::move(f))` to
 resume the current coroutine on a specific executor when the future completes.
+
+Compared with `std::future`: copyable value types need no `shared_future`; there is
+no blocking `wait()`/`get()`—use `get_try()` / `get_ready()` or continuations.
+`then()` is `const` and may be called multiple times on copyable futures (a **split**);
+continuations receive the value type, not a `future`. Sink arguments should be taken by
+value and moved; read-only use `const&`; modifying through a non-const reference is
+undefined. When the last `future` is destroyed, the associated task and argument futures
+are released and an uninvoked `packaged_task` becomes a no-op.
+
+Specialize `stlab::smart_test` when `T` is e.g. `std::vector<std::unique_ptr<>>` so
+move-only dispatch is correct (`std::is_copy_constructible` is defective for such types).
 */
 
 /**************************************************************************************************/
@@ -837,8 +848,13 @@ template <class... Args>
 
 /**************************************************************************************************/
 
-/// Consumer side of a one-shot result (copyable T). Use `get_ready()` or `get_try()` to obtain the
-/// value.
+/// Consumer side of a one-shot result (copyable `T`).
+///
+/// @details
+/// Copyable futures support multiple continuations (`then`, `recover`, `|`, `^`) from the same
+/// object. Use `get_ready()` when `is_ready()`; otherwise `get_try()` returns `std::optional<T>`
+/// (or `bool` for `void`). Rvalue `get_try()`/`get_ready()` may move the value when this is the
+/// only outstanding reference.
 template <class T>
 class STLAB_NODISCARD() future<T, enable_if_copyable<void_to_monostate_t<T>>> {
     using type = void_to_monostate_t<T>;
@@ -898,8 +914,9 @@ public:
 
     /// @name Pipe operators (`operator|`, `operator^`)
     /// `operator|` forwards to `then` (including `executor_task_pair`); `operator^` forwards to
-    /// `recover`. Overloads mirror the matching `then` / `recover` overloads (lvalue vs rvalue,
-    /// default vs explicit executor).
+    /// `recover` (value-based error handling—use `recover`/`^` rather than inspecting `error()`).
+    /// Overloads mirror the matching `then` / `recover` overloads (lvalue vs rvalue, default vs
+    /// explicit executor).
 
     /// Pipe operator: same as `then(f)`.
     template <class F>

@@ -11,8 +11,11 @@
 /*! @file pre_exit.hpp
  *  @brief Register and run operations that must execute before program exit.
  *
- *  Register handlers with `at_pre_exit()`; call `pre_exit()` once before the process terminates
- *  (e.g. before `std::exit()` or when leaving `main()`).
+ *  @details
+ *  Register handlers with `at_pre_exit()`; call `pre_exit()` once before normal process termination
+ *  (before `std::exit()` or when leaving `main()`). Handlers run in reverse registration order.
+ *  Required when using the default executor so detached or canceled tasks do not overlap global
+ *  teardown (see `default_executor.hpp`). `std::quick_exit()` is an alternative when appropriate.
  */
 
 /**************************************************************************************************/
@@ -31,7 +34,7 @@ inline namespace v2 {
 
 /**************************************************************************************************/
 
-/// Function type invoked during `pre_exit()`.
+/// Function type invoked during `pre_exit()` (must not throw; `noexcept` with C++17 and later).
 using pre_exit_handler = void (*)() noexcept;
 
 /// An `extern "C"` vector for `pre-exit()` to make it simpler to

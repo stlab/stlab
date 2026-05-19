@@ -15,6 +15,17 @@
  *  @par Motivation
  *  A plain extra `{ }` block does not document intent. `scope` constructs `T` from the leading
  *  arguments, runs the last argument as a nullary function while `T` is alive, then destroys `T`.
+ *
+ *  @par Example
+ *  @code
+ *  void pop_and_run_task() {
+ *      std::function<void()> task = scope<std::lock_guard<std::mutex>>(m, [&]() {
+ *          return pop_front_unsafe(task_queue);
+ *      });
+ *      task();
+ *  }
+ *  @endcode
+ *  The lock’s lifetime is bound to the lambda that pops the queue—clearer than an anonymous scope.
  */
 
 /**************************************************************************************************/

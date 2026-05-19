@@ -51,10 +51,8 @@ STLAB_VERSION_NAMESPACE_BEGIN()
 
 /**************************************************************************************************/
 
-/**
-    Assumes `f` _will wait_ and wakes or adds a thread to the thread pool (to the limit) before
-    invoking `f`.
-*/
+/// Assumes `f` will block waiting; on the portable task system, wakes the pool or adds a worker
+/// (up to the limit) before calling `f`.
 template <class F>
 auto invoke_waiting(F&& f) {
 #if STLAB_TASK_SYSTEM(PORTABLE)
@@ -163,8 +161,10 @@ auto await_for(const future<T>& x, const std::chrono::nanoseconds& timeout) -> f
 
 /// @deprecated Use `await()` instead.
 ///
-/// @warning Blocks a thread until `x` is ready; prefer continuations to avoid contention and
-/// deadlocks.
+/// @details
+/// Waits until `x` is ready. Consumes a thread while blocked, increasing contention and risking
+/// deadlock; subsequent work on the waiting thread is stalled. Prefer continuations (`then`,
+/// `recover`, `when_all`, etc.).
 template <class T>
 [[deprecated("Use await instead.")]]
 auto blocking_get(future<T> x) -> T {

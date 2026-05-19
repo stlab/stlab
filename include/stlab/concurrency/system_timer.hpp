@@ -11,6 +11,18 @@
 
 /*! @file system_timer.hpp
  *  @brief System timer / delayed execution (platform run loop or portable thread).
+ *
+ *  @details
+ *  `system_timer` schedules `void() noexcept` tasks after a delay. The implementation is
+ *  platform-specific (Grand Central Dispatch, Windows thread-pool timers, or a portable thread with
+ *  a priority queue).
+ *
+ *  Destroying a `system_timer` does not tear down the underlying run loop or timer thread; tasks
+ *  already submitted still run. On libdispatch builds, scheduling after `pre_exit()` is ignored.
+ *
+ *  Prefer `std::chrono::duration` overloads. Deprecated `time_point` overloads run immediately if
+ *  the time is in the past. If a prior task overruns its interval, later tasks may run later than
+ *  requested (never earlier).
  */
 
 /**************************************************************************************************/
@@ -45,6 +57,9 @@ STLAB_VERSION_NAMESPACE_BEGIN()
 /** @defgroup stlab_concurrency_system_timer system_timer
  *  @ingroup stlab_concurrency
  *  @brief System timer / delayed execution (platform run loop or portable thread).
+ *
+ *  @details
+ *  See `system_timer.hpp` for scheduling semantics and platform behavior.
  *  @{
  */
 
@@ -294,6 +309,7 @@ public:
 
 /**************************************************************************************************/
 
+/// Schedules `void() noexcept` tasks after a duration (or at a deprecated time point).
 struct system_timer_type {
     using result_type = void;
 
@@ -302,11 +318,13 @@ struct system_timer_type {
         return only_system_timer;
     }
 
+    /// @deprecated Use a `duration` overload instead.
     [[deprecated("Use chrono::duration as parameter instead")]] void operator()(
         std::chrono::steady_clock::time_point when, task<void() noexcept>&& f) const {
         operator()(when - std::chrono::steady_clock().now(), std::move(f));
     }
 
+    /// Executes `f` after `duration` (via the process-wide `system_timer` instance).
     template <typename Rep, typename Per = std::ratio<1>>
     void operator()(std::chrono::duration<Rep, Per> duration, task<void() noexcept>&& f) const {
         get_system_timer()(duration, std::move(f));

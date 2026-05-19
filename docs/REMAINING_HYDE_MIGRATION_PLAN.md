@@ -70,6 +70,20 @@ Use [`docs/hyde_source_inventory.md`](hyde_source_inventory.md) as a **checklist
 
 **Done in source:** `forest_algorithms` file/group narratives plus `equal_shape`, `transcribe`/`transcriber`, `flatten`/`unflatten`, `transcribe_iterator`; `serial_queue_t` / `schedule_mode` / `executor` / `operator()` from Hyde; `task` file/group/`task_`/`task` alias; `annotate` / `regular` / `move_only` class `@details`. **`progress.hpp` skipped** (Hyde inventory had no substantive bodies).
 
+### Hyde 2.0 regression audit (commit `c1e96179`) — **done**
+
+Compared pre/post bodies under `docs/libraries/` vs current `docs/include/stlab/` and restored prose that existed before Hyde 2.0 but was not yet in Doxygen, including:
+
+- **`system_timer.hpp`** — deleted Hyde pages; scheduling, destruction, duration vs time-point semantics.
+- **`main_executor.hpp`** — deleted class page; main-loop ordering and lifetime.
+- **`channel.hpp`** — `docs/libraries/concurrency/channel/process/*` overview (await-process protocol).
+- **`future.hpp`** — copyable-future vs `std::future`, continuation conventions, `smart_test` note.
+- **`task.hpp`** — former `task` class narrative (move-only type erasure).
+- **`await.hpp`** — `blocking_get` warning; `invoke_waiting` as Doxygen.
+- **`scope.hpp`**, **`pre_exit.hpp`**, **`ready_future.hpp`**, **`executor_base.hpp`**, **`progress.hpp`**, **`traits.hpp`**, **`algorithm/reverse.hpp`**.
+
+Not migrated here: external **`copy_on_write`** Hyde tree (separate package); duplicate/obsolete Hyde paths removed in 2.0 with no public API change.
+
 ### Phase 6 — Remove the old site tree
 
 1. When satisfied with Doxygen (and README) coverage, **delete** `docs/include/` (or replace with a short `docs/include/README.md` stating “removed; see Doxygen + headers”).
