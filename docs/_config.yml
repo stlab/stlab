@@ -28,6 +28,10 @@ exclude:
   - boost.tgz # from building examples
   - "*.sh"
   - README.md
+  - DOCUMENTATION.md
+  - REMAINING_HYDE_MIGRATION_PLAN.md
+  - hyde_source_inventory.md
+  - include/README.md
   - stlab.bbprojectd/
   - vendor # For Travis-CI (see https://jekyllrb.com/docs/continuous-integration/)
   - tools/
@@ -35,10 +39,6 @@ exclude:
   - CMakeLists.txt
   - Gemfile
   - Gemfile.lock
-adobe_hyde:
-  header_image: stlab-logo-long.svg
-  hyde_yaml_dir: /include
-  source_root: https://github.com/stlab/stlab/blob/main/include
 excerpt_separator: <!--more-->
 markdown: kramdown
 utterances:

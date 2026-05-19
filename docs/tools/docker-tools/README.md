@@ -124,7 +124,7 @@ docker exec -it <container id> bash
 
 - 1.0.0 - Initial release for Jekyll
 - 1.0.1 - Updating tool set
-- 1.0.2 - Updating in for Hyde 2.0
-- 1.0.3 - Updating Jekyll to 4.2.0 for new Hyde and moving to GitHub Actions.
+- 1.0.2 — Jekyll site updates (historical; API docs are now Doxygen-only in the main repo).
+- 1.0.3 — Updating Jekyll to 4.2.0 and moving to GitHub Actions.
 - 1.0.4 - Updating docs for new header directory structure. The gem installs are no longer baked into the image, this was causing too many issues.
 - 1.0.5 - Updating to Ruby 3.4.4 and Jekyll 5.1.0.

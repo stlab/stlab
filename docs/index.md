@@ -2,21 +2,39 @@
 layout: default
 ---
 
-{% assign home_thumbs = site.pages | where_exp:"p","p.hyde.icon" | sort:"hyde.tab"%}
-
 <div class="home">
+
+  <h1>stlab libraries</h1>
+
+  <p>Modern, modular C++ algorithms and data structures. Source and issues on
+  <a href="https://github.com/stlab/stlab">GitHub</a>.</p>
+
   <table class='icon-table'>
   <tr>
-    {% for page in home_thumbs %}
-      <td>
-            <a href='{{page.url}}'>
-            <div class='icon-box'>
-                <div class='top'><i class="fa fa-inverse fa-{{page.hyde.icon}}"></i></div>
-                <div class='bottom'>{{page.hyde.tab}}</div>
-            </div>
-            </a>
-      </td>
-    {% endfor %}
+    <td>
+      <a href="{{ '/doxygen/' | relative_url }}">
+        <div class='icon-box'>
+          <div class='top'><i class="fa fa-inverse fa-book"></i></div>
+          <div class='bottom'>API (Doxygen)</div>
+        </div>
+      </a>
+    </td>
+    <td>
+      <a href="{{ '/doxygen/' | relative_url }}group__stlab__concurrency.html">
+        <div class='icon-box'>
+          <div class='top'><i class="fa fa-inverse fa-random"></i></div>
+          <div class='bottom'>Concurrency</div>
+        </div>
+      </a>
+    </td>
+    <td>
+      <a href="{{ '/doxygen/' | relative_url }}group__stlab__forest.html">
+        <div class='icon-box'>
+          <div class='top'><i class="fa fa-inverse fa-tree"></i></div>
+          <div class='bottom'>Forest</div>
+        </div>
+      </a>
+    </td>
   </tr>
   </table>
 
@@ -25,7 +43,6 @@ layout: default
 {% assign releases = site.data.releases | sort: 'published_at' | reverse %}
 {% assign release = releases | first %}
 {% assign prev_release = releases | shift | first %}
-{% assign release_tag = site.data.tags | where_exp:'p','p.name == release.tag_name' | first %}
 
   <h1>Latest Release: {{release.tag_name}}</h1>
 

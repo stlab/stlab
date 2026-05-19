@@ -84,15 +84,17 @@ Compared pre/post bodies under `docs/libraries/` vs current `docs/include/stlab/
 
 Not migrated here: external **`copy_on_write`** Hyde tree (separate package); duplicate/obsolete Hyde paths removed in 2.0 with no public API change.
 
-### Phase 6 — Remove the old site tree
+### Phase 6 — Remove the old site tree — **done**
 
-1. When satisfied with Doxygen (and README) coverage, **delete** `docs/include/` (or replace with a short `docs/include/README.md` stating “removed; see Doxygen + headers”).
-2. Adjust Jekyll config ([`_config.yml`](_config.yml)) so the site no longer expects `hyde_yaml_dir` content, or redirect GitHub Pages to **Doxygen-only** layout—coordinate with whoever publishes the site.
+1. Deleted `docs/include/stlab/`; replaced with [`include/README.md`](include/README.md) pointing to Doxygen and headers.
+2. Removed `adobe_hyde` / `hyde_yaml_dir` from [`_config.yml`](_config.yml). Home page links to `/doxygen/` module groups. CI already merges Doxygen into the Jekyll site (see [`.github/workflows/jekyll.yml`](../.github/workflows/jekyll.yml)).
+
+**Also removed:** `docs/generate_docs.sh`, `validate_docs.sh`, `docs/scripts/hyde_inventory.py`, `.hyde-config`, `docs/HYDE_AND_SOURCES.md`. Added [`DOCUMENTATION.md`](DOCUMENTATION.md). Removed obsolete CMake preset `docs` (Hyde configure). See [`README.md`](README.md).
 
 ## Tracking
 
-- Keep [`docs/hyde_source_inventory.md`](hyde_source_inventory.md) as a **static snapshot** or regenerate once from [`docs/scripts/hyde_inventory.py`](scripts/hyde_inventory.py) before deleting Hyde files, to preserve a paper trail.
-- Optionally add a checkbox section at the bottom of this file per phase.
+- [`docs/hyde_source_inventory.md`](hyde_source_inventory.md) is a **frozen archive** of the removed Hyde tree (paths under `docs/include/stlab/`).
+- Migration complete; this file is kept for history only.
 
 ## When a *new* file might be justified (only if you later choose)
 

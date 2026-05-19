@@ -1,4 +1,6 @@
-# Hyde → source inventory (auto-generated)
+# Historical Hyde → source inventory (archived snapshot)
+
+Frozen inventory from the former `docs/include/stlab/**/*.md` Hyde mirror (removed in Phase 6). **Do not regenerate**; API docs are in `include/stlab/**/*.hpp` (Doxygen) and `build/doxygen/html/`.
 
 | md_path | header | symbol_hint | has_md_body | hyde.brief | review |
 |---------|--------|-------------|-------------|------------|--------|
