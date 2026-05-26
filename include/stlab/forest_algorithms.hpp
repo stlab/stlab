@@ -26,7 +26,6 @@
 namespace stlab::forests {
 
 /** @defgroup stlab_forest_algorithms forest_algorithms
- *  @ingroup stlab
  *  @brief Higher-level forest algorithms (`stlab::forests`).
  *
  *  @details

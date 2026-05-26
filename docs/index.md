@@ -15,7 +15,7 @@ layout: default
       <a href="{{ '/doxygen/' | relative_url }}">
         <div class='icon-box'>
           <div class='top'><i class="fa fa-inverse fa-book"></i></div>
-          <div class='bottom'>API (Doxygen)</div>
+          <div class='bottom'>API</div>
         </div>
       </a>
     </td>

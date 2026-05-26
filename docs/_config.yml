@@ -27,7 +27,8 @@ adobe_hyde:
 
 exclude:
   - _source
-  - Doxyfile
+  - Doxyfile.in
+  - Doxyfile.stlab
   # Doxyfile INPUT only (stlab_groups.hpp); API HTML is merged into _site/doxygen/ by build-site.sh
   - doxygen
   - build

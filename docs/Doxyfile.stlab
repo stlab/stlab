@@ -1,0 +1,29 @@
+# stlab-specific Doxygen settings (appended to docs/Doxyfile.in at configure time).
+
+# Math in comments via MathJax (no local LaTeX).
+USE_MATHJAX            = YES
+MATHJAX_VERSION        = MathJax_3
+
+# Extra INPUT for @mainpage and directory-level @defgroup (docs/doxygen/).
+INPUT                  = @INPUT_DIR@ \
+                         @STLAB_DOXYGEN_EXTRA_INPUT@
+
+FULL_PATH_NAMES        = YES
+STRIP_FROM_PATH        = @INPUT_DIR@
+
+# Generated config.hpp from the build tree.
+INCLUDE_PATH           = @CMAKE_BINARY_DIR@/include
+
+# Version inline namespace and attribute macros (see include/stlab/config.hpp).
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = YES
+EXPAND_ONLY_PREDEF     = YES
+PREDEFINED             = STLAB_VERSION_NAMESPACE_BEGIN()= \
+                         STLAB_VERSION_NAMESPACE_END()= \
+                         __cpp_has_concepts=202002L \
+                         STLAB_NODISCARD()=[[nodiscard]]
+
+# Friend declarations to stlab::detail otherwise confuse Doxygen with EXCLUDE_SYMBOLS.
+HIDE_FRIEND_COMPOUNDS  = YES
+LAYOUT_FILE = @STLAB_DOXYGEN_EXTRA_INPUT@/DoxygenLayout.xml
+

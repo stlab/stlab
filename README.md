@@ -2,7 +2,7 @@
 
 ASL libraries will be migrated here in the `stlab` namespace, new libraries will be created here.
 
-**STLab** is a set of C++ libraries (namespace `stlab`) under the [Boost Software License 1.0](https://www.boost.org/LICENSE_1_0.txt). This repository provides headers, CMake packages, tests, and API reference (Doxygen). Versioned releases are on [GitHub Releases](https://github.com/stlab/stlab/releases).
+**STLab** is a set of C++ libraries (namespace `stlab`) under the [Boost Software License 1.0](https://www.boost.org/LICENSE_1_0.txt). This repository provides headers, CMake packages, tests, and API reference. Versioned releases are on [GitHub Releases](https://github.com/stlab/stlab/releases).
 
 # Using the STLab Libraries
 
@@ -28,7 +28,7 @@ This library provides futures and channels, high-level abstractions for implemen
 
 The complete documentation is available on the [STLab home page](http://stlab.cc).
 
-API reference (Doxygen, including [doxygen-awesome-css](https://github.com/jothepro/doxygen-awesome-css)) is built when `-DSTLAB_DOXYGEN=ON` is set, or via the CMake preset `doxygen` (`cmake --preset=doxygen` then `cmake --build --preset=doxygen`). Output is written under `build/doxygen/html`. On GitHub Pages, it is published under `/doxygen/` next to the Jekyll blog site. See [`docs/DOCUMENTATION.md`](docs/DOCUMENTATION.md).
+API reference (Doxygen, including [doxygen-awesome-css](https://github.com/jothepro/doxygen-awesome-css)) is built with `-DBUILD_DOCS=ON` or the CMake preset `docs` (`cmake --preset=docs` then `cmake --build --preset=docs`). Output is under `build/docs/html` (preset `doxygen` is an alias with output in `build/doxygen/html`). On GitHub Pages, it is published under `/doxygen/` next to the Jekyll blog site. See [`docs/DOCUMENTATION.md`](docs/DOCUMENTATION.md).
 
 Formulas in comments use Doxygen’s math markup (e.g. `\f$O(n)\f$` inline, `\f[` / `\f]` for display); HTML output enables **MathJax 3** so no LaTeX toolchain is required locally or in CI.
 

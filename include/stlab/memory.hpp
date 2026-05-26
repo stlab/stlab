@@ -24,7 +24,6 @@ namespace stlab {
 STLAB_VERSION_NAMESPACE_BEGIN()
 
 /** @defgroup stlab_memory memory
- *  @ingroup stlab
  *  @brief Small memory-related utilities (`make_weak_ptr`).
  *  @{
  */

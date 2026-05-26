@@ -26,7 +26,6 @@ namespace stlab {
 STLAB_VERSION_NAMESPACE_BEGIN()
 
 /** @defgroup stlab_functional functional
- *  @ingroup stlab
  *  @brief Reference unwrapping and related functional helpers.
  *  @{
  */

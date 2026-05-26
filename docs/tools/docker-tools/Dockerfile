@@ -9,7 +9,6 @@ RUN apt-get update && apt-get install -y \
   cmake \
   doxygen \
   fswatch \
-  graphviz \
   g++ \
   git \
   libreadline-dev \

@@ -19,7 +19,6 @@
 #include <stlab/config.hpp>
 
 /** @defgroup stlab_version version
- *  @ingroup stlab
  *  @brief Library version number macros.
  *  @{
  */

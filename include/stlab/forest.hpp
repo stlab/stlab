@@ -44,7 +44,6 @@ namespace stlab {
 STLAB_VERSION_NAMESPACE_BEGIN()
 
 /** @defgroup stlab_forest forest
- *  @ingroup stlab
  *  @brief Forest (tree-of-sequences) iterators, ranges, and algorithms.
  *
  *  @details

@@ -26,11 +26,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Setup Ruby
-        uses: ruby/setup-ruby@v1.213.0
+        uses: ruby/setup-ruby@v1.308.0
         with:
           ruby-version: '3.4.4'
           working-directory: docs
@@ -38,18 +38,16 @@ jobs:
           cache-version: 0
       - name: Setup Pages
         id: pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v6
       - name: Install Doxygen
-        uses: ssciwr/doxygen-install@501e53b879da7648ab392ee226f5b90e42148449
-      - name: Install Ninja and Graphviz
-        run: sudo apt-get update && sudo apt-get install -y ninja-build graphviz
+        uses: ssciwr/doxygen-install@329d88f5a303066a5bd006db7516b1925b86350e
       - name: Build full documentation site
         run: ./docs/tools/docs/build-site.sh --refresh-releases
         env:
           JEKYLL_BASEURL: ${{ steps.pages.outputs.base_path }}
           JEKYLL_ENV: production
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ./docs/_site
 
@@ -62,4 +60,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

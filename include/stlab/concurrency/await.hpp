@@ -178,7 +178,7 @@ auto blocking_get_for(future<T> x, const std::chrono::nanoseconds& timeout) -> f
     return await_for(std::move(x), timeout);
 }
 
-/// @deprecated Use `await_for()` and `get_try()` instead.
+/// @deprecated Use `await_for()` instead.
 template <class T>
 [[deprecated("Use await_for instead.")]]
 auto blocking_get(future<T> x, const std::chrono::nanoseconds& timeout) -> decltype(x.get_try()) {

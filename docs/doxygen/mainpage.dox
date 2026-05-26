@@ -1,0 +1,11 @@
+/** @mainpage stlab
+
+Public API grouped by header (nested under directory modules where applicable).
+
+@details
+Source repository: [stlab/stlab on GitHub](https://github.com/stlab/stlab).
+
+License: [Boost Software License 1.0](https://www.boost.org/LICENSE_1_0.txt).
+
+Module overviews are listed under the Reference topics index (`algorithm`, `concurrency`, `forest`, and related headers).
+ */

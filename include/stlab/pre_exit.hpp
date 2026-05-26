@@ -27,7 +27,6 @@ namespace stlab {
 inline namespace v2 {
 
 /** @defgroup stlab_pre_exit pre_exit
- *  @ingroup stlab
  *  @brief Pre-exit handler registration (`at_pre_exit`, `pre_exit`).
  *  @{
  */

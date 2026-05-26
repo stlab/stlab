@@ -193,12 +193,21 @@ if(PROJECT_IS_TOP_LEVEL AND BUILD_TESTING)
   add_subdirectory(test)
 endif()
 
-option(STLAB_DOXYGEN "Generate API documentation with Doxygen (requires Doxygen on PATH)" OFF)
-# Directory passed to docs/Doxyfile for additional INPUT (e.g. root @defgroup stlab).
-set(STLAB_DOXYGEN_EXTRA_INPUT "${CMAKE_SOURCE_DIR}/docs/doxygen")
-if(PROJECT_IS_TOP_LEVEL AND STLAB_DOXYGEN)
-  # Hide implementation namespace detail:: (STLAB_VERSION_NAMESPACE_* is a no-op in Doxygen).
-  _cpp_library_setup_docs(
+# cpp-library convention (see templates/CMakePresets.json "docs" preset).
+option(BUILD_DOCS "Generate API documentation with Doxygen (requires Doxygen on PATH)" OFF)
+option(STLAB_DOXYGEN "Deprecated alias for BUILD_DOCS" OFF)
+if(STLAB_DOXYGEN AND NOT BUILD_DOCS)
+  set(BUILD_DOCS ON CACHE BOOL "Generate API documentation with Doxygen" FORCE)
+  message(STATUS "stlab: STLAB_DOXYGEN is deprecated; use BUILD_DOCS or cmake --preset=docs")
+endif()
+# Default ON until Hyde→Doxygen migration reaches full symbol coverage; then OFF to match cpp-library.
+option(STLAB_DOXYGEN_RELAXED_WARNINGS
+  "Disable WARN_IF_UNDOCUMENTED / WARN_AS_ERROR (set OFF for cpp-library-strict builds)"
+  ON)
+
+if(PROJECT_IS_TOP_LEVEL AND BUILD_DOCS)
+  include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/StlabDocs.cmake")
+  stlab_setup_docs(
     NAME "stlab"
     VERSION "${PROJECT_VERSION}"
     DESCRIPTION "Modern, modular C++ algorithms, data structures, and concurrency primitives"

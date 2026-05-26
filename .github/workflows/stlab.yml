@@ -149,19 +149,16 @@ jobs:
           fetch-depth: 0
 
       - name: Install Doxygen
-        uses: ssciwr/doxygen-install@501e53b879da7648ab392ee226f5b90e42148449
-
-      - name: Install Ninja and Graphviz
-        run: sudo apt-get update && sudo apt-get install -y ninja-build graphviz
+        uses: ssciwr/doxygen-install@329d88f5a303066a5bd006db7516b1925b86350e
 
       - name: Configure
-        run: cmake --preset=doxygen
+        run: cmake --preset=docs
 
       - name: Build documentation
-        run: cmake --build --preset=doxygen
+        run: cmake --build --preset=docs
 
       - name: Upload HTML artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: doxygen-html
-          path: build/doxygen/html
+          path: build/docs/html

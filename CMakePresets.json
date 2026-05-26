@@ -125,18 +125,25 @@
             }
         },
         {
-            "name": "doxygen",
-            "description": "Doxygen API reference (doxygen-awesome); run build preset doxygen with target docs",
+            "name": "docs",
+            "description": "Doxygen API reference (cpp-library docs preset); cmake --build --preset docs",
             "inherits": "base-cpp20",
             "cacheVariables": {
                 "BUILD_TESTING": "OFF",
-                "STLAB_DOXYGEN": "ON",
+                "BUILD_DOCS": "ON",
+                "STLAB_DOXYGEN_RELAXED_WARNINGS": "ON",
                 "STLAB_MAIN_EXECUTOR": "none",
                 "STLAB_NO_STD_COROUTINES": "ON",
                 "STLAB_TASK_SYSTEM": "portable",
                 "STLAB_THREAD_SYSTEM": "pthread",
                 "stlab.coverage": "OFF"
             }
+        },
+        {
+            "name": "doxygen",
+            "description": "Alias for docs preset (same as cpp-library BUILD_DOCS flow)",
+            "inherits": "docs",
+            "binaryDir": "${sourceDir}/build/doxygen"
         },
         {
             "name": "clang-tidy",
@@ -240,6 +247,11 @@
             "name": "include-what-you-use",
             "configurePreset": "include-what-you-use",
             "jobs": 1
+        },
+        {
+            "name": "docs",
+            "configurePreset": "docs",
+            "targets": ["docs"]
         },
         {
             "name": "doxygen",

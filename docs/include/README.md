@@ -4,7 +4,7 @@ The per-symbol Markdown tree that lived under `docs/include/stlab/` was generate
 
 **Authoritative API documentation** is now:
 
-- **Doxygen** — build with `cmake --preset=doxygen` and `cmake --build --preset=doxygen` (HTML under `build/doxygen/html/`). On [stlab.cc](https://stlab.cc) it is published at `/doxygen/`.
+- **Doxygen** — build with `cmake --preset=docs` and `cmake --build --preset=docs` (HTML under `build/docs/html/`). On [stlab.cc](https://stlab.cc) it is published at `/doxygen/`.
 - **Source headers** — `include/stlab/**/*.hpp` with Doxygen comments (`@file`, `@brief`, `@details`, `///`).
 
 See [`../README.md`](../README.md) for the Jekyll blog/release site and Doxygen build steps.

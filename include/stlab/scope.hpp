@@ -42,7 +42,6 @@ namespace stlab {
 STLAB_VERSION_NAMESPACE_BEGIN()
 
 /** @defgroup stlab_scope scope
- *  @ingroup stlab
  *  @brief RAII scope helpers (`scope`, mutex guard).
  *  @{
  */

@@ -66,18 +66,15 @@ if [[ "${REFRESH_RELEASES}" -eq 1 ]]; then
 fi
 
 if [[ "${SKIP_DOXYGEN}" -eq 0 ]]; then
-  if ! command -v dot >/dev/null 2>&1; then
-    echo "error: Graphviz 'dot' not found. Doxygen needs it for class/collaboration graphs." >&2
-    echo "  Docker: rebuild image 1.0.8+ (includes graphviz). Host: install graphviz package." >&2
-    exit 1
-  fi
-  echo "Building Doxygen (cmake preset doxygen)..."
+  echo "Building Doxygen (cmake preset docs)..."
   # Remove stale HTML if a prior run failed without dot (broken .map/.png references).
-  if [[ -d build/doxygen/html ]]; then
-    rm -rf build/doxygen/html
-  fi
-  cmake --preset=doxygen
-  cmake --build --preset=doxygen
+  for doxy_html in build/docs/html build/doxygen/html; do
+    if [[ -d "${doxy_html}" ]]; then
+      rm -rf "${doxy_html}"
+    fi
+  done
+  cmake --preset=docs
+  cmake --build --preset=docs
 fi
 
 if [[ "${SKIP_JEKYLL}" -eq 0 ]]; then

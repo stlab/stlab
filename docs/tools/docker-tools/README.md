@@ -15,7 +15,7 @@ Specify the ruby version to match the latest stable - https://www.ruby-lang.org/
 macOS and Linux:
 
 ```bash
-VERSION="1.0.8"
+VERSION="1.0.9"
 VOLUME="stlab.libraries"
 RUBY_VERSION="3.4.4"
 ```
@@ -23,7 +23,7 @@ RUBY_VERSION="3.4.4"
 Windows:
 
 ```powershell
-$VERSION="1.0.8"
+$VERSION="1.0.9"
 $VOLUME="stlab.libraries"
 $RUBY_VERSION="3.4.4"
 
@@ -141,8 +141,8 @@ docker exec -it <container id> bash
 - 1.0.6 - CMake, Ninja, and Doxygen for unified `build-site.sh` (Jekyll + API docs in one output tree).
 - 1.0.7 - Use `C.UTF-8` for all locale variables (fixes bash `setlocale` warnings on `en_US.UTF-8`).
 - 1.0.8 - Graphviz (`dot`) for Doxygen diagrams; use `bundle install` in `update.sh` (no longer deletes `Gemfile.lock` by default).
+- 1.0.9 - Remove Graphviz (`dot`); dependency graphs rely on Doxygen defaults until cpp-library sets `HAVE_DOT = NO`.
 
 ### Troubleshooting `build-site.sh`
 
-- **`dot: not found` / Doxygen graph errors:** Rebuild the Docker image (1.0.8+). Then remove stale output and rebuild: `rm -rf build/doxygen/html && ./docs/tools/docs/build-site.sh` (or only `--skip-jekyll` if Jekyll already succeeded).
 - **Jekyll SCSS `Expected $args to contain a key`:** Ensure `adobe_hyde.header_image` is set in [`docs/_config.yml`](../../_config.yml) (the theme’s `root.scss` must pass two maps to `map.merge`). Then run `./docs/tools/docs/update.sh` and rebuild.
