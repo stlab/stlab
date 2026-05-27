@@ -42,7 +42,7 @@ jobs:
       - name: Install Doxygen
         uses: ssciwr/doxygen-install@329d88f5a303066a5bd006db7516b1925b86350e
       - name: Build full documentation site
-        run: ./docs/tools/docs/build-site.sh --refresh-releases
+        run: bash ./docs/tools/docs/build-site.sh --refresh-releases
         env:
           JEKYLL_BASEURL: ${{ steps.pages.outputs.base_path }}
           JEKYLL_ENV: production
