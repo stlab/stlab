@@ -89,7 +89,7 @@ fi
 
 if [[ "${SKIP_DOXYGEN}" -eq 0 ]]; then
   echo "Merging Doxygen into docs/_site/doxygen/..."
-  "${SCRIPT_DIR}/sync-doxygen.sh"
+  bash "${SCRIPT_DIR}/sync-doxygen.sh"
 fi
 
 echo "Site ready under docs/_site/ (API at docs/_site/doxygen/)"
