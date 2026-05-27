@@ -31,7 +31,7 @@ function(stlab_setup_docs)
     message(FATAL_ERROR "stlab_setup_docs: NAME, VERSION, and DESCRIPTION are required")
   endif()
 
-  find_package(Doxygen REQUIRED)
+  find_package(Doxygen)
   if(NOT DOXYGEN_FOUND)
     message(WARNING "Doxygen not found. Documentation will not be built.")
     return()
@@ -72,21 +72,13 @@ function(stlab_setup_docs)
 
   _stlab_write_merged_doxyfile("${DOXYFILE_OUT}")
 
-  if(WIN32)
-    add_custom_target(docs
-      COMMAND PowerShell -NoProfile -Command "$ErrorActionPreference='Continue'; & '${DOXYGEN_EXECUTABLE}' '${DOXYFILE_OUT}' 2>&1"
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-      COMMENT "Generating API documentation with Doxygen"
-      VERBATIM
-    )
-  else()
-    add_custom_target(docs
-      COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYFILE_OUT} 2>&1
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-      COMMENT "Generating API documentation with Doxygen"
-      VERBATIM
-    )
-  endif()
+  # VERBATIM: do not use shell redirection (e.g. 2>&1); it is passed as a literal extra argument.
+  add_custom_target(docs
+    COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYFILE_OUT}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMENT "Generating API documentation with Doxygen"
+    VERBATIM
+  )
 
   file(MAKE_DIRECTORY ${OUTPUT_DIR})
   message(STATUS "stlab: documentation target 'docs' configured (merged Doxyfile)")
