@@ -9,7 +9,19 @@
 #ifndef STLAB_VERSION_HPP
 #define STLAB_VERSION_HPP
 
+/*! @file version.hpp
+ *  @brief Preprocessor macros for the library version.
+ *
+ *  @note This header changes with every stlab release; including it forces recompilation when the
+ *  library version changes.
+ */
+
 #include <stlab/config.hpp>
+
+/** @defgroup stlab_version version
+ *  @brief Library version number macros.
+ *  @{
+ */
 
 //  These version numbers are automatically generated from the CMake project version.
 
@@ -30,5 +42,7 @@
 #else
 #define STLAB_LIB_VERSION STLAB_STRINGIZE(STLAB_VERSION_MAJOR()) "_" STLAB_STRINGIZE(STLAB_VERSION_MINOR()) "_" STLAB_STRINGIZE(STLAB_VERSION_PATCH())
 #endif
+
+/** @} */
 
 #endif

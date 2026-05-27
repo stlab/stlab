@@ -139,3 +139,26 @@ jobs:
         run: |
           cd build/debug-portable-sanitizer
           ctest --output-on-failure --verbose
+
+  doxygen:
+    name: Doxygen API docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Install Doxygen
+        uses: ssciwr/doxygen-install@329d88f5a303066a5bd006db7516b1925b86350e
+
+      - name: Configure
+        run: cmake --preset=docs
+
+      - name: Build documentation
+        run: cmake --build --preset=docs
+
+      - name: Upload HTML artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: doxygen-html
+          path: build/docs/html

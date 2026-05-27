@@ -9,6 +9,22 @@
 #ifndef STLAB_CONCURRENCY_DEFAULT_EXECUTOR_HPP
 #define STLAB_CONCURRENCY_DEFAULT_EXECUTOR_HPP
 
+/*! @file default_executor.hpp
+ *  @brief Thread-pool executors mapping to the OS scheduler (libdispatch, Windows pool, portable).
+ *
+ *  @details
+ *  Maps to the OS thread pool when the platform provides one; otherwise uses the library's
+ *  portable implementation. Common configurations include Apple (Grand Central Dispatch),
+ *  Windows thread pools, and Emscripten/WebAssembly builds per `STLAB_TASK_SYSTEM`.
+ *
+ *  Submit work through `high_executor`, `default_executor`, or `low_executor` as **priority
+ *  hints**; the runtime prefers high, then default, then low, but order is not strict under load.
+ *
+ *  @note Call `pre_exit()` before normal process exit when using these executors so detached tasks
+ *  do not overlap teardown of globals or other exit handlers (the implementation registers a
+ *  pre-exit hook). `std::quick_exit()` is an alternative when it fits your program.
+ */
+
 #include <stlab/config.hpp>
 
 #include <cassert>
@@ -38,7 +54,13 @@
 /**************************************************************************************************/
 
 namespace stlab {
-inline namespace STLAB_VERSION_NAMESPACE() {
+STLAB_VERSION_NAMESPACE_BEGIN()
+
+/** @defgroup stlab_concurrency_default_executor default_executor
+ *  @ingroup stlab_concurrency
+ *  @brief Default thread-pool style executors (platform task system).
+ *  @{
+ */
 
 /**************************************************************************************************/
 
@@ -484,13 +506,18 @@ struct executor_type {
 
 /**************************************************************************************************/
 
+/// Default task pool executor using low thread priority (when using the portable or Windows task system).
 inline constexpr auto low_executor = detail::executor_type<detail::executor_priority::low>{};
+/// Default concurrent executor used by `stlab::async` and related APIs when none is specified.
 inline constexpr auto default_executor = detail::executor_type<detail::executor_priority::medium>{};
+/// Default task pool executor using high thread priority (when using the portable or Windows task system).
 inline constexpr auto high_executor = detail::executor_type<detail::executor_priority::high>{};
 
 /**************************************************************************************************/
 
-} // namespace STLAB_VERSION_NAMESPACE()
+/** @} */
+
+STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/

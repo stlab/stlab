@@ -9,6 +9,10 @@
 #ifndef STLAB_FUNCTIONAL_HPP
 #define STLAB_FUNCTIONAL_HPP
 
+/*! @file functional.hpp
+ *  @brief Reference unwrapping and related functional helpers.
+ */
+
 /**************************************************************************************************/
 
 #include <stlab/config.hpp>
@@ -19,10 +23,16 @@
 /**************************************************************************************************/
 
 namespace stlab {
-inline namespace STLAB_VERSION_NAMESPACE() {
+STLAB_VERSION_NAMESPACE_BEGIN()
+
+/** @defgroup stlab_functional functional
+ *  @brief Reference unwrapping and related functional helpers.
+ *  @{
+ */
 
 /**************************************************************************************************/
 
+/// Type alias: `T`, or the referent type if `T` is `std::reference_wrapper<U>`.
 template <class T>
 struct unwrap_reference {
     using type = T;
@@ -48,6 +58,7 @@ constexpr bool is_reference_wrapper_v = is_reference_wrapper<T>::value;
 
 /**************************************************************************************************/
 
+/// @brief Unwraps `val`, forwarding through `std::reference_wrapper` when present.
 template <typename T>
 auto unwrap(T& val) -> T& {
     return val;
@@ -70,7 +81,9 @@ auto unwrap(const std::reference_wrapper<T>& val) -> const T& {
 
 /**************************************************************************************************/
 
-} // namespace STLAB_VERSION_NAMESPACE()
+/** @} */
+
+STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/

@@ -2,6 +2,8 @@
 
 ASL libraries will be migrated here in the `stlab` namespace, new libraries will be created here.
 
+**STLab** is a set of C++ libraries (namespace `stlab`) under the [Boost Software License 1.0](https://www.boost.org/LICENSE_1_0.txt). This repository provides headers, CMake packages, tests, and API reference. Versioned releases are on [GitHub Releases](https://github.com/stlab/stlab/releases).
+
 # Using the STLab Libraries
 
 The recommended approach to using the libraries is to use [CPM](https://github.com/cpm-cmake/CPM.cmake) and add the following to your `CMakeLists.txt`:
@@ -18,13 +20,17 @@ CPMAddPackage("gh:stlab/stlab@2.1.2")
 
 ## Content
 
-### [Concurrency](https://stlab.cc/include/stlab/concurrency/)
+### [Concurrency](https://stlab.cc/doxygen/group__stlab__concurrency.html)
 
 This library provides futures and channels, high-level abstractions for implementing algorithms that ease the use of multiple CPU cores while minimizing contention. This library solves several problems of the C++11 and C++17 TS futures.
 
 ## Documentation
 
 The complete documentation is available on the [STLab home page](http://stlab.cc).
+
+API reference (Doxygen, including [doxygen-awesome-css](https://github.com/jothepro/doxygen-awesome-css)) is built with `-DBUILD_DOCS=ON` or the CMake preset `docs` (`cmake --preset=docs` then `cmake --build --preset=docs`). Output is under `build/docs/html` (preset `doxygen` is an alias with output in `build/doxygen/html`). On GitHub Pages, it is published under `/doxygen/` next to the Jekyll blog site. See [`docs/DOCUMENTATION.md`](docs/DOCUMENTATION.md).
+
+Formulas in comments use Doxygen’s math markup (e.g. `\f$O(n)\f$` inline, `\f[` / `\f]` for display); HTML output enables **MathJax 3** so no LaTeX toolchain is required locally or in CI.
 
 Release changelogs are listed in [CHANGES.md](CHANGES.md).
 

@@ -189,8 +189,30 @@ message(STATUS "stlab: Task System: ${STLAB_TASK_SYSTEM}")
 message(STATUS "stlab: Main Executor: ${STLAB_MAIN_EXECUTOR}")
 
 if(PROJECT_IS_TOP_LEVEL AND BUILD_TESTING)
-  CPMAddPackage("gh:doctest/doctest@2.4.12")
+  CPMAddPackage("gh:doctest/doctest@2.5.2")
   add_subdirectory(test)
+endif()
+
+# cpp-library convention (see templates/CMakePresets.json "docs" preset).
+option(BUILD_DOCS "Generate API documentation with Doxygen (requires Doxygen on PATH)" OFF)
+option(STLAB_DOXYGEN "Deprecated alias for BUILD_DOCS" OFF)
+if(STLAB_DOXYGEN AND NOT BUILD_DOCS)
+  set(BUILD_DOCS ON CACHE BOOL "Generate API documentation with Doxygen" FORCE)
+  message(STATUS "stlab: STLAB_DOXYGEN is deprecated; use BUILD_DOCS or cmake --preset=docs")
+endif()
+# Default ON until Hyde→Doxygen migration reaches full symbol coverage; then OFF to match cpp-library.
+option(STLAB_DOXYGEN_RELAXED_WARNINGS
+  "Disable WARN_IF_UNDOCUMENTED / WARN_AS_ERROR (set OFF for cpp-library-strict builds)"
+  ON)
+
+if(PROJECT_IS_TOP_LEVEL AND BUILD_DOCS)
+  include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/StlabDocs.cmake")
+  stlab_setup_docs(
+    NAME "stlab"
+    VERSION "${PROJECT_VERSION}"
+    DESCRIPTION "Modern, modular C++ algorithms, data structures, and concurrency primitives"
+    DOCS_EXCLUDE_SYMBOLS "stlab::detail"
+  )
 endif()
 
 ########################################################

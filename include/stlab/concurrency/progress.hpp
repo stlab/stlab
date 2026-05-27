@@ -9,12 +9,27 @@
 #ifndef STLAB_CONCURRENCY_PROGRESS_HPP
 #define STLAB_CONCURRENCY_PROGRESS_HPP
 
+/*! @file progress.hpp
+ *  @brief Progress tracking wrapper for concurrent tasks.
+ *
+ *  @details
+ *  Wrap callables with `progress_tracker::operator()` to count outstanding steps; optional
+ *  callback receives `(steps, completed)` when tasks finish.
+ */
+
 #include <atomic>
 #include <functional>
 #include <memory>
 
 namespace stlab {
 namespace detail {
+
+/** @defgroup stlab_concurrency_progress progress
+ *  @ingroup stlab_concurrency
+ *  @brief Progress tracking wrapper for concurrent tasks.
+ *  @{
+ */
+
 class tracker_server {
     std::atomic_size_t _task_number = {0};
     std::atomic_size_t _done_tasks = {0};
@@ -79,14 +94,23 @@ struct tracker_client {
         return r;
     }
 };
+
+/** @} */
+
 } // namespace detail
 
+/** @addtogroup stlab_concurrency_progress
+ *  @{
+ */
+
+/// Tracks how many wrapped tasks are in flight and how many have completed.
 class progress_tracker {
     std::shared_ptr<detail::tracker_server> _tracker;
 
 public:
     progress_tracker() : _tracker(std::make_shared<detail::tracker_server>()) {}
 
+    /// Constructs a tracker that invokes `f(steps(), completed())` when a wrapped task completes.
     progress_tracker(std::function<void(size_t, size_t)> f) :
         _tracker(std::make_shared<detail::tracker_server>(std::move(f))) {}
     progress_tracker(const progress_tracker&) = default;
@@ -94,15 +118,21 @@ public:
     progress_tracker(progress_tracker&&) = default;
     progress_tracker& operator=(progress_tracker&&) = default;
 
+    /// Returns a wrapper that counts this callable as one step until it returns.
     template <typename F>
     auto operator()(F&& f) {
         return detail::tracker_client<F>(_tracker, std::forward<F>(f));
     }
 
+    /// Number of tasks currently registered (in flight or not yet done).
     size_t steps() const { return _tracker->steps(); }
 
+    /// Number of wrapped tasks that have finished.
     size_t completed() const { return _tracker->completed(); }
 };
+
+/** @} */
+
 } // namespace stlab
 
 #endif

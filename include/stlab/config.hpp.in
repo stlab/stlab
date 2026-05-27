@@ -7,6 +7,10 @@
 #ifndef STLAB_CONFIG_HPP
 #define STLAB_CONFIG_HPP
 
+/*! @file config.hpp
+ *  @brief Generated configuration, feature, and version-namespace macros.
+ */
+
 // Version information generated from CMake project version
 #define STLAB_VERSION_MAJOR() @PROJECT_VERSION_MAJOR@
 #define STLAB_VERSION_MINOR() @PROJECT_VERSION_MINOR@
@@ -15,6 +19,10 @@
 // Release version macro - used for inline namespace incremented on each release
 #define STLAB_VERSION_NAMESPACE() \
     v@PROJECT_VERSION_MAJOR@_@PROJECT_VERSION_MINOR@_@PROJECT_VERSION_PATCH@
+
+// Wrap the version inline namespace so Doxygen can expand these to nothing (see docs/Doxyfile PREDEFINED).
+#define STLAB_VERSION_NAMESPACE_BEGIN() inline namespace STLAB_VERSION_NAMESPACE() {
+#define STLAB_VERSION_NAMESPACE_END() } /* inline version */
 
 // Helper macro for string construction
 #define STLAB_STRINGIZE(x) STLAB_STRINGIZE2(x)

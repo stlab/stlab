@@ -1,79 +1,61 @@
-# `stlab` Documentation
+# stlab documentation site
 
-This site is available at [stlab.cc](https://stlab.cc).
+Published at [stlab.cc](https://stlab.cc). This directory builds the **blog, release notes, and static pages** with Jekyll. **API reference** comes from **Doxygen** (merged into the site under `/doxygen/` in CI and local full builds).
 
-Pull requests for typos, examples, and other improvements are welcome. To file an issue, please use the [libraries repository](https://github.com/stlab/stlab).
+Pull requests for typos, examples, and other improvements are welcome. For library issues, use the [stlab repository](https://github.com/stlab/stlab).
 
-## Building the Documentation
+## Full site (Jekyll + Doxygen)
 
-To run a local Jekyll server, see the instructions in the docker-tools [README](../tools/docker-tools/README.md).
-
-## Running Hyde in Docker
-
-<!-- 
-Configure the build as follows:
-
-```
-cmake --preset=hyde-build-docs
-``` 
--->
-
-Login to [GitHub Packages registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#authenticating-with-a-personal-access-token-classic)
-
-```pwsh
-$CR_PAT=<personal access token>
-```
+From the **repository root**, one script matches CI and production layout (`docs/_site/` including `docs/_site/doxygen/`):
 
 ```bash
-echo $CR_PAT | docker login ghcr.io --password-stdin -u USERNAME 
+./docs/tools/docs/build-site.sh
 ```
 
-Fetch the latest image and run it:
+**Prerequisites (host):** Ruby 3.4.x ([`.ruby-version`](.ruby-version)), Bundler, CMake 3.28+, Ninja, Doxygen. On Windows, use the same tools in PowerShell or Git Bash, or use [Docker](tools/docker-tools/README.md) below.
+
+Options:
+
+- `--skip-doxygen` — Jekyll only (markdown/theme)
+- `--skip-jekyll` — rebuild API docs and copy into `_site/doxygen/` after editing headers
+- `--refresh-releases` — update `docs/_data/releases.json` from GitHub before building
+
+Serve the built tree:
 
 ```bash
-HYDE_VERSION=2.0.1
-docker pull ghcr.io/adobe/hyde:$HYDE_VERSION
-
-docker run --platform linux/x86_64 --mount type=bind,source="$(pwd)/..",target=/mnt/host \
-    --tty --interactive \
-    ghcr.io/adobe/hyde:$HYDE_VERSION bash
+cd docs && bundle exec jekyll serve --skip-initial-build
 ```
 
-```pwsh
-$HYDE_VERSION="2.0.1"
-docker pull ghcr.io/adobe/hyde:$HYDE_VERSION
+Or static file server:
 
-docker run --platform linux/x86_64 --mount "type=bind,source=$(Split-Path -Parent $PWD),target=/mnt/host" --tty --interactive ghcr.io/adobe/hyde:$HYDE_VERSION bash
+```bash
+npx --yes serve _site -p 3000
 ```
 
-From the docker prompt
+Live preview with auto-reload (maintainers): from repo root, `./docs/tools/docs/start.sh` (Docker or host with browser-sync). See [`tools/docker-tools/README.md`](tools/docker-tools/README.md).
 
-```
-  sed -i 's/\r$//' ./generate_docs.sh
-  sed -i 's/\r$//' ./about.sh
-  sed -i 's/\r$//' ./CMakePresets.json
+## Jekyll only (no API section)
 
+From this directory:
 
-cd /mnt/host/stlab
-  
-  cmake -S . -B build/hyde -G Ninja \
-  -DCMAKE_CXX_STANDARD=20 \
-  -DBUILD_TESTING=OFF \
-  -DSTLAB_MAIN_EXECUTOR=none \
-  -DSTLAB_NO_STD_COROUTINES=ON \
-  -DSTLAB_TASK_SYSTEM=portable \
-  -DSTLAB_THREAD_SYSTEM=pthread \
-  -Dstlab.coverage=OFF \
-  -DCPM_SOURCE_CACHE=.cache/cpm
+```bash
+bundle install
+bundle exec jekyll serve
 ```
 
-```
-cd /mnt/host/stlab/docs
-./generate_docs.sh
-./about.sh
+Home page links to `/doxygen/` will not work until you run a full `build-site.sh`. The folder `docs/doxygen/` is Doxyfile input only (not copied by Jekyll).
+
+## API reference (Doxygen only)
+
+From the repository root:
+
+```bash
+cmake --preset=docs
+cmake --build --preset=docs
 ```
 
-<!-- \[ this is from the old docs - need to update the docs and script.
+Open `build/docs/html/index.html` (preset `doxygen` writes to `build/doxygen/html`). CI merges this into `docs/_site/doxygen/` via [`build-site.sh`](tools/docs/build-site.sh) (see [`.github/workflows/jekyll.yml`](../.github/workflows/jekyll.yml)).
 
-> (or, simply `-u`) to generate the boilerplate for it. Then, fill in any fields marked as `__MISSING__`. Fields marked as `__OPTIONAL__` may be omitted.
-> \] -->
+Authoritative prose lives in `include/stlab/**/*.hpp` as Doxygen comments. The old Hyde YAML/Markdown mirror under `docs/include/stlab/` has been removed; see [`include/README.md`](include/README.md).
+
+See also [`DOCUMENTATION.md`](DOCUMENTATION.md).

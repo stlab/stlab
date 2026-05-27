@@ -9,6 +9,14 @@
 #ifndef STLAB_MODEL_HPP
 #define STLAB_MODEL_HPP
 
+/*! @file model.hpp
+ *  @brief Test-only instrumented types for verifying move/copy/destroy behavior.
+ *
+ *  @details
+ *  `annotate` and `annotate_counters` count special-member operations; `regular` logs to
+ *  `std::cout`; `move_only` exercises move-only polymorphic types. Not for production use.
+ */
+
 /**************************************************************************************************/
 
 #include <stlab/config.hpp>
@@ -23,10 +31,17 @@
 /**************************************************************************************************/
 
 namespace stlab {
-inline namespace STLAB_VERSION_NAMESPACE() {
+STLAB_VERSION_NAMESPACE_BEGIN()
+
+/** @defgroup stlab_test_model model
+ *  @ingroup stlab_test
+ *  @brief Test-only instrumented types for verifying move/copy/destroy behavior.
+ *  @{
+ */
 
 /**************************************************************************************************/
 
+/// Shared counters for `annotate` special-member and comparison instrumentation.
 struct annotate_counters {
     std::atomic_size_t _dtor{0};
     std::atomic_size_t _copy_ctor{0};
@@ -64,6 +79,11 @@ struct annotate_counters {
     }
 };
 
+/// Test type that counts special-member and comparison operations via `annotate_counters`.
+///
+/// @details
+/// Increments the shared counters on destructor, copy/move construction, copy/move assignment, and
+/// `swap`. `operator==` always returns `true`; `operator!=` always returns `false`.
 struct annotate {
     annotate_counters* _counters;
     explicit annotate(annotate_counters& counters) : _counters(&counters) {}
@@ -107,6 +127,10 @@ struct annotate {
 
 /**************************************************************************************************/
 
+/// Regular type that logs lifetime and comparison events to `std::cout`.
+///
+/// @details
+/// Logs constructor, destructor, copy/move construction, assignment, `operator<`, and `swap`.
 struct regular {
     int _x;
 
@@ -153,6 +177,11 @@ struct regular {
 
 /**************************************************************************************************/
 
+/// Move-only polymorphic test type with equality comparison.
+///
+/// @details
+/// Copy construction and copy assignment are deleted. Holds an integer identifier read via
+/// `member()`.
 class move_only {
 private:
     int _member{0};
@@ -177,7 +206,9 @@ public:
 
 /**************************************************************************************************/
 
-} // namespace STLAB_VERSION_NAMESPACE()
+/** @} */
+
+STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/

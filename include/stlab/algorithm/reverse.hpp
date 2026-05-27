@@ -8,6 +8,14 @@
 #ifndef STLAB_ALGORITHM_REVERSE_HPP
 #define STLAB_ALGORITHM_REVERSE_HPP
 
+/*! @file reverse.hpp
+ *  @brief Reverse algorithms for iterators and intrusive forward / bidirectional sequences.
+ *
+ *  @details
+ *  Algorithms for reversing node ranges and iterator sequences, including helpers that splice
+ *  intrusive lists via `stlab/iterator/set_next.hpp`.
+ */
+
 #include <algorithm>
 #include <utility>
 
@@ -18,7 +26,13 @@
 /**************************************************************************************************/
 
 namespace stlab {
-inline namespace STLAB_VERSION_NAMESPACE() {
+STLAB_VERSION_NAMESPACE_BEGIN()
+
+/** @defgroup stlab_algorithm_reverse reverse
+ *  @ingroup stlab_algorithm
+ *  @brief Reverse algorithms for iterators and intrusive forward sequences.
+ *  @{
+ */
 
 /**************************************************************************************************/
 
@@ -113,7 +127,9 @@ auto reverse_until(I f, I m, I l) -> std::pair<I, I> {
 
 /**************************************************************************************************/
 
-} // namespace STLAB_VERSION_NAMESPACE()
+/** @} */
+
+STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/

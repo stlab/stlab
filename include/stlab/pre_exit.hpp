@@ -8,21 +8,33 @@
 #ifndef STLAB_PRE_EXIT_HPP
 #define STLAB_PRE_EXIT_HPP
 
+/*! @file pre_exit.hpp
+ *  @brief Register and run operations that must execute before program exit.
+ *
+ *  @details
+ *  Register handlers with `at_pre_exit()`; call `pre_exit()` once before normal process termination
+ *  (before `std::exit()` or when leaving `main()`). Handlers run in reverse registration order.
+ *  Required when using the default executor so detached or canceled tasks do not overlap global
+ *  teardown (see `default_executor.hpp`). `std::quick_exit()` is an alternative when appropriate.
+ */
+
 /**************************************************************************************************/
 
 // The namespace for pre_exit cannot be changed without an ABI break. If making an ABI breaking
 // change in this file it needs to be done in a way supporting this version as well.
+
 namespace stlab {
 inline namespace v2 {
 
+/** @defgroup stlab_pre_exit pre_exit
+ *  @brief Pre-exit handler registration (`at_pre_exit`, `pre_exit`).
+ *  @{
+ */
+
 /**************************************************************************************************/
 
-/// Pre-exit handler type.
-#if __cpp_noexcept_function_type >= 201510L
+/// Function type invoked during `pre_exit()` (must not throw; `noexcept` with C++17 and later).
 using pre_exit_handler = void (*)() noexcept;
-#else
-using pre_exit_handler = void (*)();
-#endif
 
 /// An `extern "C"` vector for `pre-exit()` to make it simpler to
 /// export the function from a shared library.
@@ -41,6 +53,8 @@ inline void pre_exit() { stlab_pre_exit(); }
 inline void at_pre_exit(pre_exit_handler f) { stlab_at_pre_exit(f); }
 
 /**************************************************************************************************/
+
+/** @} */
 
 } // namespace v2
 } // namespace stlab

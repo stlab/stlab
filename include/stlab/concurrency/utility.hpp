@@ -9,6 +9,10 @@
 #ifndef STLAB_CONCURRENCY_UTILITY_HPP
 #define STLAB_CONCURRENCY_UTILITY_HPP
 
+/*! @file utility.hpp
+ *  @brief Convenience includes for ready futures and await helpers.
+ */
+
 #include <stlab/concurrency/ready_future.hpp>
 #include <stlab/concurrency/await.hpp>
 

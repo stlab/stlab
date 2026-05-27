@@ -9,6 +9,16 @@
 #ifndef STLAB_CONCURRENCY_TRAITS_HPP
 #define STLAB_CONCURRENCY_TRAITS_HPP
 
+/*! @file traits.hpp
+ *  @brief Type traits and detection helpers used by the concurrency library.
+ *
+ *  @details
+ *  `smart_is_copy_constructible` corrects `std::is_copy_constructible` for types such as
+ *  `std::vector<std::unique_ptr<T>>`. Specialize `smart_test` for other cases (see
+ *  `test/traits_test.cpp`). Used by `future` and `channel` to pick copyable vs move-only
+ *  specializations.
+ */
+
 #include <stlab/config.hpp>
 
 #include <type_traits>
@@ -16,7 +26,13 @@
 /**************************************************************************************************/
 
 namespace stlab {
-inline namespace STLAB_VERSION_NAMESPACE() {
+STLAB_VERSION_NAMESPACE_BEGIN()
+
+/** @defgroup stlab_concurrency_traits traits
+ *  @ingroup stlab_concurrency
+ *  @brief Type traits and detection helpers used by the concurrency library.
+ *  @{
+ */
 
 /**************************************************************************************************/
 
@@ -27,6 +43,7 @@ using all_true = std::is_same<bool_pack<true, v...>, bool_pack<v..., true>>;
 
 /**************************************************************************************************/
 
+/// Trait adapter; specialize for types where `std::is_copy_constructible` is wrong.
 template <template <typename> class test, typename T>
 struct smart_test : test<T> {};
 
@@ -92,7 +109,9 @@ using detected_t = typename detector<nonesuch, void, Op, Args...>::type;
 
 /**************************************************************************************************/
 
-} // namespace STLAB_VERSION_NAMESPACE()
+/** @} */
+
+STLAB_VERSION_NAMESPACE_END()
 
 /**************************************************************************************************/
 

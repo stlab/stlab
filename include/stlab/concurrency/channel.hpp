@@ -9,6 +9,29 @@
 #ifndef STLAB_CONCURRENCY_CHANNEL_HPP
 #define STLAB_CONCURRENCY_CHANNEL_HPP
 
+/*! @file channel.hpp
+ *  @brief CSP-style channels (sender/receiver) for reusable processing graphs.
+ *
+ *  @details
+ *  [Channels](https://en.wikipedia.org/wiki/Channel_(programming)) follow the tradition of
+ *  [communicating sequential processes (CSP)](https://en.wikipedia.org/wiki/Communicating_sequential_processes).
+ *  They let you build **processing graphs** that can be run many times, unlike wiring that uses
+ *  only one-shot futures.
+ *
+ *  Each channel has sending and receiving ends. A receiver can attach a **process** that runs when
+ *  values arrive. Channels support split, zip, zip-with, and merge style composition.
+ *
+ *  **Processes** may be:
+ *  - a function object (unary for a single upstream, or n-ary matching upstream arity), or
+ *  - an **await-process** type with `await(...)`, `yield()`, and `state() const` returning
+ *    `process_state_scheduled` (`process_state` plus a `chrono::nanoseconds` deadline).
+ *
+ *  Optional await-process members: `close()` when upstream closes while awaiting; `set_error(exception_ptr)`
+ *  when upstream throws. While `state()` is `process_state::await`, values arrive via `await`; when
+ *  it is `process_state::yield`, the runtime calls `yield()` (subject to buffer limits and timers
+ *  encoded in the scheduled time point).
+ */
+
 #include <stlab/config.hpp>
 
 #include <algorithm>
@@ -37,7 +60,18 @@
 /**************************************************************************************************/
 
 namespace stlab {
-inline namespace STLAB_VERSION_NAMESPACE() {
+STLAB_VERSION_NAMESPACE_BEGIN()
+
+/** @defgroup stlab_concurrency_channel channel
+ *  @ingroup stlab_concurrency
+ *  @brief Process-oriented channels (sender/receiver) and related types.
+ *
+ *  @details
+ *  See the `@file` narrative in `channel.hpp` for CSP semantics, processing graphs, and
+ *  composition (`zip`, `zip_with`, `merge_channel`). Types and free functions in this group are
+ *  declared in that header.
+ *  @{
+ */
 
 /**************************************************************************************************/
 
@@ -47,29 +81,38 @@ template <typename>
 class receiver;
 
 /**************************************************************************************************/
-/*
- * close on a process is called when a process is in an await state to signal that no more data is
- * coming. In response to a close, a process can switch to a yield state to yield values, otherwise
- * it is destructed. await_try is await if a value is available, otherwise yield (allowing for an
- * interruptable task).
- */
+
+/// Scheduling hint for a process: wait for input (`await`) or run to produce output (`yield`).
 enum class process_state : std::uint8_t { await, yield };
 
+/// Discriminator for tuple elements that carry either a value or an exception pointer.
 enum class message_t : std::uint8_t { argument, error };
 
 /**************************************************************************************************/
 
+/// `process_state` plus a deadline returned from `process::state()`.
+///
+/// @details
+/// The runtime uses the pair to choose `await` vs `yield()` and optional timers. If `first` is
+/// `yield` and the time point is in the past, `yield()` runs next; if it is in the future, a timer
+/// fires `yield()` when it expires. For `await`, a past/now time point can trigger `yield()` when no
+/// value arrives; a future time point starts a timeout that yields if no value arrives before it
+/// expires (cancelled when a value does arrive). Optional `close()` is invoked when upstream closes
+/// while awaiting; optional `set_error(exception_ptr)` receives upstream exceptions.
 using process_state_scheduled = std::pair<process_state, std::chrono::nanoseconds>;
 
+/// Always await the next upstream value (no yield timeout).
 constexpr process_state_scheduled await_forever{process_state::await,
                                                 std::chrono::nanoseconds::max()};
 
+/// Yield as soon as the scheduler permits.
 constexpr process_state_scheduled yield_immediate{process_state::yield,
                                                   std::chrono::nanoseconds::min()};
 
 /**************************************************************************************************/
 
-enum class channel_error_codes : std::uint8_t { // names for channel errors
+/// Error codes reported by `channel_error`.
+enum class channel_error_codes : std::uint8_t {
     broken_channel = 1,
     process_already_running = 2,
     no_state = 3
@@ -102,8 +145,7 @@ inline auto channel_error_map(channel_error_codes code) noexcept
 
 /**************************************************************************************************/
 
-// channel exception
-
+/// Exception type for channel usage errors (broken channel, process already running, etc.).
 class channel_error : public std::logic_error {
 public:
     explicit channel_error(channel_error_codes code) : logic_error(""), _code(code) {}
@@ -1184,16 +1226,20 @@ struct shared_process
 
 } // namespace detail
 
+/// Merge strategy for `merge_channel`: invoke the process in arbitrary order as values arrive.
 struct unordered_t {
     template <typename... R>
     using strategy_type = detail::unordered_queue_strategy<detail::receiver_t<R>...>;
 };
 
+/// Merge strategy for `merge_channel`: round-robin among upstream senders.
 struct round_robin_t {
     template <typename... R>
     using strategy_type = detail::round_robin_queue_strategy<detail::receiver_t<R>...>;
 };
 
+/// Merge strategy for `merge_channel` / `zip_with`: wait for one value from each upstream, then
+/// invoke with the full argument set.
 struct zip_with_t {
     template <typename... R>
     using strategy_type = detail::zip_with_queue_strategy<detail::receiver_t<R>...>;
@@ -1290,6 +1336,7 @@ struct channel_<E, void> {
 
 /**************************************************************************************************/
 
+/// Creates a `sender`/`receiver` pair on `executor` (`receiver<void>` only when `T` is `void`).
 template <typename T, typename E>
 auto channel(E executor) {
     return detail::channel_<E, T>::create(std::move(executor));
@@ -1297,6 +1344,12 @@ auto channel(E executor) {
 
 /**************************************************************************************************/
 
+/// @deprecated Use `zip_with` instead.
+///
+/// @details
+/// Creates a new receiver and attaches process `f`. Upstream values are not delivered one-by-one;
+/// the last value from the slowest upstream triggers `f` with the complete argument set (same
+/// synchronization model as `zip_with`).
 template <typename S, typename F, typename... R>
 [[deprecated("Use zip_with")]] auto join(S s, F f, R... upstream_receiver) {
     return detail::channel_combiner::merge_helper<zip_with_t, S, F, R...>(
@@ -1305,6 +1358,11 @@ template <typename S, typename F, typename... R>
 
 /**************************************************************************************************/
 
+/// @deprecated Use `merge_channel<unordered_t>` instead.
+///
+/// @details
+/// Creates a receiver whose process runs whenever any upstream provides a value; there is no
+/// defined order among upstream values.
 template <typename S, typename F, typename... R>
 [[deprecated("Use merge_channel<unordered_t>")]] auto merge(S s, F f, R... upstream_receiver) {
     return detail::channel_combiner::merge_helper<unordered_t, S, F, R...>(
@@ -1313,6 +1371,12 @@ template <typename S, typename F, typename... R>
 
 /**************************************************************************************************/
 
+/// Creates a receiver that merges upstream channels using merge strategy `M`.
+///
+/// @details
+/// `M` is one of `unordered_t`, `round_robin_t`, or `zip_with_t`. Callable `f` must accept values
+/// from the upstream processes (single argument for unordered/round-robin, or one argument per
+/// upstream for `zip_with_t`).
 template <typename M, typename S, typename F, typename... R>
 auto merge_channel(S s, F f, R&&... upstream_receiver) {
     return detail::channel_combiner::merge_helper<M>(std::move(s), std::move(f),
@@ -1321,6 +1385,11 @@ auto merge_channel(S s, F f, R&&... upstream_receiver) {
 
 /**************************************************************************************************/
 
+/// Creates a receiver that runs `f` when each upstream has produced one value.
+///
+/// @details
+/// Upstream values are collected; when every upstream has contributed, `f` is invoked with that
+/// complete set. Returns `receiver<T>` where `T` is the result type of `f`.
 template <typename S, typename F, typename... R>
 auto zip_with(S s, F f, const R&... upstream_receiver) {
     return detail::channel_combiner::merge_helper<zip_with_t>(std::move(s), std::move(f),
@@ -1329,6 +1398,11 @@ auto zip_with(S s, F f, const R&... upstream_receiver) {
 
 /**************************************************************************************************/
 
+/// Zips upstream receivers in step; yields `std::tuple<T...>` of their `result_type`s.
+///
+/// @details
+/// Whenever a complete set of values from each upstream has arrived, the tuple is passed
+/// downstream. (Behavior changed after release 1.2.0; prefer this over the deprecated `join`.)
 template <typename S, typename... R>
 auto zip(S s, const R&... r) {
     return zip_with(std::move(s), detail::zip_helper{}, r...);
@@ -1339,8 +1413,17 @@ auto zip(S s, const R&... r) {
 
 /**************************************************************************************************/
 
+/// Per-process input queue capacity for flow control (combine with a process via `operator&`).
+///
+/// @details
+/// Default queue size is **1** (a value must be received before the process may yield the next).
+/// Combine `buffer_size` with a process using `operator&` before attaching via `receiver::operator|`.
+/// `buffer_size{0}` means no bound other than available memory. While yielding, a process may run
+/// until its buffer is full, then suspends; during `await` it may suspend even when the buffer is
+/// not full if no value is available.
 struct buffer_size {
     std::size_t _value;
+    /// Constructs a buffer limit of `b` elements (`0` = unbounded).
     buffer_size(std::size_t b) : _value(b) {}
 };
 
@@ -1450,6 +1533,23 @@ auto operator&(detail::annotated_process<F>&& a, buffer_size bs) -> detail::anno
 
 /**************************************************************************************************/
 
+/// Receiving end of a CSP channel.
+///
+/// @details
+/// Each receiver has an attached process that runs when a value is sent through the paired
+/// sender. The process may be an n-ary function object (arity matches the number of upstream
+/// receivers) or a type with `await()` and `yield()` methods.
+///
+/// Repeated `operator|` on the same receiver **splits** the stream: results are copied to every
+/// downstream channel when `T` is copyable; for move-only `T`, each call overwrites the previous
+/// downstream attachment.
+///
+/// If the process throws, the exception is passed to a downstream process that implements
+/// `set_error()`; otherwise this process is closed. All receivers that participate in a graph must
+/// call `set_ready()` or data cannot flow.
+///
+/// Specialize `stlab::smart_test` when `T` is e.g. a container of non-copyable elements so
+/// move-only dispatch is correct (`std::is_copy_constructible` is defective for such types).
 template <typename T>
 class STLAB_NODISCARD() receiver {
     using ptr_t = std::shared_ptr<detail::shared_process_receiver<T>>;
@@ -1493,6 +1593,7 @@ public:
 
     auto operator=(receiver&& x) noexcept -> receiver& = default;
 
+    /// Marks this receiver ready so values may flow through the graph.
     void set_ready() {
         if (!_ready && _p) _p->remove_receiver();
         _ready = true;
@@ -1508,8 +1609,15 @@ public:
         return !(x == y);
     };
 
+    /// Returns `true` if `set_ready()` was called on this receiver.
     [[nodiscard]] auto ready() const -> bool { return _ready; }
 
+    /// @name Attach process (`operator|`)
+    /// Creates a new downstream receiver and attaches a process. `f` may be a unary function, a
+    /// process with `await`/`yield`, or `detail::annotated_process` from `buffer_size` / `executor`
+    /// via `operator&`. L-value processes may be wrapped in `std::reference_wrapper`.
+
+    /// Attaches `f` and returns a new receiver (inherits executor unless overridden).
     template <typename F>
     auto operator|(F&& f) const {
         if (!_p) throw channel_error(channel_error_codes::broken_channel);
@@ -1523,6 +1631,7 @@ public:
         return receiver<detail::yield_type<unwrap_reference_t<F>, T>>(std::move(p));
     }
 
+    /// Attaches an annotated process (buffer size and/or executor from `operator&`).
     template <typename F>
     auto operator|(detail::annotated_process<F> ap) {
         if (!_p) throw channel_error(channel_error_codes::broken_channel);
@@ -1541,11 +1650,13 @@ public:
         return receiver<detail::yield_type<unwrap_reference_t<F>, T>>(std::move(p));
     }
 
+    /// Attaches `etp` (process plus executor from `operator&`).
     template <typename F>
     auto operator|(executor_task_pair<F> etp) {
         return operator|(detail::annotated_process<F>(std::move(etp)));
     }
 
+    /// Forwards values into downstream `send`.
     auto operator|(sender<T> send) {
         return operator|(
             [_send = std::move(send)](auto&& x) { _send(std::forward<decltype(x)>(x)); });
@@ -1554,6 +1665,7 @@ public:
 
 /**************************************************************************************************/
 
+/// Sending end of a CSP channel (copyable `T`).
 template <typename T>
 class sender<T, enable_if_copyable<T>> {
     using ptr_t = std::weak_ptr<detail::shared_process_sender<T>>;
@@ -1601,18 +1713,21 @@ public:
 
     inline friend auto operator!=(const sender& x, const sender& y) -> bool { return !(x == y); };
 
+    /// Closes this side of the channel (releases the weak link to the shared process).
     void close() {
         auto p = _p.lock();
         if (p) p->remove_sender();
         _p.reset();
     }
 
+    /// Sends a value (or exception) into the channel.
     template <typename... A>
     void operator()(A&&... args) const {
         auto p = _p.lock();
         if (p) p->send(std::forward<A>(args)...);
     }
 
+    /// Remaining capacity in the downstream process buffer, if known.
     [[nodiscard]] auto free_buffer() const -> std::optional<std::size_t> {
         std::optional<std::size_t> result;
         auto p = _p.lock();
@@ -1621,6 +1736,7 @@ public:
     }
 };
 
+/// Sending end of a CSP channel (move-only `T`; not copyable).
 template <typename T>
 class sender<T, enable_if_not_copyable<T>> {
     using ptr_t = std::weak_ptr<detail::shared_process_sender<T>>;
@@ -1659,18 +1775,21 @@ public:
 
     inline friend auto operator!=(const sender& x, const sender& y) -> bool { return !(x == y); };
 
+    /// Closes this side of the channel (releases the weak link to the shared process).
     void close() {
         auto p = _p.lock();
         if (p) p->remove_sender();
         _p.reset();
     }
 
+    /// Sends a value (or exception) into the channel.
     template <typename... A>
     void operator()(A&&... args) const {
         auto p = _p.lock();
         if (p) p->send(std::forward<A>(args)...);
     }
 
+    /// Remaining capacity in the downstream process buffer, if known.
     [[nodiscard]] auto free_buffer() const -> std::optional<std::size_t> {
         std::optional<std::size_t> result;
         auto p = _p.lock();
@@ -1681,9 +1800,11 @@ public:
 
 /**************************************************************************************************/
 
+/// Adapts a `std::function` into a channel process with `await` / `yield` / `state`.
 template <typename F>
 struct function_process;
 
+/// Function-object process: binds arguments in `await`, runs the call in `yield`.
 template <typename R, typename... Args>
 struct function_process<R(Args...)> {
     std::function<R(Args...)> _f;
@@ -1695,16 +1816,20 @@ struct function_process<R(Args...)> {
     template <typename F>
     function_process(F&& f) : _f(std::forward<F>(f)) {}
 
+    /// Stores arguments until `yield` runs the bound call.
     template <typename... A>
     void await(A&&... args) {
         _bound = std::bind(_f, std::forward<A>(args)...);
         _done = false;
     }
 
+    /// Invokes the function bound by the last `await` and returns its result.
     auto yield() -> R {
         _done = true;
         return _bound();
     }
+
+    /// `yield_immediate` while a call is pending, otherwise `await_forever`.
     [[nodiscard]] auto state() const -> process_state_scheduled {
         return _done ? await_forever : yield_immediate;
     }
@@ -1712,7 +1837,9 @@ struct function_process<R(Args...)> {
 
 /**************************************************************************************************/
 
-} // namespace STLAB_VERSION_NAMESPACE()
+/** @} */
+
+STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/

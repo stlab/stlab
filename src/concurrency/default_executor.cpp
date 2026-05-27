@@ -16,7 +16,7 @@
 #include "stlab/pre_exit.hpp" // for at_pre_exit
 
 namespace stlab {
-inline namespace STLAB_VERSION_NAMESPACE() {
+STLAB_VERSION_NAMESPACE_BEGIN()
 namespace detail {
 
 #if STLAB_TASK_SYSTEM(LIBDISPATCH)
@@ -72,5 +72,5 @@ template task_system<executor_priority::low>& single_task_system<executor_priori
 #endif
 
 } // namespace detail
-} // namespace STLAB_VERSION_NAMESPACE()
+STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab

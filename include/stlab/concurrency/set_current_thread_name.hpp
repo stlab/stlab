@@ -1,6 +1,10 @@
 #ifndef STLAB_SET_CURRENT_THREAD_NAME_HPP
 #define STLAB_SET_CURRENT_THREAD_NAME_HPP
 
+/*! @file set_current_thread_name.hpp
+ *  @brief Set the current thread name (platform-specific).
+ */
+
 #include <stlab/config.hpp>
 
 #if STLAB_THREADS(WIN32)
@@ -26,6 +30,12 @@
 
 namespace stlab {
 
+/** @defgroup stlab_concurrency_set_current_thread_name set_current_thread_name
+ *  @ingroup stlab_concurrency
+ *  @brief Set the current thread name (platform-specific).
+ *  @{
+ */
+
 inline void set_current_thread_name(const char* name) {
 #if STLAB_THREADS(WIN32)
     /* Should string->wstring be split out to a utility? */
@@ -49,6 +59,8 @@ inline void set_current_thread_name(const char* name) {
     #error "Unspecified or unknown thread mode set."
 #endif
 }
+
+/** @} */
 
 } // namespace stlab
 

@@ -8,6 +8,22 @@
 #ifndef STLAB_FOREST_HPP
 #define STLAB_FOREST_HPP
 
+/*! @file forest.hpp
+ *  @brief Forest (tree-of-sequences) iterators, ranges, and algorithms.
+ *
+ *  @details
+ *  Models an **ordered forest**: a rooted tree where each node’s children form a sequence. The
+ *  primary abstraction is **fullorder** iteration—each node is visited twice, on its *leading* and
+ *  *trailing* edge (see `forest_edge`). Preorder, postorder, reverse, depth, and filtered walks are
+ *  built from that representation.
+ *
+ *  The main container is `forest<T>`. **Child** iterators adapt a fullorder iterator to walk only
+ *  the immediate children of a node; `child_adaptor` exposes child sequences with sequence-like
+ *  `push_front` / `push_back` / `pop_*` on a forest and parent iterator.
+ *
+ *  Background: [Tree traversal](https://en.wikipedia.org/wiki/Tree_traversal) (Wikipedia).
+ */
+
 /**************************************************************************************************/
 
 #include <array>
@@ -25,10 +41,22 @@
 /**************************************************************************************************/
 
 namespace stlab {
-inline namespace STLAB_VERSION_NAMESPACE() {
+STLAB_VERSION_NAMESPACE_BEGIN()
+
+/** @defgroup stlab_forest forest
+ *  @brief Forest (tree-of-sequences) iterators, ranges, and algorithms.
+ *
+ *  @details
+ *  Use this module for hierarchical data and algorithms that need **fullorder** iterators
+ *  (leading/trailing edges), **child** views, and range helpers (`preorder_range`, `postorder_range`,
+ *  `depth_range`, `filter_fullorder_range`, etc.). Higher-level shape algorithms live in
+ *  `forest_algorithms.hpp` (`stlab::forests`).
+ *  @{
+ */
 
 /**************************************************************************************************/
 
+/// Leading and trailing visits in a fullorder walk of a node (see `forest` iterators).
 enum class forest_edge : bool { trailing, leading };
 
 constexpr auto forest_trailing_edge{forest_edge::trailing};
@@ -36,13 +64,16 @@ constexpr auto forest_leading_edge{forest_edge::leading};
 
 /**************************************************************************************************/
 
+/// Toggles a `forest_edge` between leading and trailing.
 constexpr auto pivot(forest_edge e) { return forest_edge(static_cast<bool>(e) ^ 1); }
 
+/// Flips the edge on iterator `i` in place.
 template <class I> // I models FullorderIterator
 void pivot(I& i) {
     i.edge() = pivot(i.edge());
 }
 
+/// Returns a copy of `i` with its edge toggled (`pivot`).
 template <class I> // I models FullorderIterator
 auto pivot_of(I i) {
     pivot(i);
@@ -51,12 +82,14 @@ auto pivot_of(I i) {
 
 /**************************************************************************************************/
 
+/// Positions `i` on the **leading** edge of the same node.
 template <class I> // I models a FullorderIterator
 auto leading_of(I i) {
     i.edge() = forest_edge::leading;
     return i;
 }
 
+/// Positions `i` on the **trailing** edge of the same node.
 template <class I> // I models a FullorderIterator
 auto trailing_of(I i) {
     i.edge() = forest_edge::trailing;
@@ -65,15 +98,19 @@ auto trailing_of(I i) {
 
 /**************************************************************************************************/
 
+/// True if `e` is a leading-edge position.
 constexpr auto is_leading(forest_edge e) { return e == forest_edge::leading; }
 
+/// True if iterator `i` is on its node’s leading edge.
 template <class I> // I models a FullorderIterator
 auto is_leading(const I& i) {
     return is_leading(i.edge());
 }
 
+/// True if `e` is a trailing-edge position.
 constexpr auto is_trailing(forest_edge e) { return e == forest_edge::trailing; }
 
+/// True if iterator `i` is on its node’s trailing edge.
 template <class I> // I models a FullorderIterator
 auto is_trailing(const I& i) {
     return is_trailing(i.edge());
@@ -81,6 +118,14 @@ auto is_trailing(const I& i) {
 
 /**************************************************************************************************/
 
+/// Returns the trailing-edge iterator of the parent of the subtree containing `i`.
+///
+/// @details
+/// Walks forward from `i` until a trailing edge is found; cost is proportional to that walk (often
+/// related to depth and subtree shape). In the worst case over arbitrary forests this is linear in
+/// the size of the subtree being skipped.
+///
+/// @note Time complexity is linear in the number of fullorder steps along the search path.
 template <class I> // I models FullorderIterator
 auto find_parent(I i) -> I {
     do {
@@ -98,6 +143,8 @@ auto has_children(const I& i) -> bool {
 
 /**************************************************************************************************/
 
+/// Iterator over the **child sequence** of a node: adapts a fullorder iterator to visit only
+/// immediate children (skipping descendants).
 template <class I> // I models FullorderIterator
 struct child_iterator {
     using value_type = typename std::iterator_traits<I>::value_type;
@@ -158,6 +205,7 @@ private:
 
 /**************************************************************************************************/
 
+/// Advances `x` forward until `x.edge() == edge` (or returns last such position).
 template <class I> // I models FullorderIterator
 auto find_edge(I x, forest_edge edge) -> I {
     while (x.edge() != edge)
@@ -165,6 +213,7 @@ auto find_edge(I x, forest_edge edge) -> I {
     return x;
 }
 
+/// Advances `x` backward until `x.edge() == edge`.
 template <class I> // I models FullorderIterator
 auto find_edge_reverse(I x, forest_edge edge) -> I {
     while (x.edge() != edge)
@@ -174,6 +223,8 @@ auto find_edge_reverse(I x, forest_edge edge) -> I {
 
 /**************************************************************************************************/
 
+/// Fullorder iterator restricted to a single edge kind: visits only **leading** or **trailing**
+/// positions (e.g. preorder vs. postorder when `Edge` is fixed).
 template <class I, forest_edge Edge> // I models FullorderIterator
 struct edge_iterator {
     using value_type = typename std::iterator_traits<I>::value_type;
@@ -229,6 +280,8 @@ private:
 
 /**************************************************************************************************/
 
+/// Fullorder iterator that **visits** only positions whose values satisfy predicate `P` (skipping
+/// others by advancing through the underlying fullorder sequence).
 template <class I, // I models a Forest
           class P> // P models UnaryPredicate of value_type(I)
 struct filter_fullorder_iterator {
@@ -345,6 +398,7 @@ private:
 
 /**************************************************************************************************/
 
+/// Reverses the direction of a fullorder walk while preserving edge semantics (bidirectional).
 template <class I> // I models a FullorderIterator
 struct reverse_fullorder_iterator {
     using iterator_type = I;
@@ -423,6 +477,7 @@ private:
 
 /**************************************************************************************************/
 
+/// Fullorder iterator that tracks **depth** in the tree as it advances or retreats.
 template <class I> // I models FullorderIterator
 struct depth_fullorder_iterator {
     using value_type = typename std::iterator_traits<I>::value_type;
@@ -760,6 +815,22 @@ struct set_next_fn<detail::forest_iterator<T>> {
 
 /**************************************************************************************************/
 
+/**
+ * @brief Hierarchical, node-based container: a **forest** (ordered sequence of trees) with
+ *        fullorder iterators and child views.
+ *
+ * @details
+ * Values are stored in a tree threaded for bidirectional **fullorder** traversal (each node appears
+ * at a leading edge and again at a trailing edge). `begin()` / `end()` traverse that order; typedefs
+ * such as `preorder_iterator` and `postorder_iterator` select `edge_iterator` specializations.
+ * `size()` is \f$O(1)\f$ when `size_valid()` is true; otherwise it walks the forest. Many mutating
+ * operations preserve the cached size; some splices can invalidate it on source and/or destination.
+ *
+ * @par Erasing nodes
+ * `erase(position)` removes that node. If it had children, those children become siblings inserted
+ * after the removed node’s former position (half-open `erase(first, last)` removes a contiguous
+ * fullorder range).
+ */
 template <class T>
 class forest {
 private:
@@ -814,6 +885,14 @@ public:
 
     void swap(forest& x) noexcept { std::swap(*this, x); }
 
+    /// Returns the number of nodes; \f$O(1)\f$ when `size_valid()` is true, otherwise a linear walk.
+    ///
+    /// @details
+    /// Most operations keep the cached count consistent. Some **splice** overloads (e.g. moving a
+    /// range of child nodes when the moved count is unknown) can invalidate `size_valid()` on the
+    /// source and/or destination until the next full recount.
+    ///
+    /// @note Some splices can invalidate cached sizes on source and destination forests.
     auto size() const -> size_type;
     auto max_size() const -> size_type { return size_type(-1); }
     auto size_valid() const -> bool { return _size != 0 || empty(); }
@@ -858,7 +937,17 @@ public:
         assert(empty()); // Make sure our erase is correct
     }
 
+    /// Erases the node at `position`.
+    ///
+    /// @details
+    /// Removes `position` from the tree; **former children become siblings** immediately after that
+    /// position (they are not recursively deleted).
     auto erase(const iterator& position) -> iterator;
+
+    /// Erases every node in the half-open fullorder range `[first, last)`.
+    ///
+    /// @details
+    /// Range erase removes each node in `[first, last)` in fullorder sequence.
     auto erase(const iterator& first, const iterator& last) -> iterator;
 
     auto insert(const iterator& position, T x) -> iterator {
@@ -1024,8 +1113,7 @@ auto forest<T>::splice(const iterator& position, forest<T>& x) -> iterator {
 /**************************************************************************************************/
 
 template <class T>
-auto forest<T>::splice(const iterator& position, forest<T>& x, iterator i) ->
-    typename forest<T>::iterator {
+auto forest<T>::splice(const iterator& position, forest<T>& x, iterator i) -> iterator {
     i.edge() = forest_edge::leading;
     return splice(position, x, child_iterator(i), ++child_iterator(i), has_children(i) ? 0 : 1);
 }
@@ -1045,12 +1133,12 @@ auto forest<T>::insert(iterator pos, const const_child_iterator& f, const const_
 /**************************************************************************************************/
 
 template <class T>
-auto forest<T>::splice(const iterator& pos,
+auto forest<T>::splice(const iterator& position,
                        forest<T>& x,
                        const child_iterator& first,
                        const child_iterator& last,
                        size_type count) -> iterator {
-    if (first == last || first.base() == pos) return pos;
+    if (first == last || first.base() == position) return position;
 
     if (&x != this) {
         if (count) {
@@ -1066,8 +1154,8 @@ auto forest<T>::splice(const iterator& pos,
 
     unsafe::set_next(std::prev(first), last);
 
-    unsafe::set_next(std::prev(pos), first.base());
-    unsafe::set_next(back, pos);
+    unsafe::set_next(std::prev(position), first.base());
+    unsafe::set_next(back, position);
 
     return first.base();
 }
@@ -1075,9 +1163,11 @@ auto forest<T>::splice(const iterator& pos,
 /**************************************************************************************************/
 
 template <class T>
-auto forest<T>::splice(const iterator& pos, forest<T>& x, child_iterator first, child_iterator last)
-    -> typename forest<T>::iterator {
-    return splice(pos, x, first, last, 0);
+auto forest<T>::splice(const iterator& position,
+                       forest<T>& x,
+                       child_iterator first,
+                       child_iterator last) -> iterator {
+    return splice(position, x, first, last, 0);
 }
 
 /**************************************************************************************************/
@@ -1103,6 +1193,7 @@ void forest<T>::reverse(child_iterator first, child_iterator last) {
 
 /**************************************************************************************************/
 
+/// First child iterator for the node referenced by fullorder iterator `x` (may equal `child_end`).
 template <class I> // I models FullorderIterator
 auto child_begin(const I& x) -> child_iterator<I> {
     return child_iterator<I>(std::next(leading_of(x)));
@@ -1110,6 +1201,7 @@ auto child_begin(const I& x) -> child_iterator<I> {
 
 /**************************************************************************************************/
 
+/// One-past-last child iterator for the node referenced by `x` (half-open child sequence).
 template <class I> // I models FullorderIterator
 auto child_end(const I& x) -> child_iterator<I> {
     return child_iterator<I>(trailing_of(x));
@@ -1117,6 +1209,8 @@ auto child_end(const I& x) -> child_iterator<I> {
 
 /**************************************************************************************************/
 
+/// Presents the **children** of a node (given by a fullorder iterator into `forest`) as a small
+/// sequence-like interface: `front` / `back` / `push_front` / `push_back` / `pop_front` / `pop_back`.
 template <class Forest>
 class child_adaptor {
 public:
@@ -1147,6 +1241,7 @@ private:
 
 /**************************************************************************************************/
 
+/// Half-open range [`begin`, `end`) of forest iterators; used by `child_range`, `preorder_range`, etc.
 template <class I>
 struct forest_range {
     I _f;
@@ -1158,6 +1253,7 @@ struct forest_range {
 
 /**************************************************************************************************/
 
+/// `forest_range` of `child_iterator` over the immediate children of the node at `x`.
 template <class I> // I models FullorderIterator
 auto child_range(const I& x) {
     return forest_range<child_iterator<I>>{child_begin(x), child_end(x)};
@@ -1165,6 +1261,7 @@ auto child_range(const I& x) {
 
 /**************************************************************************************************/
 
+/// Range of `filter_fullorder_iterator` over `x` using predicate `p`.
 template <class R, typename P> // R models FullorderRange
 auto filter_fullorder_range(R& x, P p) {
     using iterator = filter_fullorder_iterator<typename R::iterator, P>;
@@ -1173,6 +1270,7 @@ auto filter_fullorder_range(R& x, P p) {
                                   iterator(std::end(x), std::end(x), p)};
 }
 
+/// `const` overload: filters over `const_iterator`s.
 template <class R, typename P> // R models FullorderRange
 auto filter_fullorder_range(const R& x, P p) {
     using iterator = filter_fullorder_iterator<typename R::const_iterator, P>;
@@ -1183,6 +1281,7 @@ auto filter_fullorder_range(const R& x, P p) {
 
 /**************************************************************************************************/
 
+/// Reverses the fullorder traversal of `x` (see `reverse_fullorder_iterator`).
 template <class R> // R models FullorderRange
 auto reverse_fullorder_range(R& x) {
     using iterator = reverse_fullorder_iterator<typename R::iterator>;
@@ -1190,6 +1289,7 @@ auto reverse_fullorder_range(R& x) {
     return forest_range<iterator>{iterator(std::end(x)), iterator(std::begin(x))};
 }
 
+/// `const` overload.
 template <class R> // R models FullorderRange
 auto reverse_fullorder_range(const R& x) {
     using iterator = reverse_fullorder_iterator<typename R::const_iterator>;
@@ -1199,6 +1299,7 @@ auto reverse_fullorder_range(const R& x) {
 
 /**************************************************************************************************/
 
+/// Fullorder walk with **depth** tracking over `x` (`depth_fullorder_iterator`).
 template <class R> // R models FullorderRange
 auto depth_range(R& x) {
     using iterator = depth_fullorder_iterator<typename R::iterator>;
@@ -1206,6 +1307,7 @@ auto depth_range(R& x) {
     return forest_range<iterator>{iterator(std::begin(x)), iterator(std::end(x))};
 }
 
+/// `const` overload.
 template <class R> // R models FullorderRange
 auto depth_range(const R& x) {
     using iterator = depth_fullorder_iterator<typename R::const_iterator>;
@@ -1215,6 +1317,7 @@ auto depth_range(const R& x) {
 
 /**************************************************************************************************/
 
+/// **Postorder** (trailing-edge) walk over `x`.
 template <class R> // R models FullorderRange
 auto postorder_range(R& x) {
     using iterator = edge_iterator<typename R::iterator, forest_edge::trailing>;
@@ -1222,6 +1325,7 @@ auto postorder_range(R& x) {
     return forest_range<iterator>{iterator(std::begin(x)), iterator(std::end(x))};
 }
 
+/// `const` overload.
 template <class R> // R models FullorderRange
 auto postorder_range(const R& x) {
     using iterator = edge_iterator<typename R::const_iterator, forest_edge::trailing>;
@@ -1238,6 +1342,7 @@ auto preorder_range(R& x) {
     return forest_range<iterator>{iterator(std::begin(x)), iterator(std::end(x))};
 }
 
+/// `const` overload.
 template <class R> // R models FullorderRange
 auto preorder_range(const R& x) {
     using iterator = edge_iterator<typename R::const_iterator, forest_edge::leading>;
@@ -1247,7 +1352,9 @@ auto preorder_range(const R& x) {
 
 /**************************************************************************************************/
 
-} // namespace STLAB_VERSION_NAMESPACE()
+/** @} */
+
+STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/

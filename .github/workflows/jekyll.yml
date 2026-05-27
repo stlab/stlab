@@ -1,66 +1,56 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
+# Build Jekyll site + Doxygen API docs and deploy to GitHub Pages (stlab.cc).
 
-# Sample workflow for building and deploying a Jekyll site to GitHub Pages
 name: Deploy Jekyll site to Pages
 
 env:
   source: ./docs/
 
 on:
-  # Runs on pushes targeting the default branch
   push:
     branches: [main]
-
-  # Allows you to run this workflow manually from the Actions tab
+  release:
+    types: [published]
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
   group: "pages"
   cancel-in-progress: false
 
 jobs:
-  # Build job
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1.213.0
+        uses: actions/checkout@v6
         with:
-          ruby-version: '3.4.1' # Not needed with a .ruby-version file
-          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
-          cache-version: 0 # Increment this number if you need to re-download cached gems
+          fetch-depth: 0
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1.308.0
+        with:
+          ruby-version: '3.4.4'
+          working-directory: docs
+          bundler-cache: true
+          cache-version: 0
       - name: Setup Pages
         id: pages
-        uses: actions/configure-pages@v4
-      - name: Build with Jekyll
-        # Outputs to the './_site' directory by default
-        # run: cd ./docs
-        run: |
-          cd ./docs
-          bundle install
-          bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
+        uses: actions/configure-pages@v6
+      - name: Install Doxygen
+        uses: ssciwr/doxygen-install@329d88f5a303066a5bd006db7516b1925b86350e
+      - name: Build full documentation site
+        run: ./docs/tools/docs/build-site.sh --refresh-releases
         env:
+          JEKYLL_BASEURL: ${{ steps.pages.outputs.base_path }}
           JEKYLL_ENV: production
       - name: Upload artifact
-        # Automatically uploads an artifact from the './_site' directory by default
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ./docs/_site
 
-  # Deployment job
   deploy:
     environment:
       name: github-pages
@@ -70,4 +60,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

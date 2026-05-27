@@ -1,0 +1,34 @@
+# Synced with stlab/cpp-library templates/Doxyfile.in @ v5.2.0
+# Do not edit the shared baseline here without updating cpp-library or docs/Doxyfile.stlab.
+
+PROJECT_NAME           = "@PROJECT_NAME@"
+PROJECT_BRIEF          = "@PROJECT_BRIEF@"
+PROJECT_NUMBER         = @PROJECT_VERSION@
+OUTPUT_DIRECTORY       = @OUTPUT_DIR@
+GENERATE_LATEX         = NO
+QUIET                  = YES
+WARN_IF_UNDOCUMENTED   = @STLAB_DOXYGEN_WARN_IF_UNDOCUMENTED@
+WARN_AS_ERROR          = @STLAB_DOXYGEN_WARN_AS_ERROR@
+INPUT                  = @INPUT_DIR@
+RECURSIVE              = YES
+EXCLUDE_SYMBOLS        = @EXCLUDE_SYMBOLS@
+EXAMPLE_PATH           = @EXAMPLES_PATH@
+HIDE_UNDOC_NAMESPACES  = NO
+HTML_EXTRA_STYLESHEET  = @AWESOME_CSS_PATH@/doxygen-awesome.css \
+                         @AWESOME_CSS_PATH@/doxygen-awesome-sidebar-only.css \
+                         @CPP_LIBRARY_ROOT@/templates/custom.css
+HTML_COLORSTYLE        = LIGHT
+GENERATE_TREEVIEW      = YES
+DISABLE_INDEX          = NO
+FULL_SIDEBAR           = NO
+DISTRIBUTE_GROUP_DOC   = YES
+MAX_INITIALIZER_LINES  = 0
+MULTILINE_CPP_IS_BRIEF = YES
+INCLUDE_GRAPH           = NO
+INCLUDED_BY_GRAPH       = NO
+DIRECTORY_GRAPH         = NO
+CLASS_GRAPH             = NO
+COLLABORATION_GRAPH     = NO
+GRAPHICAL_HIERARCHY     = NO
+GROUP_GRAPHS            = NO
+GENERATE_DEPRECATEDLIST = NO

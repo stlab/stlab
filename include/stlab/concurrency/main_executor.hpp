@@ -9,6 +9,17 @@
 #ifndef STLAB_CONCURRENCY_MAIN_EXECUTOR_HPP
 #define STLAB_CONCURRENCY_MAIN_EXECUTOR_HPP
 
+/*! @file main_executor.hpp
+ *  @brief Main-thread / UI-thread executor (Qt, libdispatch, Emscripten, etc.).
+ *
+ *  @details
+ *  Tasks submitted to `main_executor` run on the application's main loop (Qt event loop, libdispatch
+ *  main queue, or Emscripten main loop when configured). Tasks are executed in submission order.
+ *
+ *  Destroying `main_executor` does not destroy the underlying UI/main loop; submitted work still
+ *  runs. A main executor is not implemented for Windows unless `STLAB_MAIN_EXECUTOR` selects Qt.
+ */
+
 #include <stlab/config.hpp>
 
 #if STLAB_MAIN_EXECUTOR(QT5) || STLAB_MAIN_EXECUTOR(QT6)
@@ -32,7 +43,13 @@
 /**************************************************************************************************/
 
 namespace stlab {
-inline namespace STLAB_VERSION_NAMESPACE() {
+STLAB_VERSION_NAMESPACE_BEGIN()
+
+/** @defgroup stlab_concurrency_main_executor main_executor
+ *  @ingroup stlab_concurrency
+ *  @brief Main-thread / UI-thread executor (Qt, libdispatch, Emscripten, etc.).
+ *  @{
+ */
 
 /**************************************************************************************************/
 
@@ -162,11 +179,18 @@ struct main_executor_type {
 
 } // namespace detail
 
+/// Runs `void() noexcept` tasks on the process main thread (Qt, libdispatch, or Emscripten as configured).
+///
+/// @details
+/// Submitted tasks run in order on the main loop. The main loop itself outlives this executor
+/// object; pending tasks are not canceled by executor destruction.
 inline constexpr auto main_executor = detail::main_executor_type{};
 
 /**************************************************************************************************/
 
-} // namespace STLAB_VERSION_NAMESPACE()
+/** @} */
+
+STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
 /**************************************************************************************************/
