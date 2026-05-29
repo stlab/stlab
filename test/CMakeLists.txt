@@ -221,11 +221,25 @@ add_test(
 )
 
 ################################################################################
+
+add_executable( stlab.test.actor
+        actor_tests.cpp
+        main.cpp )
+
+target_link_libraries( stlab.test.actor PUBLIC stlab::testing )
+
+add_test(
+    NAME stlab.test.actor
+    COMMAND stlab.test.actor
+)
+
+################################################################################
 #
 # tests are compiled without compiler extensions to ensure the stlab headers
 # are not dependent upon any such extension.
 #
 set_target_properties(
+  stlab.test.actor
   stlab.test.channel
   stlab.test.future
   stlab.test.serial_queue
@@ -250,6 +264,7 @@ ProcessorCount(nProcessors)
 
 if(nProcessors)
   set_tests_properties(
+    stlab.test.actor
     stlab.test.channel
     stlab.test.executor
     stlab.test.future
