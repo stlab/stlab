@@ -154,7 +154,7 @@ struct child_iterator {
     using iterator_category = typename std::iterator_traits<I>::iterator_category;
 
     child_iterator() = default;
-    explicit child_iterator(const I& x) : _x(std::move(x)) {}
+    explicit child_iterator(I x) : _x(std::move(x)) {}
     template <class U>
     child_iterator(const child_iterator<U>& u) : _x(u.base()) {}
 
