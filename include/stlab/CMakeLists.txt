@@ -28,6 +28,7 @@ target_sources( stlab INTERFACE
 
     test/model.hpp
 
+    export.hpp
     forest.hpp
     forest_algorithms.hpp
     functional.hpp

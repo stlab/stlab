@@ -26,6 +26,7 @@
  */
 
 #include <stlab/config.hpp>
+#include <stlab/export.hpp>
 
 #include <cassert>
 #include <cstdint>
@@ -102,7 +103,7 @@ struct group_t {
     ~group_t();
 };
 
-auto group() -> const group_t&;
+STLAB_API auto group() -> const group_t&;
 
 template <executor_priority P = executor_priority::medium>
 struct executor_type {
@@ -465,7 +466,7 @@ public:
 /// Returns an instance of the task system singleton. An immediately executed lambda is used
 /// to register the the task system for tear down pre-exit in a thread safe manner.
 
-priority_task_system& pts();
+STLAB_API priority_task_system& pts();
 
 #endif
 
@@ -474,7 +475,7 @@ priority_task_system& pts();
 #if STLAB_TASK_SYSTEM(WINDOWS)
 
 template <executor_priority P>
-extern task_system<P>& single_task_system();
+extern STLAB_API task_system<P>& single_task_system();
 
 template <executor_priority P = executor_priority::medium>
 struct executor_type {

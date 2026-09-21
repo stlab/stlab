@@ -20,6 +20,10 @@
 
 /**************************************************************************************************/
 
+#include <stlab/export.hpp>
+
+/**************************************************************************************************/
+
 // The namespace for pre_exit cannot be changed without an ABI break. If making an ABI breaking
 // change in this file it needs to be done in a way supporting this version as well.
 
@@ -38,10 +42,10 @@ using pre_exit_handler = void (*)() noexcept;
 
 /// An `extern "C"` vector for `pre-exit()` to make it simpler to
 /// export the function from a shared library.
-extern "C" void stlab_pre_exit();
+extern "C" STLAB_API void stlab_pre_exit();
 /// An `extern "C"` vector for `at_pre-exit()` to make it simpler to
 /// export the function from a shared library.
-extern "C" void stlab_at_pre_exit(pre_exit_handler f);
+extern "C" STLAB_API void stlab_at_pre_exit(pre_exit_handler f);
 
 /// Invoke all registered pre-exit handlers in the reverse order they are registered. It is safe
 /// to register additional handlers during this operation. Must be invoked exactly once prior to

@@ -65,9 +65,9 @@ task_system<P>& single_task_system() {
 }
 
 /// Instantiations of single_task_system for each priority level.
-template task_system<executor_priority::high>& single_task_system<executor_priority::high>();
-template task_system<executor_priority::medium>& single_task_system<executor_priority::medium>();
-template task_system<executor_priority::low>& single_task_system<executor_priority::low>();
+template STLAB_API task_system<executor_priority::high>& single_task_system<executor_priority::high>();
+template STLAB_API task_system<executor_priority::medium>& single_task_system<executor_priority::medium>();
+template STLAB_API task_system<executor_priority::low>& single_task_system<executor_priority::low>();
 
 #endif
 

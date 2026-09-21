@@ -14,5 +14,7 @@ if(STLAB_SANITIZER STREQUAL "address")
 endif()
 
 if(BUILD_SHARED_LIBS)
-    set_target_properties(stlab PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+    target_compile_definitions(stlab PRIVATE STLAB_EXPORTS)
+else()
+    target_compile_definitions(stlab PUBLIC STLAB_STATIC)
 endif()
