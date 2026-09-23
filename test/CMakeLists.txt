@@ -3,6 +3,16 @@ include(stlab/development)
 # test dependencies: doctest is fetched in root CMakeLists when BUILD_TESTING is ON
 # Sanitizer options from development.cmake apply to test targets; stlab target gets them in src/CMakeLists.txt.
 
+function(stlab_copy_runtime_dlls target_name)
+  if(WIN32 AND STLAB_CORE_SHARED)
+    add_custom_command(
+      TARGET ${target_name}
+      POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy -t $<TARGET_FILE_DIR:${target_name}> $<TARGET_RUNTIME_DLLS:${target_name}>
+      COMMAND_EXPAND_LISTS)
+  endif()
+endfunction()
+
 add_executable(stlab.test.channel
   channel_functor_tests.cpp
   channel_merge_round_robin_tests.cpp
@@ -66,9 +76,7 @@ if(WIN32 AND STLAB_CORE_SHARED)
 
   add_test(
     NAME stlab.test.core_shared_smoke
-    COMMAND ${CMAKE_COMMAND} -E env
-      "PATH=$<TARGET_FILE_DIR:stlab-core>;$ENV{PATH}"
-      $<TARGET_FILE:stlab.test.core_shared_smoke>
+    COMMAND stlab.test.core_shared_smoke
   )
 endif()
 
@@ -274,4 +282,24 @@ if(nProcessors)
     stlab.test.task
     stlab.test.tuple
     PROPERTIES PROCESSORS ${nProcessors})
+endif()
+
+foreach(stlab_test_target IN ITEMS
+  stlab.test.channel
+  stlab.test.executor
+  stlab.test.future
+  stlab.test.serial_queue
+  stlab.test.system_timer
+  stlab.test.tuple_algorithm
+  stlab.test.cow
+  stlab.test.task
+  stlab.test.tuple
+  stlab.test.traits
+  stlab.test.forest
+  stlab.test.utility)
+  stlab_copy_runtime_dlls(${stlab_test_target})
+endforeach()
+
+if(TARGET stlab.test.core_shared_smoke)
+  stlab_copy_runtime_dlls(stlab.test.core_shared_smoke)
 endif()

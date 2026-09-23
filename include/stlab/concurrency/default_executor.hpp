@@ -102,6 +102,40 @@ enum class executor_priority : std::uint8_t { high, medium, low };
 /// - Postcondition: exactly one execution of `f` is scheduled.
 void submit_executor_task(executor_priority priority, task<void() noexcept>&& f);
 
+/// Submits one ABI task procedure to the executor for `priority`.
+///
+/// - Precondition: `task` is not `nullptr`.
+/// - Precondition: `context` remains valid until `task(context)` is invoked.
+/// - Postcondition: exactly one invocation of `task(context)` is scheduled.
+inline void submit_executor_proc(executor_priority priority, stlab_v2_task_proc task, void* context) {
+    switch (priority) {
+        case executor_priority::high:
+            stlab_v2_high_executor_submit(task, context);
+            break;
+        case executor_priority::medium:
+            stlab_v2_default_executor_submit(task, context);
+            break;
+        case executor_priority::low:
+            stlab_v2_low_executor_submit(task, context);
+            break;
+    }
+}
+
+#if STLAB_CORE_SHARED() && STLAB_TASK_SYSTEM(WINDOWS)
+
+template <class F>
+struct executor_submission_context {
+    F _f;
+
+    static void run(void* context) noexcept {
+        std::unique_ptr<executor_submission_context> self(
+            static_cast<executor_submission_context*>(context));
+        self->_f();
+    }
+};
+
+#endif
+
 /**************************************************************************************************/
 
 #if STLAB_TASK_SYSTEM(LIBDISPATCH)
@@ -182,7 +216,14 @@ struct executor_type {
 
     template <class F>
     auto operator()(F&& f) const -> std::enable_if_t<std::is_nothrow_invocable_v<std::decay_t<F>>> {
+#if STLAB_CORE_SHARED() && STLAB_TASK_SYSTEM(WINDOWS)
+        using context_t = executor_submission_context<std::decay_t<F>>;
+        auto context = std::make_unique<context_t>(context_t{std::forward<F>(f)});
+        submit_executor_proc(P, &context_t::run, context.get());
+        (void)context.release();
+#else
         submit_executor_task(P, task<void() noexcept>{std::forward<F>(f)});
+#endif
     }
 };
 
