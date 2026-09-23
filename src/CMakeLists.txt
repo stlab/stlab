@@ -1,3 +1,4 @@
+target_sources(stlab PRIVATE stlab.cpp)
 target_sources(stlab-core PRIVATE pre_exit.cpp concurrency/executor_abi.cpp)
 target_include_directories(stlab-core PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include ${PROJECT_BINARY_DIR}/include)
 target_compile_definitions(stlab-core PRIVATE $<$<CXX_COMPILER_ID:MSVC>:NOMINMAX>)

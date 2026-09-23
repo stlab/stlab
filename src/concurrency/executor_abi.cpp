@@ -38,13 +38,13 @@ namespace detail {
 
 namespace {
 
-constexpr auto executor_priority_index(v2_3_0::detail::executor_priority priority) -> std::size_t {
+constexpr auto executor_priority_index(executor_priority priority) -> std::size_t {
     switch (priority) {
-        case v2_3_0::detail::executor_priority::high:
+        case executor_priority::high:
             return 0;
-        case v2_3_0::detail::executor_priority::medium:
+        case executor_priority::medium:
             return 1;
-        case v2_3_0::detail::executor_priority::low:
+        case executor_priority::low:
             return 2;
     }
 
@@ -53,7 +53,7 @@ constexpr auto executor_priority_index(v2_3_0::detail::executor_priority priorit
 }
 
 class task_shard {
-    using task_t = v2_3_0::task<void() noexcept>;
+    using task_t = task<void() noexcept>;
 
     std::mutex _mutex;
     std::deque<task_t> _tasks;
@@ -85,7 +85,7 @@ public:
 };
 
 class sharded_task_queue {
-    using task_t = v2_3_0::task<void() noexcept>;
+    using task_t = task<void() noexcept>;
 
     std::vector<task_shard> _shards;
     std::atomic<unsigned> _index{0};
@@ -146,24 +146,21 @@ class shared_executor_queues {
         sharded_task_queue{executor_shard_count()}};
 
 public:
-    auto submit(v2_3_0::detail::executor_priority priority, v2_3_0::task<void() noexcept>&& task)
-        -> std::size_t {
+    auto submit(executor_priority priority, task<void() noexcept>&& task) -> std::size_t {
         return _queues[executor_priority_index(priority)].enqueue(std::move(task));
     }
 
-    auto try_pop(v2_3_0::detail::executor_priority priority, std::size_t hint)
-        -> v2_3_0::task<void() noexcept> {
+    auto try_pop(executor_priority priority, std::size_t hint) -> task<void() noexcept> {
         return _queues[executor_priority_index(priority)].try_pop(hint);
     }
 
-    auto pending(v2_3_0::detail::executor_priority priority) const -> std::size_t {
+    auto pending(executor_priority priority) const -> std::size_t {
         return _queues[executor_priority_index(priority)].pending();
     }
 
     auto any_pending() const -> bool {
-        return pending(v2_3_0::detail::executor_priority::high) != 0 ||
-               pending(v2_3_0::detail::executor_priority::medium) != 0 ||
-               pending(v2_3_0::detail::executor_priority::low) != 0;
+        return pending(executor_priority::high) != 0 || pending(executor_priority::medium) != 0 ||
+               pending(executor_priority::low) != 0;
     }
 };
 
@@ -180,7 +177,7 @@ auto unpack_hint(void* context) -> std::size_t {
     return static_cast<std::size_t>(reinterpret_cast<std::uintptr_t>(context));
 }
 
-template <v2_3_0::detail::executor_priority Priority, class Reschedule>
+template <executor_priority Priority, class Reschedule>
 void run_wake(std::size_t hint, Reschedule&& reschedule) {
     if (auto task = executor_queues().try_pop(Priority, hint)) {
         task();
@@ -362,31 +359,65 @@ void submit_executor_task(executor_priority priority, task<void() noexcept>&& f)
 
 #elif STLAB_TASK_SYSTEM(PORTABLE)
 
+class waiter {
+    std::mutex _mutex;
+    std::condition_variable _ready;
+    bool _waiting{false};
+    bool _done{false};
+
+public:
+    void done() {
+        {
+            std::unique_lock<std::mutex> lock{_mutex};
+            _done = true;
+        }
+        _ready.notify_one();
+    }
+
+    auto wake() -> bool {
+        {
+            std::unique_lock<std::mutex> lock{_mutex, std::try_to_lock};
+            if (!lock || !_waiting) return false;
+            _waiting = false;
+        }
+        _ready.notify_one();
+        return true;
+    }
+
+    auto wait() -> bool {
+        std::unique_lock<std::mutex> lock{_mutex};
+        _waiting = true;
+        while (_waiting && !_done)
+            _ready.wait(lock);
+        _waiting = false;
+        return _done;
+    }
+};
+
 struct priority_task_system::implementation {
     const unsigned _worker_count{executor_shard_count()};
     const unsigned _thread_limit{std::max(9U, portable_hardware_concurrency() * 4 + 1)};
 
     std::mutex _mutex;
-    std::condition_variable _ready;
-    bool _done{false};
-    std::size_t _waiting{0};
     std::vector<std::thread> _threads;
+    std::vector<waiter> _waiters{_thread_limit};
 
     implementation() {
         _threads.reserve(_thread_limit);
-        for (unsigned i = 0; i != _worker_count; ++i) add_thread_unlocked(i);
+        for (unsigned i = 0; i != _worker_count; ++i)
+            add_thread_unlocked(i);
     }
 
     void submit(executor_priority priority, task<void() noexcept>&& f) {
         (void)executor_queues().submit(priority, std::move(f));
-        _ready.notify_one();
+        (void)wake();
     }
 
     auto wake() -> bool {
-        std::unique_lock<std::mutex> lock{_mutex};
-        if (_waiting == 0) return false;
-        _ready.notify_one();
-        return true;
+        for (auto& waiter : _waiters) {
+            if (waiter.wake()) return true;
+        }
+        return false;
     }
 
     void add_thread() {
@@ -396,13 +427,8 @@ struct priority_task_system::implementation {
     }
 
     void join() {
-        {
-            std::unique_lock<std::mutex> lock{_mutex};
-            _done = true;
-        }
-
-        _ready.notify_all();
-
+        for (auto& waiter : _waiters)
+            waiter.done();
         for (auto& thread : _threads)
             thread.join();
         _threads.clear();
@@ -421,12 +447,7 @@ private:
                     continue;
                 }
 
-                std::unique_lock<std::mutex> lock{_mutex};
-                ++_waiting;
-                _ready.wait(lock, [&] { return _done || executor_queues().any_pending(); });
-                --_waiting;
-
-                if (_done && !executor_queues().any_pending()) return;
+                if (_waiters[index].wait()) return;
             }
         });
     }
@@ -474,23 +495,29 @@ STLAB_VERSION_NAMESPACE_END()
 inline namespace v2 {
 extern "C" void stlab_v2_default_executor_submit(stlab_v2_task_proc proc, void* context) {
     assert(proc != nullptr && "Task procedure must not be null.");
-    v2_3_0::detail::submit_executor_task(
-        v2_3_0::detail::executor_priority::medium,
-        v2_3_0::task<void() noexcept>{[proc, context]() noexcept { proc(context); }});
+    STLAB_VERSION_NAMESPACE()::detail::submit_executor_task(
+        STLAB_VERSION_NAMESPACE()::detail::executor_priority::medium,
+        STLAB_VERSION_NAMESPACE()::task<void() noexcept>{[proc, context]() noexcept {
+            proc(context);
+        }});
 }
 
 extern "C" void stlab_v2_high_executor_submit(stlab_v2_task_proc proc, void* context) {
     assert(proc != nullptr && "Task procedure must not be null.");
-    v2_3_0::detail::submit_executor_task(
-        v2_3_0::detail::executor_priority::high,
-        v2_3_0::task<void() noexcept>{[proc, context]() noexcept { proc(context); }});
+    STLAB_VERSION_NAMESPACE()::detail::submit_executor_task(
+        STLAB_VERSION_NAMESPACE()::detail::executor_priority::high,
+        STLAB_VERSION_NAMESPACE()::task<void() noexcept>{[proc, context]() noexcept {
+            proc(context);
+        }});
 }
 
 extern "C" void stlab_v2_low_executor_submit(stlab_v2_task_proc proc, void* context) {
     assert(proc != nullptr && "Task procedure must not be null.");
-    v2_3_0::detail::submit_executor_task(
-        v2_3_0::detail::executor_priority::low,
-        v2_3_0::task<void() noexcept>{[proc, context]() noexcept { proc(context); }});
+    STLAB_VERSION_NAMESPACE()::detail::submit_executor_task(
+        STLAB_VERSION_NAMESPACE()::detail::executor_priority::low,
+        STLAB_VERSION_NAMESPACE()::task<void() noexcept>{[proc, context]() noexcept {
+            proc(context);
+        }});
 }
 
 } // namespace v2

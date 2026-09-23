@@ -4,7 +4,7 @@ include(stlab/development)
 # Sanitizer options from development.cmake apply to test targets; stlab target gets them in src/CMakeLists.txt.
 
 function(stlab_copy_runtime_dlls target_name)
-  if(WIN32 AND STLAB_CORE_SHARED)
+  if(WIN32)
     add_custom_command(
       TARGET ${target_name}
       POST_BUILD

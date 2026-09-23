@@ -38,7 +38,7 @@ include(CTest)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 # Create the main library target first
-add_library(stlab INTERFACE)
+add_library(stlab)
 add_library(stlab::stlab ALIAS stlab)
 option(STLAB_CORE_SHARED "Build the process-shared executor core as a shared library on Windows" OFF)
 if(STLAB_CORE_SHARED AND WIN32)
@@ -145,7 +145,7 @@ endif()
 # and installation. Here we use a CMake generator expression to dispatch
 # on how the configuration under which this library is being consumed.
 #
-target_include_directories(stlab INTERFACE
+target_include_directories(stlab PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
@@ -161,9 +161,12 @@ target_include_directories(stlab-core PUBLIC
 # + NOMINMAX
 #    disable the `min` and `max` macros defined in the windows.h header
 #
-target_compile_definitions(stlab INTERFACE $<$<CXX_COMPILER_ID:MSVC>:NOMINMAX>)
+target_compile_definitions(stlab PUBLIC $<$<CXX_COMPILER_ID:MSVC>:NOMINMAX>)
+if(WIN32 AND BUILD_SHARED_LIBS)
+  target_compile_definitions(stlab PRIVATE STLAB_BUILD_SHARED_LIBRARY)
+endif()
 target_compile_definitions(stlab-core PRIVATE $<$<CXX_COMPILER_ID:MSVC>:NOMINMAX>)
-target_link_libraries(stlab INTERFACE
+target_link_libraries(stlab PUBLIC
   $<BUILD_INTERFACE:stlab-core>
   $<INSTALL_INTERFACE:stlab::stlab-core>)
 
@@ -175,29 +178,29 @@ add_subdirectory(src)
 
 # https://github.com/stlab/stlab-copy-on-write
 CPMAddPackage("gh:stlab/stlab-copy-on-write@1.1.0")
-target_link_libraries(stlab INTERFACE $<BUILD_INTERFACE:stlab::copy-on-write>)
+target_link_libraries(stlab PUBLIC $<BUILD_INTERFACE:stlab::copy-on-write>)
 
 # https://github.com/stlab/stlab-enum-ops
 CPMAddPackage("gh:stlab/stlab-enum-ops@1.2.0")
-target_link_libraries(stlab INTERFACE $<BUILD_INTERFACE:stlab::enum-ops>)
+target_link_libraries(stlab PUBLIC $<BUILD_INTERFACE:stlab::enum-ops>)
 
 # System dependencies
 if(NOT STLAB_THREAD_SYSTEM STREQUAL "none")
-  target_link_libraries(stlab INTERFACE Threads::Threads)
+  target_link_libraries(stlab PUBLIC Threads::Threads)
   target_link_libraries(stlab-core PUBLIC Threads::Threads)
 endif()
 
 if(STLAB_TASK_SYSTEM STREQUAL "libdispatch")
-  target_link_libraries(stlab INTERFACE libdispatch::libdispatch)
+  target_link_libraries(stlab PUBLIC libdispatch::libdispatch)
   target_link_libraries(stlab-core PUBLIC libdispatch::libdispatch)
 endif()
 
 if(STLAB_MAIN_EXECUTOR STREQUAL "libdispatch")
-  target_link_libraries(stlab INTERFACE libdispatch::libdispatch)
+  target_link_libraries(stlab PUBLIC libdispatch::libdispatch)
 elseif(STLAB_MAIN_EXECUTOR STREQUAL "qt5")
-  target_link_libraries(stlab INTERFACE Qt5::Core)
+  target_link_libraries(stlab PUBLIC Qt5::Core)
 elseif(STLAB_MAIN_EXECUTOR STREQUAL "qt6")
-  target_link_libraries(stlab INTERFACE Qt6::Core)
+  target_link_libraries(stlab PUBLIC Qt6::Core)
 endif()
 
 message(STATUS "stlab: Disable Coroutines: ${STLAB_NO_STD_COROUTINES}")
