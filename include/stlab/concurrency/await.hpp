@@ -56,7 +56,7 @@ STLAB_VERSION_NAMESPACE_BEGIN()
 template <class F>
 auto invoke_waiting(F&& f) {
 #if STLAB_TASK_SYSTEM(PORTABLE)
-    if (!detail::pts().wake()) detail::pts().add_thread();
+    detail::notify_waiting_executor_before_blocking();
 #endif
 
     return std::forward<F>(f)();

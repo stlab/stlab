@@ -246,6 +246,53 @@ TEST_CASE("abi_executor_submit_drains_concurrent_contention_without_dropping_tas
     }
 }
 
+#if STLAB_TASK_SYSTEM(PORTABLE)
+TEST_CASE("invoke_waiting_on_portable_pool_completes_nested_submissions") {
+    constexpr std::size_t outer_task_count = 16;
+    constexpr std::size_t iterations_per_task = 64;
+
+    std::condition_variable ready;
+    std::mutex mutex;
+    std::atomic<std::size_t> completed{0};
+    std::atomic_bool timed_out{false};
+
+    for (std::size_t outer = 0; outer < outer_task_count; ++outer) {
+        default_executor([&]() noexcept {
+            for (std::size_t iteration = 0; iteration < iterations_per_task; ++iteration) {
+                auto inner_done = std::make_shared<std::atomic_bool>(false);
+                default_executor([&, inner_done]() noexcept {
+                    inner_done->store(true, std::memory_order_release);
+                    std::lock_guard<std::mutex> lock{mutex};
+                    ready.notify_all();
+                });
+
+                std::unique_lock<std::mutex> lock{mutex};
+                if (!invoke_waiting([&] {
+                        return ready.wait_for(lock, std::chrono::seconds(5), [&] {
+                            return inner_done->load(std::memory_order_acquire);
+                        });
+                    })) {
+                    timed_out.store(true, std::memory_order_release);
+                    break;
+                }
+            }
+
+            completed.fetch_add(1, std::memory_order_acq_rel);
+            std::lock_guard<std::mutex> lock{mutex};
+            ready.notify_all();
+        });
+    }
+
+    std::unique_lock<std::mutex> lock{mutex};
+    const auto finished = ready.wait_for(lock, std::chrono::seconds(30), [&] {
+        return completed.load(std::memory_order_acquire) == outer_task_count;
+    });
+
+    REQUIRE(finished);
+    REQUIRE(!timed_out.load(std::memory_order_acquire));
+}
+#endif
+
 // REVISIT (sean-parent) - These tests is disabled because boost multi-precision is generated
 // deprecated warnings.
 #if 0

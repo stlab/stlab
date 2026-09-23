@@ -60,21 +60,21 @@ using stlab_v2_task_proc = void (*)(void*) noexcept;
 /// - Precondition: `task` is not `nullptr`.
 /// - Precondition: `context` remains valid until `task(context)` is invoked.
 /// - Postcondition: exactly one invocation of `task(context)` is scheduled.
-extern "C" void stlab_v2_default_executor_submit(stlab_v2_task_proc task, void* context);
+extern "C" void stlab_v2_default_executor_submit(stlab_v2_task_proc task, void* context) noexcept;
 
 /// Submits one task to the shared high-priority executor.
 ///
 /// - Precondition: `task` is not `nullptr`.
 /// - Precondition: `context` remains valid until `task(context)` is invoked.
 /// - Postcondition: exactly one invocation of `task(context)` is scheduled.
-extern "C" void stlab_v2_high_executor_submit(stlab_v2_task_proc task, void* context);
+extern "C" void stlab_v2_high_executor_submit(stlab_v2_task_proc task, void* context) noexcept;
 
 /// Submits one task to the shared low-priority executor.
 ///
 /// - Precondition: `task` is not `nullptr`.
 /// - Precondition: `context` remains valid until `task(context)` is invoked.
 /// - Postcondition: exactly one invocation of `task(context)` is scheduled.
-extern "C" void stlab_v2_low_executor_submit(stlab_v2_task_proc task, void* context);
+extern "C" void stlab_v2_low_executor_submit(stlab_v2_task_proc task, void* context) noexcept;
 
 /** @} */
 
@@ -107,6 +107,8 @@ void submit_executor_task(executor_priority priority, task<void() noexcept>&& f)
 /// - Precondition: `task` is not `nullptr`.
 /// - Precondition: `context` remains valid until `task(context)` is invoked.
 /// - Postcondition: exactly one invocation of `task(context)` is scheduled.
+/// - Note: Windows shared-core portable builds reserve a null-task control submission internally
+///   for `invoke_waiting()`.
 inline void submit_executor_proc(executor_priority priority, stlab_v2_task_proc task, void* context) {
     switch (priority) {
         case executor_priority::high:
@@ -121,7 +123,7 @@ inline void submit_executor_proc(executor_priority priority, stlab_v2_task_proc 
     }
 }
 
-#if STLAB_CORE_SHARED() && STLAB_TASK_SYSTEM(WINDOWS)
+#if defined(_WIN32) && STLAB_CORE_SHARED()
 
 template <class F>
 struct executor_submission_context {
@@ -206,6 +208,18 @@ public:
 /// Returns the process-shared portable task system.
 auto pts() -> priority_task_system&;
 
+/// Ensures the portable task system has a worker available before a blocking wait.
+///
+/// On Windows shared-core builds this is routed through the exported executor ABI so consumers do
+/// not depend on non-exported C++ detail symbols from `stlab-core.dll`.
+inline void notify_waiting_executor_before_blocking() {
+#if defined(_WIN32) && STLAB_CORE_SHARED()
+    submit_executor_proc(executor_priority::medium, nullptr, reinterpret_cast<void*>(1));
+#else
+    if (!pts().wake()) pts().add_thread();
+#endif
+}
+
 #endif
 
 /**************************************************************************************************/
@@ -216,7 +230,7 @@ struct executor_type {
 
     template <class F>
     auto operator()(F&& f) const -> std::enable_if_t<std::is_nothrow_invocable_v<std::decay_t<F>>> {
-#if STLAB_CORE_SHARED() && STLAB_TASK_SYSTEM(WINDOWS)
+#if defined(_WIN32) && STLAB_CORE_SHARED()
         using context_t = executor_submission_context<std::decay_t<F>>;
         auto context = std::make_unique<context_t>(context_t{std::forward<F>(f)});
         submit_executor_proc(P, &context_t::run, context.get());

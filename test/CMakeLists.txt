@@ -80,6 +80,20 @@ if(WIN32 AND STLAB_CORE_SHARED)
   )
 endif()
 
+if(WIN32 AND STLAB_CORE_SHARED AND STLAB_TASK_SYSTEM STREQUAL "portable")
+  add_executable(stlab.test.portable_shared_smoke
+    portable_shared_smoke_test.cpp
+    main.cpp)
+
+  target_compile_definitions(stlab.test.portable_shared_smoke PRIVATE STLAB_UNIT_TEST)
+  target_link_libraries(stlab.test.portable_shared_smoke PUBLIC stlab::testing)
+
+  add_test(
+    NAME stlab.test.portable_shared_smoke
+    COMMAND stlab.test.portable_shared_smoke
+  )
+endif()
+
 ################################################################################
 
 add_executable(stlab.test.future
@@ -302,4 +316,8 @@ endforeach()
 
 if(TARGET stlab.test.core_shared_smoke)
   stlab_copy_runtime_dlls(stlab.test.core_shared_smoke)
+endif()
+
+if(TARGET stlab.test.portable_shared_smoke)
+  stlab_copy_runtime_dlls(stlab.test.portable_shared_smoke)
 endif()
