@@ -38,8 +38,15 @@ include(CTest)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 # Create the main library target first
-add_library(stlab)
+add_library(stlab INTERFACE)
 add_library(stlab::stlab ALIAS stlab)
+option(STLAB_CORE_SHARED "Build the process-shared executor core as a shared library on Windows" OFF)
+if(STLAB_CORE_SHARED AND WIN32)
+  add_library(stlab-core SHARED)
+else()
+  add_library(stlab-core STATIC)
+endif()
+add_library(stlab::stlab-core ALIAS stlab-core)
 
 ########################################################
 
@@ -142,6 +149,10 @@ target_include_directories(stlab INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+target_include_directories(stlab-core PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 #
 # Several definitions are specified for the microsoft compiler. These have
@@ -151,6 +162,10 @@ target_include_directories(stlab INTERFACE
 #    disable the `min` and `max` macros defined in the windows.h header
 #
 target_compile_definitions(stlab INTERFACE $<$<CXX_COMPILER_ID:MSVC>:NOMINMAX>)
+target_compile_definitions(stlab-core PRIVATE $<$<CXX_COMPILER_ID:MSVC>:NOMINMAX>)
+target_link_libraries(stlab INTERFACE
+  $<BUILD_INTERFACE:stlab-core>
+  $<INSTALL_INTERFACE:stlab::stlab-core>)
 
 add_subdirectory(include/stlab)
 add_subdirectory(src)
@@ -169,10 +184,12 @@ target_link_libraries(stlab INTERFACE $<BUILD_INTERFACE:stlab::enum-ops>)
 # System dependencies
 if(NOT STLAB_THREAD_SYSTEM STREQUAL "none")
   target_link_libraries(stlab INTERFACE Threads::Threads)
+  target_link_libraries(stlab-core PUBLIC Threads::Threads)
 endif()
 
 if(STLAB_TASK_SYSTEM STREQUAL "libdispatch")
   target_link_libraries(stlab INTERFACE libdispatch::libdispatch)
+  target_link_libraries(stlab-core PUBLIC libdispatch::libdispatch)
 endif()
 
 if(STLAB_MAIN_EXECUTOR STREQUAL "libdispatch")
@@ -219,6 +236,12 @@ endif()
 # Installation Support (using cpp-library dependency auto-discovery)
 if(PROJECT_IS_TOP_LEVEL)
   include("${cpp-library_SOURCE_DIR}/cmake/cpp-library-install.cmake")
+
+  install(TARGETS stlab-core
+    EXPORT stlabTargets
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
   
   # Use cpp-library's install function for automatic dependency discovery
   # No manual dependency mappings needed - cpp-library auto-discovers via dependency provider

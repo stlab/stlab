@@ -12,6 +12,7 @@
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
+#include <cstddef>
 #include <mutex>
 #include <thread>
 #include <vector>
@@ -23,6 +24,49 @@ using namespace std;
 
 namespace {
 void rest() { std::this_thread::sleep_for(std::chrono::milliseconds(1)); }
+
+struct counted_task_context {
+    std::atomic<int>* _count{nullptr};
+    std::atomic<int>* _remaining{nullptr};
+    std::condition_variable* _ready{nullptr};
+    std::mutex* _mutex{nullptr};
+
+    static void run(void* context) noexcept {
+        auto& self = *static_cast<counted_task_context*>(context);
+        self._count->fetch_add(1, std::memory_order_relaxed);
+
+        if (self._remaining->fetch_sub(1, std::memory_order_acq_rel) == 1) {
+            std::lock_guard<std::mutex> lock{*self._mutex};
+            self._ready->notify_one();
+        }
+    }
+};
+
+template <typename Submit>
+void wait_for_all_submissions(Submit&& submit, std::size_t count) {
+    std::vector<std::atomic<int>> executions(count);
+    for (auto& execution : executions)
+        execution.store(0, std::memory_order_relaxed);
+
+    std::vector<counted_task_context> contexts(count);
+    std::atomic<int> remaining{static_cast<int>(count)};
+    std::condition_variable ready;
+    std::mutex mutex;
+
+    for (std::size_t i = 0; i < count; ++i) {
+        contexts[i] = counted_task_context{&executions[i], &remaining, &ready, &mutex};
+        submit(&counted_task_context::run, &contexts[i], i);
+    }
+
+    {
+        std::unique_lock<std::mutex> lock{mutex};
+        ready.wait(lock, [&] { return remaining.load(std::memory_order_acquire) == 0; });
+    }
+
+    for (const auto& execution : executions) {
+        REQUIRE(execution.load(std::memory_order_relaxed) == 1);
+    }
+}
 } // namespace
 
 TEST_CASE("all_low_prio_tasks_are_executed") {
@@ -128,6 +172,78 @@ TEST_CASE("task_system_restarts_after_it_went_pending") {
     }
 
     REQUIRE(!done);
+}
+
+TEST_CASE("abi_executor_submit_executes_each_task_exactly_once_across_priorities") {
+    wait_for_all_submissions(
+        [](stlab_v2_task_proc task, void* context, std::size_t index) {
+            switch (index % 3) {
+                case 0:
+                    stlab_v2_high_executor_submit(task, context);
+                    break;
+                case 1:
+                    stlab_v2_default_executor_submit(task, context);
+                    break;
+                case 2:
+                    stlab_v2_low_executor_submit(task, context);
+                    break;
+            }
+        },
+        96);
+}
+
+TEST_CASE("abi_executor_submit_drains_concurrent_contention_without_dropping_tasks") {
+    constexpr std::size_t submitter_count = 8;
+    constexpr std::size_t tasks_per_submitter = 128;
+
+    std::vector<std::atomic<int>> executions(submitter_count * tasks_per_submitter);
+    for (auto& execution : executions)
+        execution.store(0, std::memory_order_relaxed);
+
+    std::vector<counted_task_context> contexts(executions.size());
+    std::atomic<int> remaining{static_cast<int>(contexts.size())};
+    std::condition_variable ready;
+    std::mutex mutex;
+
+    for (std::size_t i = 0; i < contexts.size(); ++i) {
+        contexts[i] = counted_task_context{&executions[i], &remaining, &ready, &mutex};
+    }
+
+    std::vector<std::thread> submitters;
+    submitters.reserve(submitter_count);
+
+    for (std::size_t submitter = 0; submitter < submitter_count; ++submitter) {
+        submitters.emplace_back([&, submitter] {
+            const auto base = submitter * tasks_per_submitter;
+
+            for (std::size_t offset = 0; offset < tasks_per_submitter; ++offset) {
+                auto* context = &contexts[base + offset];
+                switch ((submitter + offset) % 3) {
+                    case 0:
+                        stlab_v2_high_executor_submit(&counted_task_context::run, context);
+                        break;
+                    case 1:
+                        stlab_v2_default_executor_submit(&counted_task_context::run, context);
+                        break;
+                    case 2:
+                        stlab_v2_low_executor_submit(&counted_task_context::run, context);
+                        break;
+                }
+            }
+        });
+    }
+
+    for (auto& submitter : submitters)
+        submitter.join();
+
+    {
+        std::unique_lock<std::mutex> lock{mutex};
+        ready.wait(lock, [&] { return remaining.load(std::memory_order_acquire) == 0; });
+    }
+
+    for (const auto& execution : executions) {
+        REQUIRE(execution.load(std::memory_order_relaxed) == 1);
+    }
 }
 
 // REVISIT (sean-parent) - These tests is disabled because boost multi-precision is generated

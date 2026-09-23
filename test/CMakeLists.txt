@@ -56,6 +56,22 @@ add_test(
   COMMAND stlab.test.executor
 )
 
+if(WIN32 AND STLAB_CORE_SHARED)
+  add_executable(stlab.test.core_shared_smoke
+    core_shared_smoke_test.cpp
+    core_shared_smoke_main.cpp)
+
+  target_compile_definitions(stlab.test.core_shared_smoke PRIVATE STLAB_UNIT_TEST)
+  target_link_libraries(stlab.test.core_shared_smoke PUBLIC doctest::doctest stlab-core)
+
+  add_test(
+    NAME stlab.test.core_shared_smoke
+    COMMAND ${CMAKE_COMMAND} -E env
+      "PATH=$<TARGET_FILE_DIR:stlab-core>;$ENV{PATH}"
+      $<TARGET_FILE:stlab.test.core_shared_smoke>
+  )
+endif()
+
 ################################################################################
 
 add_executable(stlab.test.future
