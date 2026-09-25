@@ -8,10 +8,15 @@
 #include <stlab/concurrency/await.hpp>
 #include <stlab/concurrency/default_executor.hpp>
 #include <stlab/concurrency/serial_queue.hpp>
+#include <stlab/concurrency/task.hpp>
+#include <stlab/config.hpp>
+
+#include "../src/concurrency/detail/waiter_state.hpp"
 
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
+#include <cstddef>
 #include <mutex>
 #include <thread>
 #include <vector>
@@ -23,6 +28,71 @@ using namespace std;
 
 namespace {
 void rest() { std::this_thread::sleep_for(std::chrono::milliseconds(1)); }
+
+/// Returns the address of the linker guard for the current task relocation storage ABI.
+///
+/// - Postcondition: the returned pointer refers to the current storage-ABI guard symbol.
+auto current_task_abi_guard() noexcept -> const unsigned char* {
+    return &stlab::detail::current_task_storage_abi_guard::value;
+}
+
+TEST_CASE("portable waiter retains a wake requested before waiting") {
+    stlab::detail::waiter_state state;
+
+    REQUIRE_FALSE(state.wake());
+    REQUIRE_FALSE(state.begin_wait());
+
+    CHECK(state.begin_wait());
+    CHECK(state.wake());
+}
+
+struct counted_task_context {
+    std::atomic<int>* _count{nullptr};
+    std::atomic<int>* _remaining{nullptr};
+    std::condition_variable* _ready{nullptr};
+    std::mutex* _mutex{nullptr};
+
+    static void run(void* context) noexcept {
+        auto& self = *static_cast<counted_task_context*>(context);
+        self._count->fetch_add(1, std::memory_order_relaxed);
+
+        if (self._remaining->fetch_sub(1, std::memory_order_acq_rel) == 1) {
+            std::scoped_lock lock{*self._mutex};
+            self._ready->notify_one();
+        }
+    }
+};
+
+/// Submits `count` tasks and waits until each task has executed exactly once.
+///
+/// - Complexity: O(`count`) submissions and checks.
+template <typename Submit>
+void wait_for_all_submissions(Submit&& submit, std::size_t count) {
+    std::vector<std::atomic<int>> executions(count);
+    for (auto& execution : executions)
+        execution.store(0, std::memory_order_relaxed);
+
+    std::vector<counted_task_context> contexts(count);
+    std::atomic<int> remaining{static_cast<int>(count)};
+    std::condition_variable ready;
+    std::mutex mutex;
+
+    for (std::size_t i = 0; i < count; ++i) {
+        contexts[i] = counted_task_context{&executions[i], &remaining, &ready, &mutex};
+        task<void() noexcept> t{
+            [context = &contexts[i]]() noexcept { counted_task_context::run(context); }};
+        submit(t.relocation_concept(), t.relocation_invoke(), t.relocation_source(), i);
+    }
+
+    {
+        std::unique_lock<std::mutex> lock{mutex};
+        ready.wait(lock, [&] { return remaining.load(std::memory_order_acquire) == 0; });
+    }
+
+    for (const auto& execution : executions) {
+        REQUIRE(execution.load(std::memory_order_relaxed) == 1);
+    }
+}
 } // namespace
 
 TEST_CASE("all_low_prio_tasks_are_executed") {
@@ -129,6 +199,142 @@ TEST_CASE("task_system_restarts_after_it_went_pending") {
 
     REQUIRE(!done);
 }
+
+TEST_CASE("abi_executor_submit_executes_each_task_exactly_once_across_priorities") {
+    wait_for_all_submissions(
+        [](const task<void() noexcept>::concept_t* vtable, task<void() noexcept>::invoke_t invoke,
+           void* source, std::size_t index) {
+            switch (index % 3) {
+                case 0:
+                    stlab_v2_high_executor_submit(current_task_abi_guard(), vtable, invoke, source);
+                    break;
+                case 1:
+                    stlab_v2_default_executor_submit(current_task_abi_guard(), vtable, invoke,
+                                                     source);
+                    break;
+                case 2:
+                    stlab_v2_low_executor_submit(current_task_abi_guard(), vtable, invoke, source);
+                    break;
+            }
+        },
+        96);
+}
+
+TEST_CASE("abi_executor_submit_drains_concurrent_contention_without_dropping_tasks") {
+    constexpr std::size_t submitter_count = 8;
+    constexpr std::size_t tasks_per_submitter = 128;
+
+    std::vector<std::atomic<int>> executions(submitter_count * tasks_per_submitter);
+    for (auto& execution : executions)
+        execution.store(0, std::memory_order_relaxed);
+
+    std::vector<counted_task_context> contexts(executions.size());
+    std::atomic<int> remaining{static_cast<int>(contexts.size())};
+    std::condition_variable ready;
+    std::mutex mutex;
+
+    for (std::size_t i = 0; i < contexts.size(); ++i) {
+        contexts[i] = counted_task_context{&executions[i], &remaining, &ready, &mutex};
+    }
+
+    std::vector<std::thread> submitters;
+    submitters.reserve(submitter_count);
+
+    for (std::size_t submitter = 0; submitter < submitter_count; ++submitter) {
+        submitters.emplace_back([&, submitter] {
+            const auto base = submitter * tasks_per_submitter;
+
+            for (std::size_t offset = 0; offset < tasks_per_submitter; ++offset) {
+                auto* context = &contexts[base + offset];
+                task<void() noexcept> t{
+                    [context]() noexcept { counted_task_context::run(context); }};
+                switch ((submitter + offset) % 3) {
+                    case 0:
+                        stlab_v2_high_executor_submit(current_task_abi_guard(),
+                                                      t.relocation_concept(),
+                                                      t.relocation_invoke(),
+                                                      t.relocation_source());
+                        break;
+                    case 1:
+                        stlab_v2_default_executor_submit(current_task_abi_guard(),
+                                                         t.relocation_concept(),
+                                                         t.relocation_invoke(),
+                                                         t.relocation_source());
+                        break;
+                    case 2:
+                        stlab_v2_low_executor_submit(current_task_abi_guard(),
+                                                     t.relocation_concept(),
+                                                     t.relocation_invoke(),
+                                                     t.relocation_source());
+                        break;
+                }
+            }
+        });
+    }
+
+    for (auto& submitter : submitters)
+        submitter.join();
+
+    {
+        std::unique_lock<std::mutex> lock{mutex};
+        ready.wait(lock, [&] { return remaining.load(std::memory_order_acquire) == 0; });
+    }
+
+    for (const auto& execution : executions) {
+        REQUIRE(execution.load(std::memory_order_relaxed) == 1);
+    }
+}
+
+#if STLAB_TASK_SYSTEM(PORTABLE)
+TEST_CASE("invoke_waiting_on_portable_pool_completes_nested_submissions") {
+    constexpr std::size_t outer_task_count = 8;
+    constexpr std::size_t iterations_per_task = 64;
+
+    std::condition_variable ready;
+    std::mutex mutex;
+    std::atomic<std::size_t> completed{0};
+    std::atomic_bool timed_out{false};
+
+    for (std::size_t outer = 0; outer < outer_task_count; ++outer) {
+        auto completion =
+            std::shared_ptr<void>{nullptr, [&](void*) noexcept {
+                                      std::scoped_lock lock{mutex};
+                                      completed.fetch_add(1, std::memory_order_acq_rel);
+                                      ready.notify_all();
+                                  }};
+
+        default_executor([&, completion = std::move(completion)]() noexcept {
+            (void)completion;
+            for (std::size_t iteration = 0; iteration < iterations_per_task; ++iteration) {
+                auto inner_done = std::make_shared<std::atomic_bool>(false);
+                default_executor([&, inner_done]() noexcept {
+                    std::scoped_lock lock{mutex};
+                    inner_done->store(true, std::memory_order_release);
+                    ready.notify_all();
+                });
+
+                std::unique_lock<std::mutex> lock{mutex};
+                if (!invoke_waiting([&] {
+                        return ready.wait_for(lock, std::chrono::seconds(5), [&] {
+                            return inner_done->load(std::memory_order_acquire);
+                        });
+                    })) {
+                    timed_out.store(true, std::memory_order_release);
+                    break;
+                }
+            }
+        });
+    }
+
+    std::unique_lock<std::mutex> lock{mutex};
+    const auto finished = ready.wait_for(lock, std::chrono::seconds(30), [&] {
+        return completed.load(std::memory_order_acquire) == outer_task_count;
+    });
+
+    REQUIRE(finished);
+    REQUIRE(!timed_out.load(std::memory_order_acquire));
+}
+#endif
 
 // REVISIT (sean-parent) - These tests is disabled because boost multi-precision is generated
 // deprecated warnings.

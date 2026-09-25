@@ -49,3 +49,5 @@ stlab/config.hpp
 /.cpm-cache
 /.cache
 compile_commands.json
+.claude/worktrees/
+.tokensave/

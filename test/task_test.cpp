@@ -8,9 +8,11 @@
 // stdc++
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <iostream>
 #include <string>
+#include <type_traits>
 #include <utility>
 
 // boost
@@ -332,6 +334,62 @@ TEST_CASE("task_equality_tests") {
         task<void()> a([] {});
         REQUIRE(std::nullptr_t() != a);
     }
+}
+
+/**************************************************************************************************/
+
+using noexcept_task = task<void() noexcept>;
+
+static_assert(std::is_same_v<noexcept_task::concept_t, stlab_v2_task_concept>);
+static_assert(std::is_standard_layout_v<stlab_v2_task_concept>);
+static_assert(stlab_v2_task_storage_size != 0);
+static_assert(stlab_v2_task_storage_alignment == alignof(std::max_align_t));
+static_assert(std::is_same_v<decltype(stlab_v2_task_concept::dtor), void (*)(void*) noexcept>);
+static_assert(
+    std::is_same_v<decltype(stlab_v2_task_concept::move_ctor), void (*)(void*, void*) noexcept>);
+static_assert(std::is_same_v<decltype(stlab_v2_task_concept::target_type),
+                             const std::type_info& (*)() noexcept>);
+static_assert(std::is_same_v<decltype(stlab_v2_task_concept::pointer), void* (*)(void*) noexcept>);
+static_assert(std::is_same_v<decltype(stlab_v2_task_concept::const_pointer),
+                             const void* (*)(const void*) noexcept>);
+
+/**************************************************************************************************/
+
+TEST_CASE("task_relocation_moves_small_target") {
+    using task_t = task<void() noexcept>;
+
+    int calls = 0;
+    task_t source([&calls]() noexcept { ++calls; });
+
+    task_t relocated(source.relocation_concept(), source.relocation_invoke(),
+                     source.relocation_source());
+
+    relocated();
+    REQUIRE(calls == 1);
+}
+
+/**************************************************************************************************/
+
+TEST_CASE("task_relocation_moves_large_target") {
+    using task_t = task<int()>;
+
+    task_t source = large_model();
+
+    task_t relocated(source.relocation_concept(), source.relocation_invoke(),
+                     source.relocation_source());
+
+    REQUIRE(relocated() == 42);
+}
+
+/**************************************************************************************************/
+
+TEST_CASE("task relocation storage contract matches live task storage") {
+    task<void() noexcept> source{[]() noexcept {}};
+
+    REQUIRE(reinterpret_cast<std::uintptr_t>(source.relocation_source()) %
+                stlab_v2_task_storage_alignment ==
+            0);
+    REQUIRE(stlab_v2_task_storage_size >= sizeof(void*));
 }
 
 /**************************************************************************************************/

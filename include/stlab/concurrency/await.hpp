@@ -34,9 +34,7 @@
 #include <stlab/concurrency/ready_future.hpp>
 #include <stlab/memory.hpp>
 
-#if STLAB_TASK_SYSTEM(PORTABLE)
 #include <stlab/concurrency/default_executor.hpp>
-#endif
 
 /**************************************************************************************************/
 
@@ -55,9 +53,7 @@ STLAB_VERSION_NAMESPACE_BEGIN()
 /// (up to the limit) before calling `f`.
 template <class F>
 auto invoke_waiting(F&& f) {
-#if STLAB_TASK_SYSTEM(PORTABLE)
-    if (!detail::pts().wake()) detail::pts().add_thread();
-#endif
+    stlab_v2_notify_default_executor_before_waiting();
 
     return std::forward<F>(f)();
 }

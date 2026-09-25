@@ -3,6 +3,16 @@ include(stlab/development)
 # test dependencies: doctest is fetched in root CMakeLists when BUILD_TESTING is ON
 # Sanitizer options from development.cmake apply to test targets; stlab target gets them in src/CMakeLists.txt.
 
+function(stlab_copy_runtime_dlls target_name)
+  if(WIN32)
+    add_custom_command(
+      TARGET ${target_name}
+      POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy -t $<TARGET_FILE_DIR:${target_name}> $<TARGET_RUNTIME_DLLS:${target_name}>
+      COMMAND_EXPAND_LISTS)
+  endif()
+endfunction()
+
 add_executable(stlab.test.channel
   channel_functor_tests.cpp
   channel_merge_round_robin_tests.cpp
@@ -55,6 +65,34 @@ add_test(
   NAME stlab.test.executor
   COMMAND stlab.test.executor
 )
+
+if(WIN32 AND STLAB_CORE_SHARED)
+  add_executable(stlab.test.core_shared_smoke
+    core_shared_smoke_test.cpp
+    core_shared_smoke_main.cpp)
+
+  target_compile_definitions(stlab.test.core_shared_smoke PRIVATE STLAB_UNIT_TEST)
+  target_link_libraries(stlab.test.core_shared_smoke PUBLIC doctest::doctest stlab-core)
+
+  add_test(
+    NAME stlab.test.core_shared_smoke
+    COMMAND stlab.test.core_shared_smoke
+  )
+endif()
+
+if(WIN32 AND STLAB_CORE_SHARED AND STLAB_TASK_SYSTEM STREQUAL "portable")
+  add_executable(stlab.test.portable_shared_smoke
+    portable_shared_smoke_test.cpp
+    main.cpp)
+
+  target_compile_definitions(stlab.test.portable_shared_smoke PRIVATE STLAB_UNIT_TEST)
+  target_link_libraries(stlab.test.portable_shared_smoke PUBLIC stlab::testing)
+
+  add_test(
+    NAME stlab.test.portable_shared_smoke
+    COMMAND stlab.test.portable_shared_smoke
+  )
+endif()
 
 ################################################################################
 
@@ -166,6 +204,20 @@ add_test(
 
 ################################################################################
 
+add_executable(stlab.test.task_abi_mismatch EXCLUDE_FROM_ALL
+  task_abi_mismatch_test.cpp)
+
+target_link_libraries(stlab.test.task_abi_mismatch PRIVATE stlab-core)
+
+add_test(
+  NAME stlab.test.task_abi_mismatch_link
+  COMMAND ${CMAKE_COMMAND}
+    -Dbuild_dir=${PROJECT_BINARY_DIR}
+    -Dconfig=$<CONFIG>
+    -P ${CMAKE_CURRENT_SOURCE_DIR}/expect_task_abi_mismatch.cmake)
+
+################################################################################
+
 add_executable(stlab.test.tuple
   tuple_test.cpp
   main.cpp)
@@ -258,4 +310,32 @@ if(nProcessors)
     stlab.test.task
     stlab.test.tuple
     PROPERTIES PROCESSORS ${nProcessors})
+endif()
+
+foreach(stlab_test_target IN ITEMS
+  stlab.test.channel
+  stlab.test.executor
+  stlab.test.future
+  stlab.test.serial_queue
+  stlab.test.system_timer
+  stlab.test.tuple_algorithm
+  stlab.test.cow
+  stlab.test.task
+  stlab.test.tuple
+  stlab.test.traits
+  stlab.test.forest
+  stlab.test.utility)
+  stlab_copy_runtime_dlls(${stlab_test_target})
+endforeach()
+
+if(TARGET stlab.test.task_abi_mismatch)
+  stlab_copy_runtime_dlls(stlab.test.task_abi_mismatch)
+endif()
+
+if(TARGET stlab.test.core_shared_smoke)
+  stlab_copy_runtime_dlls(stlab.test.core_shared_smoke)
+endif()
+
+if(TARGET stlab.test.portable_shared_smoke)
+  stlab_copy_runtime_dlls(stlab.test.portable_shared_smoke)
 endif()
