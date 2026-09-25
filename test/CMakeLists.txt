@@ -204,6 +204,20 @@ add_test(
 
 ################################################################################
 
+add_executable(stlab.test.task_abi_mismatch EXCLUDE_FROM_ALL
+  task_abi_mismatch_test.cpp)
+
+target_link_libraries(stlab.test.task_abi_mismatch PRIVATE stlab-core)
+
+add_test(
+  NAME stlab.test.task_abi_mismatch_link
+  COMMAND ${CMAKE_COMMAND}
+    -Dbuild_dir=${PROJECT_BINARY_DIR}
+    -Dconfig=$<CONFIG>
+    -P ${CMAKE_CURRENT_SOURCE_DIR}/expect_task_abi_mismatch.cmake)
+
+################################################################################
+
 add_executable(stlab.test.tuple
   tuple_test.cpp
   main.cpp)
@@ -313,6 +327,10 @@ foreach(stlab_test_target IN ITEMS
   stlab.test.utility)
   stlab_copy_runtime_dlls(${stlab_test_target})
 endforeach()
+
+if(TARGET stlab.test.task_abi_mismatch)
+  stlab_copy_runtime_dlls(stlab.test.task_abi_mismatch)
+endif()
 
 if(TARGET stlab.test.core_shared_smoke)
   stlab_copy_runtime_dlls(stlab.test.core_shared_smoke)
