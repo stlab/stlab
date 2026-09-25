@@ -260,6 +260,25 @@ void submit_and_schedule(executor_priority priority, task_relocation r, Schedule
 
 namespace {
 
+/// Maps an executor priority to its libdispatch queue priority.
+constexpr auto platform_priority(executor_priority priority) {
+    switch (priority) {
+        case executor_priority::high:
+            return DISPATCH_QUEUE_PRIORITY_HIGH;
+        case executor_priority::medium:
+            return DISPATCH_QUEUE_PRIORITY_DEFAULT;
+        case executor_priority::low:
+            return DISPATCH_QUEUE_PRIORITY_LOW;
+    }
+
+    assert(false && "Unknown executor priority.");
+    return DISPATCH_QUEUE_PRIORITY_DEFAULT;
+}
+
+static_assert(platform_priority(executor_priority::high) == DISPATCH_QUEUE_PRIORITY_HIGH);
+static_assert(platform_priority(executor_priority::medium) == DISPATCH_QUEUE_PRIORITY_DEFAULT);
+static_assert(platform_priority(executor_priority::low) == DISPATCH_QUEUE_PRIORITY_LOW);
+
 /// Schedules a platform wake-up for a priority queue.
 template <executor_priority Priority>
 void schedule_dispatch_wake(std::size_t hint);
