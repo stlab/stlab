@@ -15,6 +15,7 @@
 #endif
 
 #if STLAB_TASK_SYSTEM(PORTABLE)
+#include "detail/waiter_state.hpp"
 #include <condition_variable>
 #include <memory>
 #include <stlab/concurrency/set_current_thread_name.hpp>
@@ -523,15 +524,14 @@ public:
 class waiter {
     std::mutex _mutex;
     std::condition_variable _ready;
-    bool _waiting{false};
-    bool _done{false};
+    waiter_state _state;
 
 public:
     /// Signals this worker to terminate.
     void done() {
         {
             std::unique_lock<std::mutex> lock{_mutex};
-            _done = true;
+            _state.done();
         }
         _ready.notify_one();
     }
@@ -542,8 +542,7 @@ public:
     auto wake() -> bool {
         {
             std::unique_lock<std::mutex> lock{_mutex};
-            if (!_waiting) return false;
-            _waiting = false;
+            if (!_state.wake()) return false;
         }
         _ready.notify_one();
         return true;
@@ -554,11 +553,10 @@ public:
     /// - Postcondition: returns `true` when shutdown was requested.
     auto wait() -> bool {
         std::unique_lock<std::mutex> lock{_mutex};
-        _waiting = true;
-        while (_waiting && !_done)
+        if (!_state.begin_wait()) return _state.is_done();
+        while (_state.waiting() && !_state.is_done())
             _ready.wait(lock);
-        _waiting = false;
-        return _done;
+        return _state.is_done();
     }
 };
 

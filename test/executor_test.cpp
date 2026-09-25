@@ -11,6 +11,8 @@
 #include <stlab/concurrency/task.hpp>
 #include <stlab/config.hpp>
 
+#include "../src/concurrency/detail/waiter_state.hpp"
+
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
@@ -27,9 +29,21 @@ using namespace std;
 namespace {
 void rest() { std::this_thread::sleep_for(std::chrono::milliseconds(1)); }
 
-/// Returns the linker guard for the current task relocation storage ABI.
+/// Returns the address of the linker guard for the current task relocation storage ABI.
+///
+/// - Postcondition: the returned pointer refers to the current storage-ABI guard symbol.
 auto current_task_abi_guard() noexcept -> const unsigned char* {
     return &stlab::detail::current_task_storage_abi_guard::value;
+}
+
+TEST_CASE("portable waiter retains a wake requested before waiting") {
+    stlab::detail::waiter_state state;
+
+    REQUIRE_FALSE(state.wake());
+    REQUIRE_FALSE(state.begin_wait());
+
+    CHECK(state.begin_wait());
+    CHECK(state.wake());
 }
 
 struct counted_task_context {
@@ -49,6 +63,9 @@ struct counted_task_context {
     }
 };
 
+/// Submits `count` tasks and waits until each task has executed exactly once.
+///
+/// - Complexity: O(`count`) submissions and checks.
 template <typename Submit>
 void wait_for_all_submissions(Submit&& submit, std::size_t count) {
     std::vector<std::atomic<int>> executions(count);
