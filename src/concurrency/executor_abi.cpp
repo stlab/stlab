@@ -8,6 +8,7 @@
 
 #include <stlab/concurrency/default_executor.hpp>
 #include <stlab/concurrency/task.hpp>
+#include <stlab/config.hpp>
 
 #if STLAB_TASK_SYSTEM(LIBDISPATCH)
 #include <stlab/concurrency/detail/libdispatch_executor_group.hpp>
@@ -34,7 +35,7 @@
 #include <vector>
 
 #if STLAB_TASK_SYSTEM(WINDOWS)
-#include <Windows.h>
+#include <Windows.h> // NOLINT(misc-include-cleaner)
 #include <new>
 #endif
 
@@ -222,6 +223,7 @@ auto executor_queues() -> shared_executor_queues& {
 /// Encodes a shard hint for transport through a platform callback context.
 auto pack_hint(std::size_t hint) -> void* {
     assert(hint <= static_cast<std::size_t>(UINTPTR_MAX));
+    // NOLINTNEXTLINE(performance-no-int-to-ptr)
     return reinterpret_cast<void*>(static_cast<std::uintptr_t>(hint));
 }
 
@@ -323,6 +325,8 @@ void submit_executor_task(executor_priority priority, task_relocation r) {
 
 #elif STLAB_TASK_SYSTEM(WINDOWS)
 
+// Windows thread-pool declarations are provided through the Windows.h umbrella header.
+// NOLINTBEGIN(misc-include-cleaner)
 namespace {
 
 /// Maps an executor priority to its Windows thread-pool callback priority.
@@ -449,6 +453,7 @@ void submit_executor_task(executor_priority priority, task_relocation r) {
             break;
     }
 }
+// NOLINTEND(misc-include-cleaner)
 
 #elif STLAB_TASK_SYSTEM(PORTABLE)
 

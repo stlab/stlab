@@ -8,6 +8,8 @@
 #include <stlab/concurrency/await.hpp>
 #include <stlab/concurrency/default_executor.hpp>
 #include <stlab/concurrency/serial_queue.hpp>
+#include <stlab/concurrency/task.hpp>
+#include <stlab/config.hpp>
 
 #include <atomic>
 #include <chrono>
@@ -36,7 +38,7 @@ struct counted_task_context {
         self._count->fetch_add(1, std::memory_order_relaxed);
 
         if (self._remaining->fetch_sub(1, std::memory_order_acq_rel) == 1) {
-            std::lock_guard<std::mutex> lock{*self._mutex};
+            std::scoped_lock lock{*self._mutex};
             self._ready->notify_one();
         }
     }
@@ -265,12 +267,20 @@ TEST_CASE("invoke_waiting_on_portable_pool_completes_nested_submissions") {
     std::atomic_bool timed_out{false};
 
     for (std::size_t outer = 0; outer < outer_task_count; ++outer) {
-        default_executor([&]() noexcept {
+        auto completion =
+            std::shared_ptr<void>{nullptr, [&](void*) noexcept {
+                                      std::scoped_lock lock{mutex};
+                                      completed.fetch_add(1, std::memory_order_acq_rel);
+                                      ready.notify_all();
+                                  }};
+
+        default_executor([&, completion = std::move(completion)]() noexcept {
+            (void)completion;
             for (std::size_t iteration = 0; iteration < iterations_per_task; ++iteration) {
                 auto inner_done = std::make_shared<std::atomic_bool>(false);
                 default_executor([&, inner_done]() noexcept {
+                    std::scoped_lock lock{mutex};
                     inner_done->store(true, std::memory_order_release);
-                    std::lock_guard<std::mutex> lock{mutex};
                     ready.notify_all();
                 });
 
@@ -284,10 +294,6 @@ TEST_CASE("invoke_waiting_on_portable_pool_completes_nested_submissions") {
                     break;
                 }
             }
-
-            completed.fetch_add(1, std::memory_order_acq_rel);
-            std::lock_guard<std::mutex> lock{mutex};
-            ready.notify_all();
         });
     }
 
