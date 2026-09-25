@@ -52,6 +52,84 @@ STLAB_VERSION_NAMESPACE_BEGIN()
 
 /**************************************************************************************************/
 
+/// Versioned operation table used to relocate a task target across the shared executor ABI.
+struct stlab_v2_task_concept {
+    using dtor_t = void (*)(void*) noexcept;
+    using move_ctor_t = void (*)(void*, void*) noexcept;
+    using target_type_t = const std::type_info& (*)() noexcept;
+    using pointer_t = void* (*)(void*) noexcept;
+    using const_pointer_t = const void* (*)(const void*) noexcept;
+
+    dtor_t dtor;
+    move_ctor_t move_ctor;
+    target_type_t target_type;
+    pointer_t pointer;
+    const_pointer_t const_pointer;
+};
+
+/// Number of bytes reserved for a v2 task's relocatable inline model.
+inline constexpr std::size_t stlab_v2_task_storage_size =
+    std::max(alignof(std::max_align_t) * 2, sizeof(void*) * 8) -
+    std::max(alignof(std::max_align_t), sizeof(void*) * 2);
+
+/// Alignment required by a v2 task's relocatable inline model.
+inline constexpr std::size_t stlab_v2_task_storage_alignment = alignof(std::max_align_t);
+
+namespace detail {
+
+/// Rounds `offset` up to the next address satisfying `alignment`.
+constexpr auto stlab_v2_align_offset(std::size_t offset, std::size_t alignment) noexcept
+    -> std::size_t {
+    return (offset + alignment - 1) / alignment * alignment;
+}
+
+inline constexpr auto stlab_v2_task_concept_move_ctor_offset = stlab_v2_align_offset(
+    sizeof(stlab_v2_task_concept::dtor_t), alignof(stlab_v2_task_concept::move_ctor_t));
+inline constexpr auto stlab_v2_task_concept_target_type_offset = stlab_v2_align_offset(
+    stlab_v2_task_concept_move_ctor_offset + sizeof(stlab_v2_task_concept::move_ctor_t),
+    alignof(stlab_v2_task_concept::target_type_t));
+inline constexpr auto stlab_v2_task_concept_pointer_offset = stlab_v2_align_offset(
+    stlab_v2_task_concept_target_type_offset + sizeof(stlab_v2_task_concept::target_type_t),
+    alignof(stlab_v2_task_concept::pointer_t));
+inline constexpr auto stlab_v2_task_concept_const_pointer_offset = stlab_v2_align_offset(
+    stlab_v2_task_concept_pointer_offset + sizeof(stlab_v2_task_concept::pointer_t),
+    alignof(stlab_v2_task_concept::const_pointer_t));
+inline constexpr auto stlab_v2_task_concept_alignment = std::max(
+    {alignof(stlab_v2_task_concept::dtor_t), alignof(stlab_v2_task_concept::move_ctor_t),
+     alignof(stlab_v2_task_concept::target_type_t), alignof(stlab_v2_task_concept::pointer_t),
+     alignof(stlab_v2_task_concept::const_pointer_t)});
+
+} // namespace detail
+
+// An incompatible operation-table change requires a new versioned type instead of relaxing the v2
+// canaries below to accept a different layout.
+static_assert(std::is_standard_layout_v<stlab_v2_task_concept>);
+static_assert(alignof(stlab_v2_task_concept) == detail::stlab_v2_task_concept_alignment);
+static_assert(std::is_same_v<decltype(stlab_v2_task_concept::dtor), stlab_v2_task_concept::dtor_t>);
+static_assert(
+    std::is_same_v<decltype(stlab_v2_task_concept::move_ctor), stlab_v2_task_concept::move_ctor_t>);
+static_assert(std::is_same_v<decltype(stlab_v2_task_concept::target_type),
+                             stlab_v2_task_concept::target_type_t>);
+static_assert(
+    std::is_same_v<decltype(stlab_v2_task_concept::pointer), stlab_v2_task_concept::pointer_t>);
+static_assert(std::is_same_v<decltype(stlab_v2_task_concept::const_pointer),
+                             stlab_v2_task_concept::const_pointer_t>);
+static_assert(offsetof(stlab_v2_task_concept, dtor) == 0);
+static_assert(offsetof(stlab_v2_task_concept, move_ctor) ==
+              detail::stlab_v2_task_concept_move_ctor_offset);
+static_assert(offsetof(stlab_v2_task_concept, target_type) ==
+              detail::stlab_v2_task_concept_target_type_offset);
+static_assert(offsetof(stlab_v2_task_concept, pointer) ==
+              detail::stlab_v2_task_concept_pointer_offset);
+static_assert(offsetof(stlab_v2_task_concept, const_pointer) ==
+              detail::stlab_v2_task_concept_const_pointer_offset);
+static_assert(sizeof(stlab_v2_task_concept) ==
+              detail::stlab_v2_align_offset(detail::stlab_v2_task_concept_const_pointer_offset +
+                                                sizeof(stlab_v2_task_concept::const_pointer_t),
+                                            alignof(stlab_v2_task_concept)));
+
+/**************************************************************************************************/
+
 /// Type-erased, move-only callable with signature `R(Args...)` (or `noexcept` variant).
 ///
 /// @details
@@ -63,13 +141,7 @@ public:
     /// Stable vtable describing how to move-construct, destroy, and introspect a task's target,
     /// independent of the target's concrete type `F`. Used to relocate a task's target across an
     /// ABI boundary (see `relocate()`) without depending on `F` or re-boxing the target.
-    struct concept_t {
-        void (*dtor)(void*) noexcept;
-        void (*move_ctor)(void*, void*) noexcept;
-        const std::type_info& (*target_type)() noexcept;
-        void* (*pointer)(void*) noexcept;
-        const void* (*const_pointer)(const void*) noexcept;
-    };
+    using concept_t = stlab_v2_task_concept;
 
     /// Function used to invoke a task's target, valid for as long as the target is live.
     using invoke_t = R (*)(void*, Args...) noexcept(NoExcept);
@@ -213,13 +285,10 @@ private:
     weak-pointers (which is 4 pointers total), so we give things a little extra room.
     */
 
-    static constexpr size_t max_align = alignof(std::max_align_t);
-    static constexpr size_t small_size =
-        std::max(max_align * 2, sizeof(void*) * 8) - std::max(max_align, sizeof(void*) * 2);
-
     const concept_t* _vtable_ptr = &_vtable;
     invoke_t _invoke = invoke;
-    alignas(std::max_align_t) std::array<unsigned char, small_size> _model;
+    alignas(stlab_v2_task_storage_alignment)
+        std::array<unsigned char, stlab_v2_task_storage_size> _model;
 
 public:
     using result_type = R;
@@ -263,9 +332,10 @@ public:
     task_(F&& f) {
         using small_t = model<std::decay_t<F>, true>;
         using large_t = model<std::decay_t<F>, false>;
-        using model_t = std::conditional_t<(sizeof(small_t) <= small_size) &&
-                                               (alignof(small_t) <= alignof(decltype(_model))),
-                                           small_t, large_t>;
+        using model_t =
+            std::conditional_t<(sizeof(small_t) <= stlab_v2_task_storage_size) &&
+                                   (alignof(small_t) <= stlab_v2_task_storage_alignment),
+                               small_t, large_t>;
 
         if (is_empty(f)) return;
 
