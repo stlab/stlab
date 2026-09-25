@@ -43,8 +43,7 @@ namespace stlab {
 STLAB_VERSION_NAMESPACE_BEGIN()
 namespace detail {
 
-template <>
-STLAB_CORE_API const unsigned char
+const unsigned char
     task_storage_abi_guard<stlab_v2_task_storage_size, stlab_v2_task_storage_alignment>::value = 0;
 
 /// Bundles the raw components needed to relocate a task's target across the executor ABI, without

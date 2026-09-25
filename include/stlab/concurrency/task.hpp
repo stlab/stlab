@@ -87,6 +87,12 @@ struct task_storage_abi_guard {
 using current_task_storage_abi_guard =
     task_storage_abi_guard<stlab_v2_task_storage_size, stlab_v2_task_storage_alignment>;
 
+/// Declares the current ABI guard specialization before any inline wrapper references its member.
+template <>
+struct task_storage_abi_guard<stlab_v2_task_storage_size, stlab_v2_task_storage_alignment> {
+    STLAB_CORE_API static const unsigned char value;
+};
+
 /// Rounds `offset` up to the next address satisfying `alignment`.
 constexpr auto stlab_v2_align_offset(std::size_t offset, std::size_t alignment) noexcept
     -> std::size_t {
