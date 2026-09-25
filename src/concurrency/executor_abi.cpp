@@ -43,6 +43,10 @@ namespace stlab {
 STLAB_VERSION_NAMESPACE_BEGIN()
 namespace detail {
 
+template <>
+STLAB_CORE_API const unsigned char
+    task_storage_abi_guard<stlab_v2_task_storage_size, stlab_v2_task_storage_alignment>::value = 0;
+
 /// Bundles the raw components needed to relocate a task's target across the executor ABI, without
 /// constructing an intermediate `task<void() noexcept>`.
 struct task_relocation {
@@ -695,7 +699,8 @@ extern "C" void stlab_v2_notify_default_executor_before_waiting() noexcept {
 }
 
 /// Submits one task to the shared default-priority executor.
-extern "C" void stlab_v2_default_executor_submit(const stlab_v2_task_concept_t* vtable,
+extern "C" void stlab_v2_default_executor_submit(const unsigned char* /*task_abi_guard*/,
+                                                 const stlab_v2_task_concept* vtable,
                                                  stlab_v2_task_proc invoke,
                                                  void* source) noexcept {
     assert(vtable != nullptr && invoke != nullptr && "Task vtable/invoke must not be null.");
@@ -705,7 +710,8 @@ extern "C" void stlab_v2_default_executor_submit(const stlab_v2_task_concept_t* 
 }
 
 /// Submits one task to the shared high-priority executor.
-extern "C" void stlab_v2_high_executor_submit(const stlab_v2_task_concept_t* vtable,
+extern "C" void stlab_v2_high_executor_submit(const unsigned char* /*task_abi_guard*/,
+                                              const stlab_v2_task_concept* vtable,
                                               stlab_v2_task_proc invoke,
                                               void* source) noexcept {
     assert(vtable != nullptr && invoke != nullptr && "Task vtable/invoke must not be null.");
@@ -715,7 +721,8 @@ extern "C" void stlab_v2_high_executor_submit(const stlab_v2_task_concept_t* vta
 }
 
 /// Submits one task to the shared low-priority executor.
-extern "C" void stlab_v2_low_executor_submit(const stlab_v2_task_concept_t* vtable,
+extern "C" void stlab_v2_low_executor_submit(const unsigned char* /*task_abi_guard*/,
+                                             const stlab_v2_task_concept* vtable,
                                              stlab_v2_task_proc invoke,
                                              void* source) noexcept {
     assert(vtable != nullptr && invoke != nullptr && "Task vtable/invoke must not be null.");

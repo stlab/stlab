@@ -27,6 +27,11 @@ using namespace std;
 namespace {
 void rest() { std::this_thread::sleep_for(std::chrono::milliseconds(1)); }
 
+/// Returns the linker guard for the current task relocation storage ABI.
+auto current_task_abi_guard() noexcept -> const unsigned char* {
+    return &stlab::detail::current_task_storage_abi_guard::value;
+}
+
 struct counted_task_context {
     std::atomic<int>* _count{nullptr};
     std::atomic<int>* _remaining{nullptr};
@@ -184,13 +189,14 @@ TEST_CASE("abi_executor_submit_executes_each_task_exactly_once_across_priorities
            void* source, std::size_t index) {
             switch (index % 3) {
                 case 0:
-                    stlab_v2_high_executor_submit(vtable, invoke, source);
+                    stlab_v2_high_executor_submit(current_task_abi_guard(), vtable, invoke, source);
                     break;
                 case 1:
-                    stlab_v2_default_executor_submit(vtable, invoke, source);
+                    stlab_v2_default_executor_submit(current_task_abi_guard(), vtable, invoke,
+                                                     source);
                     break;
                 case 2:
-                    stlab_v2_low_executor_submit(vtable, invoke, source);
+                    stlab_v2_low_executor_submit(current_task_abi_guard(), vtable, invoke, source);
                     break;
             }
         },
@@ -227,15 +233,21 @@ TEST_CASE("abi_executor_submit_drains_concurrent_contention_without_dropping_tas
                     [context]() noexcept { counted_task_context::run(context); }};
                 switch ((submitter + offset) % 3) {
                     case 0:
-                        stlab_v2_high_executor_submit(t.relocation_concept(), t.relocation_invoke(),
+                        stlab_v2_high_executor_submit(current_task_abi_guard(),
+                                                      t.relocation_concept(),
+                                                      t.relocation_invoke(),
                                                       t.relocation_source());
                         break;
                     case 1:
-                        stlab_v2_default_executor_submit(
-                            t.relocation_concept(), t.relocation_invoke(), t.relocation_source());
+                        stlab_v2_default_executor_submit(current_task_abi_guard(),
+                                                         t.relocation_concept(),
+                                                         t.relocation_invoke(),
+                                                         t.relocation_source());
                         break;
                     case 2:
-                        stlab_v2_low_executor_submit(t.relocation_concept(), t.relocation_invoke(),
+                        stlab_v2_low_executor_submit(current_task_abi_guard(),
+                                                     t.relocation_concept(),
+                                                     t.relocation_invoke(),
                                                      t.relocation_source());
                         break;
                 }

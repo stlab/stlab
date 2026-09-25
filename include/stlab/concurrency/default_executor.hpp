@@ -48,39 +48,39 @@ inline namespace v2 {
 /// - Precondition: `task` does not throw.
 using stlab_v2_task_proc = void (*)(void*) noexcept;
 
-/// Vtable describing how to relocate, invoke, and destroy a task's target, shared across the ABI
-/// so submission does not depend on the target's concrete type.
-///
-/// - Note: identical in layout to `task<void() noexcept>::concept_t`.
-using stlab_v2_task_concept_t = task<void() noexcept>::concept_t;
-
 /// Submits one task to the shared default-priority executor.
 ///
+/// - Precondition: `task_abi_guard` points to `detail::current_task_storage_abi_guard::value`.
 /// - Precondition: `vtable` and `invoke` are not `nullptr`.
 /// - Precondition: `source` is the `relocation_source()` of a live `task<void() noexcept>` sharing
 ///   `vtable`/`invoke`, valid for the duration of this call.
 /// - Postcondition: exactly one invocation of the relocated target is scheduled.
-extern "C" void stlab_v2_default_executor_submit(const stlab_v2_task_concept_t* vtable,
+extern "C" void stlab_v2_default_executor_submit(const unsigned char* task_abi_guard,
+                                                 const stlab_v2_task_concept* vtable,
                                                  stlab_v2_task_proc invoke,
                                                  void* source) noexcept;
 
 /// Submits one task to the shared high-priority executor.
 ///
+/// - Precondition: `task_abi_guard` points to `detail::current_task_storage_abi_guard::value`.
 /// - Precondition: `vtable` and `invoke` are not `nullptr`.
 /// - Precondition: `source` is the `relocation_source()` of a live `task<void() noexcept>` sharing
 ///   `vtable`/`invoke`, valid for the duration of this call.
 /// - Postcondition: exactly one invocation of the relocated target is scheduled.
-extern "C" void stlab_v2_high_executor_submit(const stlab_v2_task_concept_t* vtable,
+extern "C" void stlab_v2_high_executor_submit(const unsigned char* task_abi_guard,
+                                              const stlab_v2_task_concept* vtable,
                                               stlab_v2_task_proc invoke,
                                               void* source) noexcept;
 
 /// Submits one task to the shared low-priority executor.
 ///
+/// - Precondition: `task_abi_guard` points to `detail::current_task_storage_abi_guard::value`.
 /// - Precondition: `vtable` and `invoke` are not `nullptr`.
 /// - Precondition: `source` is the `relocation_source()` of a live `task<void() noexcept>` sharing
 ///   `vtable`/`invoke`, valid for the duration of this call.
 /// - Postcondition: exactly one invocation of the relocated target is scheduled.
-extern "C" void stlab_v2_low_executor_submit(const stlab_v2_task_concept_t* vtable,
+extern "C" void stlab_v2_low_executor_submit(const unsigned char* task_abi_guard,
+                                             const stlab_v2_task_concept* vtable,
                                              stlab_v2_task_proc invoke,
                                              void* source) noexcept;
 
@@ -116,18 +116,19 @@ enum class executor_priority : std::uint8_t { high, medium, low };
 /// - Postcondition: exactly one invocation of `t`'s target is scheduled; `t`'s target is left
 ///   moved-from (the caller must still let `t` be destroyed normally).
 inline void submit_executor_proc(executor_priority priority, task<void() noexcept>& t) {
+    const auto* task_abi_guard = &current_task_storage_abi_guard::value;
     const auto* vtable = t.relocation_concept();
     const auto invoke = t.relocation_invoke();
     auto* source = t.relocation_source();
     switch (priority) {
         case executor_priority::high:
-            stlab_v2_high_executor_submit(vtable, invoke, source);
+            stlab_v2_high_executor_submit(task_abi_guard, vtable, invoke, source);
             break;
         case executor_priority::medium:
-            stlab_v2_default_executor_submit(vtable, invoke, source);
+            stlab_v2_default_executor_submit(task_abi_guard, vtable, invoke, source);
             break;
         case executor_priority::low:
-            stlab_v2_low_executor_submit(vtable, invoke, source);
+            stlab_v2_low_executor_submit(task_abi_guard, vtable, invoke, source);
             break;
     }
 }

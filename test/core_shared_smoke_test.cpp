@@ -49,7 +49,8 @@ TEST_CASE("shared core exports execute work and preserve pre_exit") {
     smoke_context context{&done, &ready, &mutex};
 
     task<void() noexcept> t{[&context]() noexcept { smoke_context::run(&context); }};
-    stlab_v2_default_executor_submit(t.relocation_concept(), t.relocation_invoke(),
+    stlab_v2_default_executor_submit(&stlab::detail::current_task_storage_abi_guard::value,
+                                     t.relocation_concept(), t.relocation_invoke(),
                                      t.relocation_source());
 
     {

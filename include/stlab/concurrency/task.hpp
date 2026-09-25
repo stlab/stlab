@@ -77,6 +77,16 @@ inline constexpr std::size_t stlab_v2_task_storage_alignment = alignof(std::max_
 
 namespace detail {
 
+/// Linker guard keyed by the v2 task relocation storage contract.
+template <std::size_t Size, std::size_t Alignment>
+struct task_storage_abi_guard {
+    STLAB_CORE_API static const unsigned char value;
+};
+
+/// Guard specialization required by the current v2 task relocation storage contract.
+using current_task_storage_abi_guard =
+    task_storage_abi_guard<stlab_v2_task_storage_size, stlab_v2_task_storage_alignment>;
+
 /// Rounds `offset` up to the next address satisfying `alignment`.
 constexpr auto stlab_v2_align_offset(std::size_t offset, std::size_t alignment) noexcept
     -> std::size_t {
