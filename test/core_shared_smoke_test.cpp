@@ -38,13 +38,19 @@ void record_pre_exit_call() noexcept { pre_exit_calls.fetch_add(1, std::memory_o
 
 } // namespace
 
+TEST_CASE("shared core exports blocking notification") {
+    stlab_v2_notify_default_executor_before_waiting();
+}
+
 TEST_CASE("shared core exports execute work and preserve pre_exit") {
     std::atomic<bool> done{false};
     std::condition_variable ready;
     std::mutex mutex;
     smoke_context context{&done, &ready, &mutex};
 
-    stlab_v2_default_executor_submit(&smoke_context::run, &context);
+    task<void() noexcept> t{[&context]() noexcept { smoke_context::run(&context); }};
+    stlab_v2_default_executor_submit(t.relocation_concept(), t.relocation_invoke(),
+                                     t.relocation_source());
 
     {
         std::unique_lock<std::mutex> lock{mutex};

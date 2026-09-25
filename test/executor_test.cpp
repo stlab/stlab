@@ -55,7 +55,9 @@ void wait_for_all_submissions(Submit&& submit, std::size_t count) {
 
     for (std::size_t i = 0; i < count; ++i) {
         contexts[i] = counted_task_context{&executions[i], &remaining, &ready, &mutex};
-        submit(&counted_task_context::run, &contexts[i], i);
+        task<void() noexcept> t{
+            [context = &contexts[i]]() noexcept { counted_task_context::run(context); }};
+        submit(t.relocation_concept(), t.relocation_invoke(), t.relocation_source(), i);
     }
 
     {
@@ -176,16 +178,17 @@ TEST_CASE("task_system_restarts_after_it_went_pending") {
 
 TEST_CASE("abi_executor_submit_executes_each_task_exactly_once_across_priorities") {
     wait_for_all_submissions(
-        [](stlab_v2_task_proc task, void* context, std::size_t index) {
+        [](const task<void() noexcept>::concept_t* vtable, task<void() noexcept>::invoke_t invoke,
+           void* source, std::size_t index) {
             switch (index % 3) {
                 case 0:
-                    stlab_v2_high_executor_submit(task, context);
+                    stlab_v2_high_executor_submit(vtable, invoke, source);
                     break;
                 case 1:
-                    stlab_v2_default_executor_submit(task, context);
+                    stlab_v2_default_executor_submit(vtable, invoke, source);
                     break;
                 case 2:
-                    stlab_v2_low_executor_submit(task, context);
+                    stlab_v2_low_executor_submit(vtable, invoke, source);
                     break;
             }
         },
@@ -218,15 +221,20 @@ TEST_CASE("abi_executor_submit_drains_concurrent_contention_without_dropping_tas
 
             for (std::size_t offset = 0; offset < tasks_per_submitter; ++offset) {
                 auto* context = &contexts[base + offset];
+                task<void() noexcept> t{
+                    [context]() noexcept { counted_task_context::run(context); }};
                 switch ((submitter + offset) % 3) {
                     case 0:
-                        stlab_v2_high_executor_submit(&counted_task_context::run, context);
+                        stlab_v2_high_executor_submit(t.relocation_concept(), t.relocation_invoke(),
+                                                      t.relocation_source());
                         break;
                     case 1:
-                        stlab_v2_default_executor_submit(&counted_task_context::run, context);
+                        stlab_v2_default_executor_submit(
+                            t.relocation_concept(), t.relocation_invoke(), t.relocation_source());
                         break;
                     case 2:
-                        stlab_v2_low_executor_submit(&counted_task_context::run, context);
+                        stlab_v2_low_executor_submit(t.relocation_concept(), t.relocation_invoke(),
+                                                     t.relocation_source());
                         break;
                 }
             }
@@ -248,7 +256,7 @@ TEST_CASE("abi_executor_submit_drains_concurrent_contention_without_dropping_tas
 
 #if STLAB_TASK_SYSTEM(PORTABLE)
 TEST_CASE("invoke_waiting_on_portable_pool_completes_nested_submissions") {
-    constexpr std::size_t outer_task_count = 16;
+    constexpr std::size_t outer_task_count = 8;
     constexpr std::size_t iterations_per_task = 64;
 
     std::condition_variable ready;

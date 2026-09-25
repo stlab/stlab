@@ -16,6 +16,8 @@
 #include <doctest/doctest.h>
 
 TEST_CASE("portable_shared_core_public_api_submits_and_waits") {
+    stlab::stlab_v2_notify_default_executor_before_waiting();
+
     std::condition_variable ready;
     std::mutex mutex;
     bool done = false;

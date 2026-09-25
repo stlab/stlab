@@ -25,19 +25,12 @@
  *  pre-exit hook). `std::quick_exit()` is an alternative when it fits your program.
  */
 
+#include <stlab/concurrency/task.hpp>
 #include <stlab/config.hpp>
 
-#include <cassert>
 #include <cstdint>
-#include <memory>
 #include <type_traits>
 #include <utility>
-
-#include <stlab/concurrency/task.hpp>
-
-#if STLAB_TASK_SYSTEM(LIBDISPATCH)
-#include <dispatch/dispatch.h>
-#endif
 
 /**************************************************************************************************/
 
@@ -55,26 +48,47 @@ inline namespace v2 {
 /// - Precondition: `task` does not throw.
 using stlab_v2_task_proc = void (*)(void*) noexcept;
 
+/// Vtable describing how to relocate, invoke, and destroy a task's target, shared across the ABI
+/// so submission does not depend on the target's concrete type.
+///
+/// - Note: identical in layout to `task<void() noexcept>::concept_t`.
+using stlab_v2_task_concept_t = task<void() noexcept>::concept_t;
+
 /// Submits one task to the shared default-priority executor.
 ///
-/// - Precondition: `task` is not `nullptr`.
-/// - Precondition: `context` remains valid until `task(context)` is invoked.
-/// - Postcondition: exactly one invocation of `task(context)` is scheduled.
-extern "C" void stlab_v2_default_executor_submit(stlab_v2_task_proc task, void* context) noexcept;
+/// - Precondition: `vtable` and `invoke` are not `nullptr`.
+/// - Precondition: `source` is the `relocation_source()` of a live `task<void() noexcept>` sharing
+///   `vtable`/`invoke`, valid for the duration of this call.
+/// - Postcondition: exactly one invocation of the relocated target is scheduled.
+extern "C" void stlab_v2_default_executor_submit(const stlab_v2_task_concept_t* vtable,
+                                                 stlab_v2_task_proc invoke,
+                                                 void* source) noexcept;
 
 /// Submits one task to the shared high-priority executor.
 ///
-/// - Precondition: `task` is not `nullptr`.
-/// - Precondition: `context` remains valid until `task(context)` is invoked.
-/// - Postcondition: exactly one invocation of `task(context)` is scheduled.
-extern "C" void stlab_v2_high_executor_submit(stlab_v2_task_proc task, void* context) noexcept;
+/// - Precondition: `vtable` and `invoke` are not `nullptr`.
+/// - Precondition: `source` is the `relocation_source()` of a live `task<void() noexcept>` sharing
+///   `vtable`/`invoke`, valid for the duration of this call.
+/// - Postcondition: exactly one invocation of the relocated target is scheduled.
+extern "C" void stlab_v2_high_executor_submit(const stlab_v2_task_concept_t* vtable,
+                                              stlab_v2_task_proc invoke,
+                                              void* source) noexcept;
 
 /// Submits one task to the shared low-priority executor.
 ///
-/// - Precondition: `task` is not `nullptr`.
-/// - Precondition: `context` remains valid until `task(context)` is invoked.
-/// - Postcondition: exactly one invocation of `task(context)` is scheduled.
-extern "C" void stlab_v2_low_executor_submit(stlab_v2_task_proc task, void* context) noexcept;
+/// - Precondition: `vtable` and `invoke` are not `nullptr`.
+/// - Precondition: `source` is the `relocation_source()` of a live `task<void() noexcept>` sharing
+///   `vtable`/`invoke`, valid for the duration of this call.
+/// - Postcondition: exactly one invocation of the relocated target is scheduled.
+extern "C" void stlab_v2_low_executor_submit(const stlab_v2_task_concept_t* vtable,
+                                             stlab_v2_task_proc invoke,
+                                             void* source) noexcept;
+
+/// Notifies the shared default executor that the calling thread is about to wait.
+///
+/// The portable task system may add a worker to preserve forward progress. Task systems with
+/// operating-system-managed blocking compensation perform no action.
+extern "C" void stlab_v2_notify_default_executor_before_waiting() noexcept;
 
 /** @} */
 
@@ -96,131 +110,27 @@ namespace detail {
 
 enum class executor_priority : std::uint8_t { high, medium, low };
 
-/// Submits one task to the shared executor implementation for `priority`.
+/// Submits one task to the executor for `priority` by relocating its target across the ABI.
 ///
-/// - Precondition: `f` does not throw.
-/// - Postcondition: exactly one execution of `f` is scheduled.
-void submit_executor_task(executor_priority priority, task<void() noexcept>&& f);
-
-/// Submits one ABI task procedure to the executor for `priority`.
-///
-/// - Precondition: `task` is not `nullptr`.
-/// - Precondition: `context` remains valid until `task(context)` is invoked.
-/// - Postcondition: exactly one invocation of `task(context)` is scheduled.
-/// - Note: Windows shared-core portable builds reserve a null-task control submission internally
-///   for `invoke_waiting()`.
-inline void submit_executor_proc(executor_priority priority, stlab_v2_task_proc task, void* context) {
+/// - Precondition: `t` holds a live target (`t != nullptr`).
+/// - Postcondition: exactly one invocation of `t`'s target is scheduled; `t`'s target is left
+///   moved-from (the caller must still let `t` be destroyed normally).
+inline void submit_executor_proc(executor_priority priority, task<void() noexcept>& t) {
+    const auto* vtable = t.relocation_concept();
+    const auto invoke = t.relocation_invoke();
+    auto* source = t.relocation_source();
     switch (priority) {
         case executor_priority::high:
-            stlab_v2_high_executor_submit(task, context);
+            stlab_v2_high_executor_submit(vtable, invoke, source);
             break;
         case executor_priority::medium:
-            stlab_v2_default_executor_submit(task, context);
+            stlab_v2_default_executor_submit(vtable, invoke, source);
             break;
         case executor_priority::low:
-            stlab_v2_low_executor_submit(task, context);
+            stlab_v2_low_executor_submit(vtable, invoke, source);
             break;
     }
 }
-
-#if defined(_WIN32) && STLAB_CORE_SHARED()
-
-template <class F>
-struct executor_submission_context {
-    F _f;
-
-    static void run(void* context) noexcept {
-        std::unique_ptr<executor_submission_context> self(
-            static_cast<executor_submission_context*>(context));
-        self->_f();
-    }
-};
-
-#endif
-
-/**************************************************************************************************/
-
-#if STLAB_TASK_SYSTEM(LIBDISPATCH)
-
-constexpr auto platform_priority(executor_priority p) {
-    switch (p) {
-        case executor_priority::high:
-            return DISPATCH_QUEUE_PRIORITY_HIGH;
-        case executor_priority::medium:
-            return DISPATCH_QUEUE_PRIORITY_DEFAULT;
-        case executor_priority::low:
-            return DISPATCH_QUEUE_PRIORITY_LOW;
-        default:
-            assert(false && "Unknown value!");
-    }
-    return DISPATCH_QUEUE_PRIORITY_DEFAULT;
-}
-
-struct group_t {
-    dispatch_group_t _group = dispatch_group_create();
-    group_t() = default;
-    group_t(const group_t&) = delete;
-    group_t(group_t&& a) noexcept : _group(std::exchange(a._group, nullptr)) {}
-    auto operator=(const group_t&) -> group_t& = delete;
-    auto operator=(group_t&& a) noexcept -> group_t& {
-        _group = std::exchange(a._group, nullptr);
-        return *this;
-    }
-
-    ~group_t();
-};
-
-/// Returns the libdispatch group that tracks shared executor work.
-auto group() -> const group_t&;
-
-/**************************************************************************************************/
-
-#elif STLAB_TASK_SYSTEM(PORTABLE)
-
-class priority_task_system {
-    struct implementation;
-    std::unique_ptr<implementation> _impl;
-
-public:
-    priority_task_system();
-    priority_task_system(const priority_task_system&) = delete;
-    auto operator=(const priority_task_system&) -> priority_task_system& = delete;
-    priority_task_system(priority_task_system&&) = delete;
-    auto operator=(priority_task_system&&) -> priority_task_system& = delete;
-    ~priority_task_system();
-
-    /// Submits one task to the shared portable executor state.
-    ///
-    /// - Precondition: `f` does not throw.
-    /// - Postcondition: exactly one execution of `f` is scheduled.
-    void submit(executor_priority priority, task<void() noexcept>&& f);
-
-    /// Wakes one waiting worker if one is available.
-    auto wake() -> bool;
-
-    /// Adds one expansion worker when the pool may otherwise stall.
-    void add_thread();
-
-    /// Joins all worker threads after shared executor shutdown begins.
-    void join();
-};
-
-/// Returns the process-shared portable task system.
-auto pts() -> priority_task_system&;
-
-/// Ensures the portable task system has a worker available before a blocking wait.
-///
-/// On Windows shared-core builds this is routed through the exported executor ABI so consumers do
-/// not depend on non-exported C++ detail symbols from `stlab-core.dll`.
-inline void notify_waiting_executor_before_blocking() {
-#if defined(_WIN32) && STLAB_CORE_SHARED()
-    submit_executor_proc(executor_priority::medium, nullptr, reinterpret_cast<void*>(1));
-#else
-    if (!pts().wake()) pts().add_thread();
-#endif
-}
-
-#endif
 
 /**************************************************************************************************/
 
@@ -230,14 +140,8 @@ struct executor_type {
 
     template <class F>
     auto operator()(F&& f) const -> std::enable_if_t<std::is_nothrow_invocable_v<std::decay_t<F>>> {
-#if defined(_WIN32) && STLAB_CORE_SHARED()
-        using context_t = executor_submission_context<std::decay_t<F>>;
-        auto context = std::make_unique<context_t>(context_t{std::forward<F>(f)});
-        submit_executor_proc(P, &context_t::run, context.get());
-        (void)context.release();
-#else
-        submit_executor_task(P, task<void() noexcept>{std::forward<F>(f)});
-#endif
+        task<void() noexcept> t{std::forward<F>(f)};
+        submit_executor_proc(P, t);
     }
 };
 

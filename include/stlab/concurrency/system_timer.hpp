@@ -36,7 +36,7 @@
 
 #if STLAB_TASK_SYSTEM(LIBDISPATCH)
 #include <dispatch/dispatch.h>
-#include <stlab/concurrency/default_executor.hpp>
+#include <stlab/concurrency/detail/libdispatch_executor_group.hpp>
 #elif STLAB_TASK_SYSTEM(WINDOWS)
 #include <Windows.h>
 #include <memory>

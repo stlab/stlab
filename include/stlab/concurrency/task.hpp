@@ -59,6 +59,22 @@ STLAB_VERSION_NAMESPACE_BEGIN()
 /// `nullptr` when empty; use `target()` / `target_type()` for runtime type queries.
 template <bool NoExcept, class R, class... Args>
 class task_ {
+public:
+    /// Stable vtable describing how to move-construct, destroy, and introspect a task's target,
+    /// independent of the target's concrete type `F`. Used to relocate a task's target across an
+    /// ABI boundary (see `relocate()`) without depending on `F` or re-boxing the target.
+    struct concept_t {
+        void (*dtor)(void*) noexcept;
+        void (*move_ctor)(void*, void*) noexcept;
+        const std::type_info& (*target_type)() noexcept;
+        void* (*pointer)(void*) noexcept;
+        const void* (*const_pointer)(const void*) noexcept;
+    };
+
+    /// Function used to invoke a task's target, valid for as long as the target is live.
+    using invoke_t = R (*)(void*, Args...) noexcept(NoExcept);
+
+private:
     template <class F>
     constexpr static bool maybe_empty =
         std::is_pointer_v<std::decay_t<F>> || std::is_member_pointer_v<std::decay_t<F>> ||
@@ -73,16 +89,6 @@ class task_ {
     constexpr static auto is_empty(const F&) -> std::enable_if_t<!maybe_empty<F>, bool> {
         return false;
     }
-
-    struct concept_t {
-        void (*dtor)(void*) noexcept;
-        void (*move_ctor)(void*, void*) noexcept;
-        const std::type_info& (*target_type)() noexcept;
-        void* (*pointer)(void*) noexcept;
-        const void* (*const_pointer)(const void*) noexcept;
-    };
-
-    using invoke_t = R (*)(void*, Args...) noexcept(NoExcept);
 
     template <class F, bool Small>
     struct model;
@@ -217,6 +223,32 @@ class task_ {
 
 public:
     using result_type = R;
+
+    /// Returns the vtable needed to relocate, invoke, or destroy this task's target without
+    /// depending on its concrete type.
+    [[nodiscard]] auto relocation_concept() const noexcept -> const concept_t* {
+        return _vtable_ptr;
+    }
+
+    /// Returns the function used to invoke this task's target.
+    [[nodiscard]] auto relocation_invoke() const noexcept -> invoke_t { return _invoke; }
+
+    /// Returns the address of this task's inline model storage.
+    ///
+    /// - Precondition: valid only until `*this` is destroyed, reassigned, or moved from.
+    [[nodiscard]] auto relocation_source() noexcept -> void* { return &_model; }
+
+    /// Constructs a task by relocating the target described by (`vtable_ptr`, `invoke_fn`) out of
+    /// `source`, without depending on the target's concrete type.
+    ///
+    /// - Precondition: `source` is the `relocation_source()` of a live task sharing the same
+    ///   `vtable_ptr`/`invoke_fn`.
+    /// - Postcondition: the target at `source` is left moved-from; the source task must still be
+    ///   destroyed normally (it is not emptied by this call).
+    task_(const concept_t* vtable_ptr, invoke_t invoke_fn, void* source) noexcept :
+        _vtable_ptr(vtable_ptr), _invoke(invoke_fn) {
+        vtable_ptr->move_ctor(source, &_model);
+    }
 
     constexpr task_() noexcept = default;
     constexpr task_(std::nullptr_t) noexcept : task_() {}

@@ -336,6 +336,34 @@ TEST_CASE("task_equality_tests") {
 
 /**************************************************************************************************/
 
+TEST_CASE("task_relocation_moves_small_target") {
+    using task_t = task<void() noexcept>;
+
+    int calls = 0;
+    task_t source([&calls]() noexcept { ++calls; });
+
+    task_t relocated(source.relocation_concept(), source.relocation_invoke(),
+                     source.relocation_source());
+
+    relocated();
+    REQUIRE(calls == 1);
+}
+
+/**************************************************************************************************/
+
+TEST_CASE("task_relocation_moves_large_target") {
+    using task_t = task<int()>;
+
+    task_t source = large_model();
+
+    task_t relocated(source.relocation_concept(), source.relocation_invoke(),
+                     source.relocation_source());
+
+    REQUIRE(relocated() == 42);
+}
+
+/**************************************************************************************************/
+
 // These tests should fail to compile.
 #if 0
 TEST_CASE("task_fail") {

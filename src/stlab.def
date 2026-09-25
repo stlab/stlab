@@ -4,3 +4,4 @@ EXPORTS
     stlab_v2_default_executor_submit
     stlab_v2_high_executor_submit
     stlab_v2_low_executor_submit
+    stlab_v2_notify_default_executor_before_waiting
