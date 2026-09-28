@@ -87,7 +87,7 @@ jobs:
         if: ${{ startsWith(matrix.config.os, 'windows') }}
         run: |
           mkdir ..\build
-          cmake -S. -B../build -GNinja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_STANDARD=20
+          cmake -S. -B../build -GNinja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_STANDARD=20 ${{ matrix.config.cmake_options }}
 
       - name: Build // Unix
         if: ${{ startsWith(matrix.config.os, 'ubuntu') || startsWith(matrix.config.os, 'macos') }}

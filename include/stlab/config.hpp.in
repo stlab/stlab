@@ -31,6 +31,17 @@
 // Configuration generated from CMake
 
 #cmakedefine01 STLAB_STD_COROUTINES()
+#cmakedefine01 STLAB_CORE_SHARED()
+
+#if defined(_WIN32) && STLAB_CORE_SHARED()
+#if defined(STLAB_CORE_BUILD)
+#define STLAB_CORE_API __declspec(dllexport)
+#else
+#define STLAB_CORE_API __declspec(dllimport)
+#endif
+#else
+#define STLAB_CORE_API
+#endif
 
 #define STLAB_THREADS(X) (STLAB_THREADS_##X())
 #cmakedefine01 STLAB_THREADS_WIN32()
