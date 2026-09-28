@@ -124,7 +124,11 @@ endif()
 set(STLAB_TASK_SYSTEM ${STLAB_DEFAULT_TASK_SYSTEM} CACHE STRING "Task system to use (portable|libdispatch|windows).")
 
 stlab_detect_main_executor(STLAB_DEFAULT_MAIN_EXECUTOR)
-set(STLAB_MAIN_EXECUTOR ${STLAB_DEFAULT_MAIN_EXECUTOR} CACHE STRING "Main executor to use (qt5|qt6|libdispatch|emscripten|none).")
+set(STLAB_MAIN_EXECUTOR ${STLAB_DEFAULT_MAIN_EXECUTOR} CACHE STRING "Main executor to use (qt5|qt6|libdispatch|emscripten|portable|none).")
+set_property(CACHE STLAB_MAIN_EXECUTOR PROPERTY STRINGS qt5 qt6 libdispatch emscripten portable none)
+if(NOT STLAB_MAIN_EXECUTOR MATCHES "^(qt5|qt6|libdispatch|emscripten|portable|none)$")
+  message(FATAL_ERROR "STLAB_MAIN_EXECUTOR must be one of qt5|qt6|libdispatch|emscripten|portable|none (got \"${STLAB_MAIN_EXECUTOR}\").")
+endif()
 
 if((NOT STLAB_THREAD_SYSTEM STREQUAL "none") AND NOT Threads_FOUND)
   message(SEND_ERROR "STLAB_THREAD_SYSTEM is not \"none\", but a thread system was not found.")

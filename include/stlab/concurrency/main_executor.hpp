@@ -10,19 +10,29 @@
 #define STLAB_CONCURRENCY_MAIN_EXECUTOR_HPP
 
 /*! @file main_executor.hpp
- *  @brief Main-thread / UI-thread executor (Qt, libdispatch, Emscripten, etc.).
+ *  @brief Executor for the application's main queue.
  *
  *  @details
- *  Tasks submitted to `main_executor` run on the application's main loop (Qt event loop, libdispatch
- *  main queue, or Emscripten main loop when configured). Tasks are executed in submission order.
+ *  Tasks submitted to `main_executor` run in submission order on the main queue selected by
+ *  `STLAB_MAIN_EXECUTOR` when `stlab-core` is built: the libdispatch main queue, the Qt
+ *  application event loop, the Emscripten main runtime thread, or (opt-in) a portable
+ *  stlab-owned queue. `main_executor_run()` services the main queue on the calling thread and
+ *  never returns, like `dispatch_main()`; the program ends by calling `pre_exit()` and
+ *  `std::exit()` from a task.
  *
- *  Destroying `main_executor` does not destroy the underlying UI/main loop; submitted work still
- *  runs. A main executor is not implemented for Windows unless `STLAB_MAIN_EXECUTOR` selects Qt.
+ *  Windows has no process main queue (each UI thread owns its message queue), so no main executor
+ *  is provided there unless `STLAB_MAIN_EXECUTOR` selects Qt or `portable`.
  */
 
 #include <stlab/config.hpp>
 
-#if STLAB_MAIN_EXECUTOR(QT5) || STLAB_MAIN_EXECUTOR(QT6)
+#if STLAB_MAIN_EXECUTOR(PORTABLE)
+#include <stlab/concurrency/default_executor.hpp>
+#include <stlab/concurrency/task.hpp>
+
+#include <type_traits>
+#include <utility>
+#elif STLAB_MAIN_EXECUTOR(QT5) || STLAB_MAIN_EXECUTOR(QT6)
 #include <QtGlobal>
 #if (STLAB_MAIN_EXECUTOR(QT5) &&                                                                \
          (QT_VERSION < QT_VERSION_CHECK(5, 0, 0) || QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)) || \
@@ -42,6 +52,41 @@
 
 /**************************************************************************************************/
 
+#if STLAB_MAIN_EXECUTOR(PORTABLE)
+
+namespace stlab {
+inline namespace v2 {
+
+/** @addtogroup stlab_concurrency_executor_abi
+ *  @{
+ */
+
+/// Submits one task to the main queue.
+///
+/// - Precondition: `task_abi_guard` points to `detail::current_task_storage_abi_guard::value`.
+/// - Precondition: `vtable` and `invoke` are not `nullptr`.
+/// - Precondition: `source` is the `relocation_source()` of a live `task<void() noexcept>` sharing
+///   `vtable`/`invoke`, valid for the duration of this call.
+/// - Postcondition: exactly one invocation of the relocated target is scheduled on the main queue,
+///   after every task previously submitted from the calling thread.
+extern "C" void stlab_v2_main_executor_submit(const unsigned char* task_abi_guard,
+                                              const stlab_v2_task_concept* vtable,
+                                              stlab_v2_task_proc invoke,
+                                              void* source) noexcept;
+
+/// Services the main queue on the calling thread; never returns.
+///
+/// - Precondition: called at most once per process, from the thread the platform designates as
+///   main where it designates one.
+extern "C" [[noreturn]] void stlab_v2_main_executor_run() noexcept;
+
+/** @} */
+
+} // namespace v2
+} // namespace stlab
+
+#endif
+
 namespace stlab {
 STLAB_VERSION_NAMESPACE_BEGIN()
 
@@ -57,7 +102,26 @@ namespace detail {
 
 /**************************************************************************************************/
 
-#if STLAB_MAIN_EXECUTOR(QT5) || STLAB_MAIN_EXECUTOR(QT6)
+#if STLAB_MAIN_EXECUTOR(PORTABLE)
+
+/// Executor that submits `void() noexcept` tasks to the main queue through the shared core ABI.
+struct main_executor_type {
+    using result_type = void;
+
+    /// Schedules `f` to run on the main queue after every task previously submitted from the
+    /// calling thread.
+    template <class F>
+    auto operator()(F&& f) const -> std::enable_if_t<std::is_nothrow_invocable_v<std::decay_t<F>>> {
+        task<void() noexcept> t{std::forward<F>(f)};
+        stlab_v2_main_executor_submit(&current_task_storage_abi_guard::value,
+                                      t.relocation_concept(), t.relocation_invoke(),
+                                      t.relocation_source());
+    }
+};
+
+/**************************************************************************************************/
+
+#elif STLAB_MAIN_EXECUTOR(QT5) || STLAB_MAIN_EXECUTOR(QT6)
 
 class main_executor_type {
     using result_type = void;
@@ -179,12 +243,16 @@ struct main_executor_type {
 
 } // namespace detail
 
-/// Runs `void() noexcept` tasks on the process main thread (Qt, libdispatch, or Emscripten as configured).
-///
-/// @details
-/// Submitted tasks run in order on the main loop. The main loop itself outlives this executor
-/// object; pending tasks are not canceled by executor destruction.
+/// Runs `void() noexcept` tasks in submission order on the configured main queue.
 inline constexpr auto main_executor = detail::main_executor_type{};
+
+#if STLAB_MAIN_EXECUTOR(PORTABLE)
+/// Services the main queue on the calling thread; never returns.
+///
+/// - Precondition: called at most once per process, from the thread the platform designates as
+///   main where it designates one.
+[[noreturn]] inline void main_executor_run() noexcept { stlab_v2_main_executor_run(); }
+#endif
 
 /**************************************************************************************************/
 

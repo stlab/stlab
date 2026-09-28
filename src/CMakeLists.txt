@@ -1,5 +1,10 @@
 target_sources(stlab PRIVATE stlab.cpp)
 target_sources(stlab-core PRIVATE pre_exit.cpp concurrency/executor_abi.cpp)
+if(STLAB_MAIN_EXECUTOR STREQUAL "portable")
+  target_sources(stlab-core PRIVATE concurrency/main_executor_portable.cpp)
+else()
+  target_sources(stlab-core PRIVATE concurrency/main_executor_none.cpp)
+endif()
 target_include_directories(stlab-core PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include ${PROJECT_BINARY_DIR}/include)
 target_compile_definitions(stlab-core PRIVATE
   STLAB_CORE_BUILD

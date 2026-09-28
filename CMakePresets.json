@@ -66,6 +66,14 @@
             }
         },
         {
+            "name": "debug-portable-main",
+            "description": "Debug build with the portable main executor",
+            "inherits": "base-cpp20",
+            "cacheVariables": {
+                "STLAB_MAIN_EXECUTOR": "portable"
+            }
+        },
+        {
             "name": "debug-portable-sanitizer",
             "description": "Debug build with portable task system and TSan+UBSan",
             "inherits": "base-sanitizer",
@@ -132,7 +140,7 @@
                 "BUILD_TESTING": "OFF",
                 "BUILD_DOCS": "ON",
                 "STLAB_DOXYGEN_RELAXED_WARNINGS": "ON",
-                "STLAB_MAIN_EXECUTOR": "none",
+                "STLAB_MAIN_EXECUTOR": "portable",
                 "STLAB_NO_STD_COROUTINES": "ON",
                 "STLAB_TASK_SYSTEM": "portable",
                 "STLAB_THREAD_SYSTEM": "pthread",
@@ -214,6 +222,10 @@
             "configurePreset": "debug-portable"
         },
         {
+            "name": "debug-portable-main",
+            "configurePreset": "debug-portable-main"
+        },
+        {
             "name": "debug-portable-sanitizer",
             "configurePreset": "debug-portable-sanitizer"
         },
@@ -264,6 +276,11 @@
             "name": "debug-cpp20",
             "description": "Run tests with debug-cpp20 build",
             "configurePreset": "debug-cpp20"
+        },
+        {
+            "name": "debug-portable-main",
+            "description": "Run tests with the portable main executor",
+            "configurePreset": "debug-portable-main"
         },
         {
             "name": "debug-sanitizer-verbose",

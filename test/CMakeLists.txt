@@ -95,6 +95,30 @@ if(WIN32 AND STLAB_CORE_SHARED AND STLAB_TASK_SYSTEM STREQUAL "portable")
 endif()
 
 ################################################################################
+#
+# Main executor scenarios. `main_executor_run()` never returns, so each scenario is a standalone
+# executable that exits from a task. They link only against `stlab-core` to prove a consumer can
+# use the main executor through the exported C ABI alone.
+#
+set(stlab_main_executor_abi_backends portable)
+
+if(STLAB_MAIN_EXECUTOR IN_LIST stlab_main_executor_abi_backends)
+  set(stlab_main_executor_tests order concurrent)
+  if(STLAB_MAIN_EXECUTOR STREQUAL "portable")
+    list(APPEND stlab_main_executor_tests pre_exit)
+  endif()
+
+  foreach(scenario IN LISTS stlab_main_executor_tests)
+    set(target stlab.test.main_executor_${scenario})
+    add_executable(${target} main_executor_${scenario}_test.cpp main_executor_test_host.hpp)
+    target_link_libraries(${target} PRIVATE stlab-core)
+    add_test(NAME ${target} COMMAND ${target})
+    set_tests_properties(${target} PROPERTIES TIMEOUT 60)
+    stlab_copy_runtime_dlls(${target})
+  endforeach()
+endif()
+
+################################################################################
 
 add_executable(stlab.test.future
   future_recover_tests.cpp

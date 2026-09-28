@@ -70,6 +70,7 @@ endfunction()
 # | emscripten   | Emscripten's executor                      |
 # | qt5          | Qt's event framework (Qt5)                 |
 # | qt6          | Qt's event framework (Qt6)                 |
+# | portable     | stlab-owned queue serviced by main_executor_run() (opt-in) |
 # | none         | None                                       |
 function( stlab_detect_main_executor result_var )
   stlab_detect_task_system( task_system )
@@ -122,6 +123,8 @@ function( stlab_generate_config_file )
     set( STLAB_MAIN_EXECUTOR_QT5 TRUE )
   elseif (STLAB_MAIN_EXECUTOR STREQUAL "qt6")
     set( STLAB_MAIN_EXECUTOR_QT6 TRUE )
+  elseif (STLAB_MAIN_EXECUTOR STREQUAL "portable")
+    set( STLAB_MAIN_EXECUTOR_PORTABLE TRUE )
   elseif (STLAB_MAIN_EXECUTOR STREQUAL "none")
     set( STLAB_MAIN_EXECUTOR_NONE TRUE )
   endif()
