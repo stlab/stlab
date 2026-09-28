@@ -34,6 +34,7 @@ int main(int argc, char** argv) {
         order.reserve(task_count);
         for (int i = 0; i != task_count; ++i) {
             stlab::main_executor([i]() noexcept {
+                main_executor_test::require_run_started();
                 if (order.empty()) main_queue_thread = std::this_thread::get_id();
                 single_thread = single_thread && main_queue_thread == std::this_thread::get_id();
                 order.push_back(i);
@@ -41,6 +42,7 @@ int main(int argc, char** argv) {
         }
 
         stlab::main_executor([run_thread]() noexcept {
+            main_executor_test::require_run_started();
             bool in_order = order.size() == static_cast<std::size_t>(task_count);
             for (int i = 0; in_order && i != task_count; ++i)
                 in_order = order[i] == i;

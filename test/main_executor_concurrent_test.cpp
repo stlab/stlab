@@ -49,6 +49,7 @@ int main(int argc, char** argv) {
             submitters.emplace_back([t] {
                 for (int i = 0; i != tasks_per_thread; ++i) {
                     stlab::main_executor([t, i]() noexcept {
+                        main_executor_test::require_run_started();
                         ++runs[static_cast<std::size_t>(t * tasks_per_thread + i)];
                         per_thread_fifo = per_thread_fifo && last_seen[t] == i - 1;
                         last_seen[t] = i;

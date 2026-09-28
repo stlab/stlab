@@ -18,19 +18,20 @@ STLAB_VERSION_NAMESPACE_BEGIN()
 namespace detail {
 namespace {
 
-/// Returns the process-shared main queue, registering its pre-exit handler on first use.
+/// Returns the process-shared main queue.
 ///
 /// The queue is intentionally never destroyed so no main-queue task is destroyed during static
 /// destruction.
 auto main_tasks() -> main_task_queue& {
     static auto& queue = *new main_task_queue; // NOLINT(cppcoreguidelines-owning-memory)
-    static const bool registered = [] {
-        at_pre_exit([]() noexcept { main_tasks().close(); });
-        return true;
-    }();
-    (void)registered;
     return queue;
 }
+
+/// Registers the portable main queue's pre-exit handler during static initialization.
+[[maybe_unused]] const bool pre_exit_registered = [] {
+    at_pre_exit([]() noexcept { main_tasks().close(); });
+    return true;
+}();
 
 /// Set once the main queue starts being serviced.
 std::atomic<bool> running{false};

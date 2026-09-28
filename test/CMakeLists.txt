@@ -105,7 +105,7 @@ set(stlab_main_executor_abi_backends portable)
 if(STLAB_MAIN_EXECUTOR IN_LIST stlab_main_executor_abi_backends)
   set(stlab_main_executor_tests order concurrent)
   if(STLAB_MAIN_EXECUTOR STREQUAL "portable")
-    list(APPEND stlab_main_executor_tests pre_exit)
+    list(APPEND stlab_main_executor_tests pre_exit pre_exit_before_submit)
   endif()
 
   foreach(scenario IN LISTS stlab_main_executor_tests)

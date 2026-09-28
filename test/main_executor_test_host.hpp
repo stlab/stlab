@@ -11,6 +11,7 @@
 #include <stlab/config.hpp>
 #include <stlab/pre_exit.hpp>
 
+#include <atomic>
 #include <cstdio>
 #include <cstdlib>
 
@@ -20,6 +21,22 @@
 
 namespace main_executor_test {
 
+/// Returns the shared run-started marker.
+inline auto run_started_state() noexcept -> std::atomic<bool>& {
+    static std::atomic<bool> started{false};
+    return started;
+}
+
+/// Returns whether the host has started servicing the main queue.
+inline auto run_started() noexcept -> bool {
+    return run_started_state().load(std::memory_order_acquire);
+}
+
+/// Marks the main queue as started.
+inline void mark_run_started() noexcept {
+    run_started_state().store(true, std::memory_order_release);
+}
+
 /// Runs pre-exit handlers and terminates the process with a status reflecting `ok`.
 ///
 /// - Postcondition: never returns; prints `message` to `stderr` when `ok` is `false`.
@@ -27,6 +44,11 @@ namespace main_executor_test {
     if (!ok) std::fprintf(stderr, "FAILED: %s\n", message);
     stlab::pre_exit();
     std::exit(ok ? EXIT_SUCCESS : EXIT_FAILURE);
+}
+
+/// Fails the process if the main queue has not started.
+inline void require_run_started() {
+    if (!run_started()) finish(false, "task ran before main_executor_run() started");
 }
 
 /// Establishes the host application the backend requires, calls `start()`, then services the main
@@ -43,6 +65,7 @@ template <class F>
     (void)argv;
 #endif
     start();
+    mark_run_started();
     stlab::main_executor_run();
 }
 
