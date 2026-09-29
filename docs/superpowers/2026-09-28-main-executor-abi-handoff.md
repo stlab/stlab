@@ -43,8 +43,10 @@
 | Doxygen | `cmake --preset=docs && cmake --build --preset=docs`; generated HTML contains `stlab_v2_main_executor_submit`, `stlab_v2_main_executor_run`, `main_executor`, and `main_executor_run` | Passed; Doxygen found, `dot` missing but non-fatal | n/a |
 | Emscripten pthread | Task 4/5 WSL builds and tests | Passed: full pthread suite 15/15 | CI continues to cover WebAssembly |
 | Emscripten non-pthread | Task 5 WSL build of `stlab-core`, order, concurrent; runtime order test | Passed: order 1/1; concurrent build-only by design | CI non-pthread job runs order test |
-| Qt6 | Task 3/4 WSL Qt6 build/test | Passed: 15/15 | Linux Qt6 apt-based CI job remains authoritative |
-| libdispatch | Task 2 syntax/package checks with mocked libdispatch | Best-effort only locally | macOS CI must verify real libdispatch runtime behavior |
+| Qt6 | Task 3/4 WSL Qt6 build/test | Passed: 15/15 | Linux GCC Qt6 main executor CI job passed |
+| libdispatch | Task 2 syntax/package checks with mocked libdispatch | Best-effort only locally | macOS apple-clang, macOS TSan, and macOS TSan (portable) CI jobs passed |
+
+CI on `main` at `f491a1d` ([Build and Tests](https://github.com/stlab/stlab/actions/runs/36521549407)) passed all 15 jobs, including the new Linux GCC portable main executor, Linux GCC Qt6 main executor, Windows shared portable main executor, and Linux WebAssembly non-pthread main executor jobs.
 
 ## Deliberate deferrals
 
@@ -61,5 +63,4 @@ No GitHub issues were created; issue creation requires explicit user approval.
 
 ## Remaining tasks
 
-- CI-only verification of real libdispatch behavior on macOS.
-- Pending CI confirmation of the apt-installed qt6-base-dev workflow job (backend already verified locally in WSL).
+- Decide whether to file GitHub issues for the deferrals above. Verification is complete: macOS libdispatch and the apt-installed Qt6 job were confirmed by CI at `f491a1d`.
