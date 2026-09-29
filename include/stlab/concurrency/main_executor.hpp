@@ -26,31 +26,21 @@
 
 #include <stlab/config.hpp>
 
-#if STLAB_MAIN_EXECUTOR(PORTABLE) || STLAB_MAIN_EXECUTOR(LIBDISPATCH)
+#if STLAB_MAIN_EXECUTOR(PORTABLE) || STLAB_MAIN_EXECUTOR(LIBDISPATCH) || \
+    STLAB_MAIN_EXECUTOR(QT5) || STLAB_MAIN_EXECUTOR(QT6)
 #include <stlab/concurrency/default_executor.hpp>
 #include <stlab/concurrency/task.hpp>
 
 #include <type_traits>
 #include <utility>
-#elif STLAB_MAIN_EXECUTOR(QT5) || STLAB_MAIN_EXECUTOR(QT6)
-#include <QtGlobal>
-#if (STLAB_MAIN_EXECUTOR(QT5) &&                                                                \
-         (QT_VERSION < QT_VERSION_CHECK(5, 0, 0) || QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)) || \
-     STLAB_MAIN_EXECUTOR(QT6) &&                                                                \
-         (QT_VERSION < QT_VERSION_CHECK(6, 0, 0) || QT_VERSION >= QT_VERSION_CHECK(7, 0, 0)))
-#error "Mismatching Qt versions"
-#endif
-#include <QCoreApplication>
-#include <QEvent>
-#include <memory>
-#include <stlab/concurrency/task.hpp>
 #elif STLAB_MAIN_EXECUTOR(EMSCRIPTEN)
 #include <stlab/concurrency/default_executor.hpp>
 #endif
 
 /**************************************************************************************************/
 
-#if STLAB_MAIN_EXECUTOR(PORTABLE) || STLAB_MAIN_EXECUTOR(LIBDISPATCH)
+#if STLAB_MAIN_EXECUTOR(PORTABLE) || STLAB_MAIN_EXECUTOR(LIBDISPATCH) || \
+    STLAB_MAIN_EXECUTOR(QT5) || STLAB_MAIN_EXECUTOR(QT6)
 
 namespace stlab {
 inline namespace v2 {
@@ -100,7 +90,8 @@ namespace detail {
 
 /**************************************************************************************************/
 
-#if STLAB_MAIN_EXECUTOR(PORTABLE) || STLAB_MAIN_EXECUTOR(LIBDISPATCH)
+#if STLAB_MAIN_EXECUTOR(PORTABLE) || STLAB_MAIN_EXECUTOR(LIBDISPATCH) || \
+    STLAB_MAIN_EXECUTOR(QT5) || STLAB_MAIN_EXECUTOR(QT6)
 
 /// Executor that submits `void() noexcept` tasks to the main queue through the shared core ABI.
 struct main_executor_type {
@@ -114,55 +105,6 @@ struct main_executor_type {
         stlab_v2_main_executor_submit(&current_task_storage_abi_guard::value,
                                       t.relocation_concept(), t.relocation_invoke(),
                                       t.relocation_source());
-    }
-};
-
-/**************************************************************************************************/
-
-#elif STLAB_MAIN_EXECUTOR(QT5) || STLAB_MAIN_EXECUTOR(QT6)
-
-class main_executor_type {
-    using result_type = void;
-
-    struct event_receiver;
-
-    class executor_event : public QEvent {
-        stlab::task<void()> _f;
-        std::unique_ptr<event_receiver> _receiver;
-
-    public:
-        executor_event() : QEvent(QEvent::User), _receiver(new event_receiver()) {
-            _receiver->moveToThread(QCoreApplication::instance()->thread());
-        }
-
-        template <typename F>
-        void set_task(F&& f) {
-            _f = std::forward<F>(f);
-        }
-
-        void execute() { _f(); }
-
-        QObject* receiver() const { return _receiver.get(); }
-    };
-
-    struct event_receiver : public QObject {
-        bool event(QEvent* event) override {
-            auto myEvent = dynamic_cast<executor_event*>(event);
-            if (myEvent) {
-                myEvent->execute();
-                return true;
-            }
-            return false;
-        }
-    };
-
-public:
-    template <typename F>
-    auto operator()(F f) const -> std::enable_if_t<std::is_nothrow_invocable_v<F>> {
-        auto event = std::make_unique<executor_event>();
-        event->set_task(std::move(f));
-        auto receiver = event->receiver();
-        QCoreApplication::postEvent(receiver, event.release());
     }
 };
 
@@ -227,7 +169,8 @@ struct main_executor_type {
 /// Runs `void() noexcept` tasks in submission order on the configured main queue.
 inline constexpr auto main_executor = detail::main_executor_type{};
 
-#if STLAB_MAIN_EXECUTOR(PORTABLE) || STLAB_MAIN_EXECUTOR(LIBDISPATCH)
+#if STLAB_MAIN_EXECUTOR(PORTABLE) || STLAB_MAIN_EXECUTOR(LIBDISPATCH) || \
+    STLAB_MAIN_EXECUTOR(QT5) || STLAB_MAIN_EXECUTOR(QT6)
 /// Services the main queue on the calling thread; never returns.
 ///
 /// - Precondition: called at most once per process, from the thread the platform designates as

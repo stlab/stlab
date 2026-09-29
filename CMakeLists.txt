@@ -212,9 +212,9 @@ if(STLAB_MAIN_EXECUTOR STREQUAL "libdispatch")
   target_link_libraries(stlab PUBLIC $<BUILD_INTERFACE:libdispatch::libdispatch>)
   target_link_libraries(stlab-core PRIVATE libdispatch::libdispatch)
 elseif(STLAB_MAIN_EXECUTOR STREQUAL "qt5")
-  target_link_libraries(stlab PUBLIC Qt5::Core)
+  target_link_libraries(stlab-core PRIVATE Qt5::Core)
 elseif(STLAB_MAIN_EXECUTOR STREQUAL "qt6")
-  target_link_libraries(stlab PUBLIC Qt6::Core)
+  target_link_libraries(stlab-core PRIVATE Qt6::Core)
 endif()
 
 message(STATUS "stlab: Disable Coroutines: ${STLAB_NO_STD_COROUTINES}")
@@ -257,6 +257,22 @@ if(PROJECT_IS_TOP_LEVEL)
   function(stlab_patch_package_config_module_path)
     set(config_file "${CMAKE_CURRENT_BINARY_DIR}/stlabConfig.cmake")
     file(READ "${config_file}" config_contents)
+
+    if(STLAB_MAIN_EXECUTOR STREQUAL "qt5" AND
+        NOT config_contents MATCHES "find_dependency\\(Qt5( |\\))")
+      string(REPLACE
+        "# Find dependencies required by this package\n"
+        "# Find dependencies required by this package\nfind_dependency(Qt5 COMPONENTS Core)\n"
+        config_contents
+        "${config_contents}")
+    elseif(STLAB_MAIN_EXECUTOR STREQUAL "qt6" AND
+        NOT config_contents MATCHES "find_dependency\\(Qt6( |\\))")
+      string(REPLACE
+        "# Find dependencies required by this package\n"
+        "# Find dependencies required by this package\nfind_dependency(Qt6 COMPONENTS Core)\n"
+        config_contents
+        "${config_contents}")
+    endif()
 
     set(module_path_prelude [=[
 set(_stlab_saved_CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}")

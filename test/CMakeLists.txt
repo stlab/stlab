@@ -100,7 +100,7 @@ endif()
 # executable that exits from a task. They link only against `stlab-core` to prove a consumer can
 # use the main executor through the exported C ABI alone.
 #
-set(stlab_main_executor_abi_backends portable libdispatch)
+set(stlab_main_executor_abi_backends portable libdispatch qt5 qt6)
 
 if(STLAB_MAIN_EXECUTOR IN_LIST stlab_main_executor_abi_backends)
   set(stlab_main_executor_tests order concurrent)
@@ -112,6 +112,11 @@ if(STLAB_MAIN_EXECUTOR IN_LIST stlab_main_executor_abi_backends)
     set(target stlab.test.main_executor_${scenario})
     add_executable(${target} main_executor_${scenario}_test.cpp main_executor_test_host.hpp)
     target_link_libraries(${target} PRIVATE stlab-core)
+    if(STLAB_MAIN_EXECUTOR STREQUAL "qt5")
+      target_link_libraries(${target} PRIVATE Qt5::Core)
+    elseif(STLAB_MAIN_EXECUTOR STREQUAL "qt6")
+      target_link_libraries(${target} PRIVATE Qt6::Core)
+    endif()
     add_test(NAME ${target} COMMAND ${target})
     set_tests_properties(${target} PROPERTIES TIMEOUT 60)
     stlab_copy_runtime_dlls(${target})
