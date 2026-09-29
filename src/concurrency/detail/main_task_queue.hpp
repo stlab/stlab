@@ -87,6 +87,15 @@ public:
     }
 };
 
+/// Returns the process-shared main-executor task queue.
+///
+/// The queue is intentionally never destroyed so pending main-queue wakes never observe a
+/// destroyed queue and no main-queue task is destroyed during static destruction.
+inline auto main_tasks() -> main_task_queue& {
+    static auto& queue = *new main_task_queue; // NOLINT(cppcoreguidelines-owning-memory)
+    return queue;
+}
+
 } // namespace detail
 STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab

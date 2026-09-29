@@ -10,7 +10,7 @@
 - Task 2 — libdispatch backend behind the ABI:
   - `bdf2029 feat: move libdispatch main executor behind the C ABI`
   - `9004f7a fix: export libdispatch dependency for stlab-core`
-  - Moved libdispatch implementation out of the public header and into `stlab-core`, with installed package dependency handling for private static `stlab-core` usage.
+  - Moved libdispatch implementation out of the public header and into `stlab-core`. (The package-config patch added in `9004f7a` was later removed; see "Follow-up".)
 - Task 3 — Qt backend behind the ABI:
   - `3b3ead0 feat: move Qt main executor behind the C ABI`
   - Moved Qt5/Qt6 main executor implementation into `src/concurrency/main_executor_qt.cpp`; `run()` is `std::exit(QCoreApplication::exec())` with a `QCoreApplication` precondition.
@@ -25,7 +25,9 @@
 - Task 6 — documentation, lint, and final handoff:
   - `f0d967b docs: document main executor ABI backends and handoff`
   - Updated README, CLAUDE.md, and the design spec to reflect `portable`, eager portable pre-exit registration, Qt/Emscripten resolved questions, `STLAB_EMSCRIPTEN_PTHREADS`, and the ABI-backed main executor architecture.
-  - Replaced generated-package `CMAKE_MODULE_PATH` prepending for libdispatch with direct inclusion of the installed `Findlibdispatch.cmake`, avoiding leaked caller state when a non-REQUIRED `find_package(stlab)` exits early.
+- Follow-up — dependency linkage and helper cleanup:
+  - Main-executor dependencies (libdispatch, Qt5/Qt6 Core) are linked `PUBLIC` on both `stlab` and `stlab-core`, matching the existing `Threads` and task-system libdispatch pattern and `main`'s `stlab` linkage. The installed package config is again generated solely by cpp-library dependency discovery; the custom `stlabConfig.cmake` patch and the `Findlibdispatch.cmake` install were removed.
+  - The shared `main_tasks()` accessor moved into `src/concurrency/detail/main_task_queue.hpp`.
 
 ## Verification
 
@@ -43,7 +45,6 @@
 | Emscripten non-pthread | Task 5 WSL build of `stlab-core`, order, concurrent; runtime order test | Passed: order 1/1; concurrent build-only by design | CI non-pthread job runs order test |
 | Qt6 | Task 3/4 WSL Qt6 build/test | Passed: 15/15 | Linux Qt6 apt-based CI job remains authoritative |
 | libdispatch | Task 2 syntax/package checks with mocked libdispatch | Best-effort only locally | macOS CI must verify real libdispatch runtime behavior |
-| Installed libdispatch config | Fake-libdispatch configure generated direct `Findlibdispatch.cmake` inclusion and no `CMAKE_MODULE_PATH` mutation | Passed | Real libdispatch consumer remains CI/platform dependent |
 
 ## Deliberate deferrals
 
@@ -62,4 +63,3 @@ No GitHub issues were created; issue creation requires explicit user approval.
 
 - CI-only verification of real libdispatch behavior on macOS.
 - Pending CI confirmation of the apt-installed qt6-base-dev workflow job (backend already verified locally in WSL).
-- Watch the installed-package libdispatch path in final CI/review; the known `CMAKE_MODULE_PATH` leak from non-REQUIRED `find_package(stlab)` has been addressed in Task 6 by removing the prepend/restore pattern.

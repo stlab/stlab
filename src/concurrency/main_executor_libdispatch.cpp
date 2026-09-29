@@ -18,15 +18,6 @@ STLAB_VERSION_NAMESPACE_BEGIN()
 namespace detail {
 namespace {
 
-/// Returns the process-shared main-executor task queue.
-///
-/// The queue is intentionally never destroyed so pending main-queue wakes never observe a
-/// destroyed queue.
-auto main_tasks() -> main_task_queue& {
-    static auto& queue = *new main_task_queue; // NOLINT(cppcoreguidelines-owning-memory)
-    return queue;
-}
-
 /// Runs the oldest queued task. Each wake is posted for exactly one pushed task.
 void run_one(void* /*context*/) noexcept { main_tasks().pop()(); }
 

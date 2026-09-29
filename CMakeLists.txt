@@ -209,12 +209,14 @@ if(STLAB_TASK_SYSTEM STREQUAL "libdispatch")
 endif()
 
 if(STLAB_MAIN_EXECUTOR STREQUAL "libdispatch")
-  target_link_libraries(stlab PUBLIC $<BUILD_INTERFACE:libdispatch::libdispatch>)
-  target_link_libraries(stlab-core PRIVATE libdispatch::libdispatch)
+  target_link_libraries(stlab PUBLIC libdispatch::libdispatch)
+  target_link_libraries(stlab-core PUBLIC libdispatch::libdispatch)
 elseif(STLAB_MAIN_EXECUTOR STREQUAL "qt5")
-  target_link_libraries(stlab-core PRIVATE Qt5::Core)
+  target_link_libraries(stlab PUBLIC Qt5::Core)
+  target_link_libraries(stlab-core PUBLIC Qt5::Core)
 elseif(STLAB_MAIN_EXECUTOR STREQUAL "qt6")
-  target_link_libraries(stlab-core PRIVATE Qt6::Core)
+  target_link_libraries(stlab PUBLIC Qt6::Core)
+  target_link_libraries(stlab-core PUBLIC Qt6::Core)
 endif()
 
 message(STATUS "stlab: Disable Coroutines: ${STLAB_NO_STD_COROUTINES}")
@@ -254,47 +256,6 @@ endif()
 if(PROJECT_IS_TOP_LEVEL)
   include("${cpp-library_SOURCE_DIR}/cmake/cpp-library-install.cmake")
 
-  function(stlab_patch_package_config_module_path)
-    set(config_file "${CMAKE_CURRENT_BINARY_DIR}/stlabConfig.cmake")
-    file(READ "${config_file}" config_contents)
-
-    if(STLAB_MAIN_EXECUTOR STREQUAL "qt5" AND
-        NOT config_contents MATCHES "find_dependency\\(Qt5( |\\))")
-      string(REPLACE
-        "# Find dependencies required by this package\n"
-        "# Find dependencies required by this package\nfind_dependency(Qt5 COMPONENTS Core)\n"
-        config_contents
-        "${config_contents}")
-    elseif(STLAB_MAIN_EXECUTOR STREQUAL "qt6" AND
-        NOT config_contents MATCHES "find_dependency\\(Qt6( |\\))")
-      string(REPLACE
-        "# Find dependencies required by this package\n"
-        "# Find dependencies required by this package\nfind_dependency(Qt6 COMPONENTS Core)\n"
-        config_contents
-        "${config_contents}")
-    endif()
-
-    set(libdispatch_dependency [=[
-if(TARGET libdispatch::libdispatch)
-  set(libdispatch_FOUND TRUE)
-else()
-  include("${CMAKE_CURRENT_LIST_DIR}/Findlibdispatch.cmake")
-endif()
-if(NOT libdispatch_FOUND)
-  set(stlab_FOUND FALSE)
-  set(stlab_NOT_FOUND_MESSAGE "libdispatch dependency was not found.")
-  return()
-endif()
-]=])
-    string(REPLACE
-      "find_dependency(libdispatch)"
-      "${libdispatch_dependency}"
-      config_contents
-      "${config_contents}")
-
-    file(WRITE "${config_file}" "${config_contents}")
-  endfunction()
-
   install(TARGETS stlab-core
     EXPORT stlabTargets
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -310,13 +271,6 @@ endif()
     NAMESPACE "stlab"
     HEADERS TRUE  # Indicates the target has a FILE_SET named "headers"
   )
-  cmake_language(DEFER DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    CALL stlab_patch_package_config_module_path)
-  if((STLAB_TASK_SYSTEM STREQUAL "libdispatch") OR
-      (STLAB_MAIN_EXECUTOR STREQUAL "libdispatch"))
-    install(FILES cmake/Findlibdispatch.cmake
-      DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/stlab)
-  endif()
   
   message(STATUS "stlab: Installation support enabled with dependency auto-discovery")
 endif()
