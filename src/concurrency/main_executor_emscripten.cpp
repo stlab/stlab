@@ -9,9 +9,11 @@
 #include <stlab/concurrency/main_executor.hpp>
 #include <stlab/config.hpp>
 
-#include <dispatch/dispatch.h>
+#include <emscripten.h>
+#include <emscripten/threading.h>
 
 #include <cassert>
+#include <cstdlib>
 
 namespace stlab {
 STLAB_VERSION_NAMESPACE_BEGIN()
@@ -20,7 +22,7 @@ namespace {
 
 /// Returns the process-shared main-executor task queue.
 ///
-/// The queue is intentionally never destroyed so pending main-queue wakes never observe a
+/// The queue is intentionally never destroyed so pending main-thread wakes never observe a
 /// destroyed queue.
 auto main_tasks() -> main_task_queue& {
     static auto& queue = *new main_task_queue; // NOLINT(cppcoreguidelines-owning-memory)
@@ -30,13 +32,20 @@ auto main_tasks() -> main_task_queue& {
 /// Runs the oldest queued task. Each wake is posted for exactly one pushed task.
 void run_one(void* /*context*/) noexcept { main_tasks().pop()(); }
 
+/// Defers `run_one` to the main runtime thread's event loop.
+///
+/// `emscripten_async_run_in_main_runtime_thread()` may run its function at any POSIX thread
+/// cancellation point while wasm is executing on the main thread, which can re-enter code holding
+/// locks. Bouncing through `emscripten_async_call()` runs the task from the main run loop instead.
+void bounce(void* context) noexcept { emscripten_async_call(&run_one, context, 0); }
+
 } // namespace
 } // namespace detail
 STLAB_VERSION_NAMESPACE_END()
 
 inline namespace v2 {
 
-/// Submits one task to the libdispatch main queue.
+/// Submits one task to the Emscripten main runtime thread.
 extern "C" void stlab_v2_main_executor_submit(const unsigned char* /*task_abi_guard*/,
                                               const stlab_v2_task_concept* vtable,
                                               stlab_v2_task_proc invoke,
@@ -44,13 +53,18 @@ extern "C" void stlab_v2_main_executor_submit(const unsigned char* /*task_abi_gu
     assert(vtable != nullptr && invoke != nullptr && "Task vtable/invoke must not be null.");
     [[maybe_unused]] const bool pushed =
         STLAB_VERSION_NAMESPACE()::detail::main_tasks().push(vtable, invoke, source);
-    assert(pushed && "libdispatch main queue is never closed.");
-    dispatch_async_f(dispatch_get_main_queue(), nullptr,
-                     &STLAB_VERSION_NAMESPACE()::detail::run_one);
+    assert(pushed && "Emscripten main queue is never closed.");
+    emscripten_async_run_in_main_runtime_thread(EM_FUNC_SIG_VI,
+                                                &STLAB_VERSION_NAMESPACE()::detail::bounce,
+                                                nullptr);
 }
 
-/// Services the libdispatch main queue; never returns.
-extern "C" [[noreturn]] void stlab_v2_main_executor_run() { dispatch_main(); }
+/// Ends the calling thread while keeping the runtime alive to service the main queue; never
+/// returns.
+extern "C" [[noreturn]] void stlab_v2_main_executor_run() {
+    emscripten_exit_with_live_runtime();
+    std::abort();
+}
 
 } // namespace v2
 } // namespace stlab

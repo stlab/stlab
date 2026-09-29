@@ -100,9 +100,7 @@ endif()
 # executable that exits from a task. They link only against `stlab-core` to prove a consumer can
 # use the main executor through the exported C ABI alone.
 #
-set(stlab_main_executor_abi_backends portable libdispatch qt5 qt6)
-
-if(STLAB_MAIN_EXECUTOR IN_LIST stlab_main_executor_abi_backends)
+if(NOT STLAB_MAIN_EXECUTOR STREQUAL "none")
   set(stlab_main_executor_tests order concurrent)
   if(STLAB_MAIN_EXECUTOR STREQUAL "portable")
     list(APPEND stlab_main_executor_tests pre_exit pre_exit_before_submit)

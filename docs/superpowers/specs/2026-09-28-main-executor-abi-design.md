@@ -100,7 +100,7 @@ extern "C" void stlab_v2_main_executor_submit(const unsigned char* task_abi_guar
 ///
 /// - Precondition: called at most once per process, from the thread the platform designates
 ///   as main where it designates one.
-extern "C" [[noreturn]] void stlab_v2_main_executor_run() noexcept;
+extern "C" [[noreturn]] void stlab_v2_main_executor_run();
 
 } // namespace v2
 } // namespace stlab
@@ -112,6 +112,9 @@ extern "C" [[noreturn]] void stlab_v2_main_executor_run() noexcept;
   `dispatch_main()`.
 - The C++ surface is `stlab::main_executor` (unchanged usage) and a new inline
   `stlab::main_executor_run()` forwarding to the C symbol.
+- Deviation from the draft ABI: `run()` is not `noexcept`. Emscripten
+  `emscripten_exit_with_live_runtime()` unwinds with a JavaScript exception; with `noexcept`,
+  optimized Release wasm tests terminate in `stlab_v2_main_executor_run`.
 
 ### 3. Header restructuring
 

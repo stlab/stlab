@@ -88,7 +88,7 @@ extern "C" void stlab_v2_main_executor_submit(const unsigned char* /*task_abi_gu
 }
 
 /// Runs the Qt application event loop and exits the process with its result; never returns.
-extern "C" [[noreturn]] void stlab_v2_main_executor_run() noexcept {
+extern "C" [[noreturn]] void stlab_v2_main_executor_run() {
     assert(QCoreApplication::instance() && "main_executor_run() requires a QCoreApplication.");
     std::exit(QCoreApplication::exec());
 }

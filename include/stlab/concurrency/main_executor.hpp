@@ -26,21 +26,17 @@
 
 #include <stlab/config.hpp>
 
-#if STLAB_MAIN_EXECUTOR(PORTABLE) || STLAB_MAIN_EXECUTOR(LIBDISPATCH) || \
-    STLAB_MAIN_EXECUTOR(QT5) || STLAB_MAIN_EXECUTOR(QT6)
+#if !STLAB_MAIN_EXECUTOR(NONE)
 #include <stlab/concurrency/default_executor.hpp>
 #include <stlab/concurrency/task.hpp>
 
 #include <type_traits>
 #include <utility>
-#elif STLAB_MAIN_EXECUTOR(EMSCRIPTEN)
-#include <stlab/concurrency/default_executor.hpp>
 #endif
 
 /**************************************************************************************************/
 
-#if STLAB_MAIN_EXECUTOR(PORTABLE) || STLAB_MAIN_EXECUTOR(LIBDISPATCH) || \
-    STLAB_MAIN_EXECUTOR(QT5) || STLAB_MAIN_EXECUTOR(QT6)
+#if !STLAB_MAIN_EXECUTOR(NONE)
 
 namespace stlab {
 inline namespace v2 {
@@ -66,7 +62,7 @@ extern "C" void stlab_v2_main_executor_submit(const unsigned char* task_abi_guar
 ///
 /// - Precondition: called at most once per process, from the thread the platform designates as
 ///   main where it designates one.
-extern "C" [[noreturn]] void stlab_v2_main_executor_run() noexcept;
+extern "C" [[noreturn]] void stlab_v2_main_executor_run();
 
 /** @} */
 
@@ -90,8 +86,7 @@ namespace detail {
 
 /**************************************************************************************************/
 
-#if STLAB_MAIN_EXECUTOR(PORTABLE) || STLAB_MAIN_EXECUTOR(LIBDISPATCH) || \
-    STLAB_MAIN_EXECUTOR(QT5) || STLAB_MAIN_EXECUTOR(QT6)
+#if !STLAB_MAIN_EXECUTOR(NONE)
 
 /// Executor that submits `void() noexcept` tasks to the main queue through the shared core ABI.
 struct main_executor_type {
@@ -110,72 +105,20 @@ struct main_executor_type {
 
 /**************************************************************************************************/
 
-#elif STLAB_MAIN_EXECUTOR(EMSCRIPTEN)
-
-struct main_executor_type {
-    using result_type = void;
-
-    template <class F>
-    auto operator()(F&& f) const -> std::enable_if_t<std::is_nothrow_invocable_v<F>> {
-        using function_type = typename std::remove_reference<F>::type;
-        auto p = new function_type(std::forward<F>(f));
-
-        /*
-          `emscripten_async_run_in_main_runtime_thread()` schedules a function to run on the main
-           JS thread, however, the code can be executed at any POSIX thread cancellation point if
-           wasm code is executing on the JS main thread.
-           Executing the code from a POSIX thread cancellation point can cause problems, including
-           deadlocks and data corruption. Consider:
-           ```
-               mutex.lock();   // <-- If reentered, would deadlock here
-               new T;          // <-- POSIX cancellation point, could reenter
-           ```
-           The call to `emscripten_async_call()` bounces the call to execute as part of the main
-           run-loop on the current (main) thread. This avoids nasty reentrancy issues if executed
-           from a POSIX thread cancellation point.
-       */
-
-        emscripten_async_run_in_main_runtime_thread(
-            EM_FUNC_SIG_VI, static_cast<void (*)(void*)>([](void* f_) {
-                emscripten_async_call(
-                    [](void* f_) {
-                        auto f = static_cast<function_type*>(f_);
-                        // Note the absence of exception handling.
-                        // Operations queued to the task system cannot throw as a precondition.
-                        // We use packaged tasks to marshal exceptions.
-                        (*f)();
-                        delete f;
-                    },
-                    f_, 0);
-            }),
-            p);
-    }
-};
-
-#elif STLAB_MAIN_EXECUTOR(NONE)
-
-// For documentation only
-struct main_executor_type {
-    using result_type = void;
-
-    template <typename F>
-    void operator()(F f) const {}
-};
-
 #endif
 
 } // namespace detail
 
+#if !STLAB_MAIN_EXECUTOR(NONE)
+
 /// Runs `void() noexcept` tasks in submission order on the configured main queue.
 inline constexpr auto main_executor = detail::main_executor_type{};
 
-#if STLAB_MAIN_EXECUTOR(PORTABLE) || STLAB_MAIN_EXECUTOR(LIBDISPATCH) || \
-    STLAB_MAIN_EXECUTOR(QT5) || STLAB_MAIN_EXECUTOR(QT6)
 /// Services the main queue on the calling thread; never returns.
 ///
 /// - Precondition: called at most once per process, from the thread the platform designates as
 ///   main where it designates one.
-[[noreturn]] inline void main_executor_run() noexcept { stlab_v2_main_executor_run(); }
+[[noreturn]] inline void main_executor_run() { stlab_v2_main_executor_run(); }
 #endif
 
 /**************************************************************************************************/

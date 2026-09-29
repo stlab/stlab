@@ -52,7 +52,7 @@ extern "C" void stlab_v2_main_executor_submit(const unsigned char* /*task_abi_gu
 }
 
 /// Services the portable main queue on the calling thread; never returns.
-extern "C" [[noreturn]] void stlab_v2_main_executor_run() noexcept {
+extern "C" [[noreturn]] void stlab_v2_main_executor_run() {
     [[maybe_unused]] const bool was_running =
         STLAB_VERSION_NAMESPACE()::detail::running.exchange(true);
     assert(!was_running && "main_executor_run() called more than once.");

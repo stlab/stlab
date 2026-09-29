@@ -18,6 +18,9 @@
 #if STLAB_MAIN_EXECUTOR(QT5) || STLAB_MAIN_EXECUTOR(QT6)
 #include <QCoreApplication>
 #endif
+#if STLAB_MAIN_EXECUTOR(EMSCRIPTEN)
+#include <emscripten.h>
+#endif
 
 namespace main_executor_test {
 
@@ -39,11 +42,19 @@ inline void mark_run_started() noexcept {
 
 /// Runs pre-exit handlers and terminates the process with a status reflecting `ok`.
 ///
-/// - Postcondition: never returns; prints `message` to `stderr` when `ok` is `false`.
-[[noreturn]] inline void finish(bool ok, const char* message) {
+/// - Postcondition: never returns, except on Emscripten where Node shutdown is requested directly;
+///   prints `message` to `stderr` when `ok` is `false`.
+#if !STLAB_MAIN_EXECUTOR(EMSCRIPTEN)
+[[noreturn]]
+#endif
+inline void finish(bool ok, const char* message) {
     if (!ok) std::fprintf(stderr, "FAILED: %s\n", message);
     stlab::pre_exit();
+#if STLAB_MAIN_EXECUTOR(EMSCRIPTEN)
+    EM_ASM({ process.exit($0); }, ok ? EXIT_SUCCESS : EXIT_FAILURE);
+#else
     std::exit(ok ? EXIT_SUCCESS : EXIT_FAILURE);
+#endif
 }
 
 /// Fails the process if the main queue has not started.

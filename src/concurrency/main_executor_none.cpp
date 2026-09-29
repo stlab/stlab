@@ -30,7 +30,7 @@ extern "C" void stlab_v2_main_executor_submit(const unsigned char* /*task_abi_gu
 /// Stub: no main executor is configured.
 ///
 /// - Precondition: never called.
-extern "C" [[noreturn]] void stlab_v2_main_executor_run() noexcept {
+extern "C" [[noreturn]] void stlab_v2_main_executor_run() {
     assert(false && "No main executor is configured (STLAB_MAIN_EXECUTOR=none).");
     std::abort();
 }
