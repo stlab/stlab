@@ -26,7 +26,7 @@
 
 #include <stlab/config.hpp>
 
-#if STLAB_MAIN_EXECUTOR(PORTABLE)
+#if STLAB_MAIN_EXECUTOR(PORTABLE) || STLAB_MAIN_EXECUTOR(LIBDISPATCH)
 #include <stlab/concurrency/default_executor.hpp>
 #include <stlab/concurrency/task.hpp>
 
@@ -44,15 +44,13 @@
 #include <QEvent>
 #include <memory>
 #include <stlab/concurrency/task.hpp>
-#elif STLAB_MAIN_EXECUTOR(LIBDISPATCH)
-#include <dispatch/dispatch.h>
 #elif STLAB_MAIN_EXECUTOR(EMSCRIPTEN)
 #include <stlab/concurrency/default_executor.hpp>
 #endif
 
 /**************************************************************************************************/
 
-#if STLAB_MAIN_EXECUTOR(PORTABLE)
+#if STLAB_MAIN_EXECUTOR(PORTABLE) || STLAB_MAIN_EXECUTOR(LIBDISPATCH)
 
 namespace stlab {
 inline namespace v2 {
@@ -102,7 +100,7 @@ namespace detail {
 
 /**************************************************************************************************/
 
-#if STLAB_MAIN_EXECUTOR(PORTABLE)
+#if STLAB_MAIN_EXECUTOR(PORTABLE) || STLAB_MAIN_EXECUTOR(LIBDISPATCH)
 
 /// Executor that submits `void() noexcept` tasks to the main queue through the shared core ABI.
 struct main_executor_type {
@@ -170,23 +168,6 @@ public:
 
 /**************************************************************************************************/
 
-#elif STLAB_MAIN_EXECUTOR(LIBDISPATCH)
-
-struct main_executor_type {
-    using result_type = void;
-
-    template <typename F>
-    auto operator()(F f) const -> std::enable_if_t<std::is_nothrow_invocable_v<F>> {
-        using f_t = decltype(f);
-
-        dispatch_async_f(dispatch_get_main_queue(), new f_t(std::move(f)), [](void* f_) {
-            auto f = static_cast<f_t*>(f_);
-            (*f)();
-            delete f;
-        });
-    }
-};
-
 #elif STLAB_MAIN_EXECUTOR(EMSCRIPTEN)
 
 struct main_executor_type {
@@ -246,7 +227,7 @@ struct main_executor_type {
 /// Runs `void() noexcept` tasks in submission order on the configured main queue.
 inline constexpr auto main_executor = detail::main_executor_type{};
 
-#if STLAB_MAIN_EXECUTOR(PORTABLE)
+#if STLAB_MAIN_EXECUTOR(PORTABLE) || STLAB_MAIN_EXECUTOR(LIBDISPATCH)
 /// Services the main queue on the calling thread; never returns.
 ///
 /// - Precondition: called at most once per process, from the thread the platform designates as

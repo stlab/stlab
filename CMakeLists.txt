@@ -209,7 +209,7 @@ if(STLAB_TASK_SYSTEM STREQUAL "libdispatch")
 endif()
 
 if(STLAB_MAIN_EXECUTOR STREQUAL "libdispatch")
-  target_link_libraries(stlab PUBLIC libdispatch::libdispatch)
+  target_link_libraries(stlab-core PRIVATE libdispatch::libdispatch)
 elseif(STLAB_MAIN_EXECUTOR STREQUAL "qt5")
   target_link_libraries(stlab PUBLIC Qt5::Core)
 elseif(STLAB_MAIN_EXECUTOR STREQUAL "qt6")
