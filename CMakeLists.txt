@@ -209,6 +209,7 @@ if(STLAB_TASK_SYSTEM STREQUAL "libdispatch")
 endif()
 
 if(STLAB_MAIN_EXECUTOR STREQUAL "libdispatch")
+  target_link_libraries(stlab PUBLIC $<BUILD_INTERFACE:libdispatch::libdispatch>)
   target_link_libraries(stlab-core PRIVATE libdispatch::libdispatch)
 elseif(STLAB_MAIN_EXECUTOR STREQUAL "qt5")
   target_link_libraries(stlab PUBLIC Qt5::Core)
@@ -253,6 +254,33 @@ endif()
 if(PROJECT_IS_TOP_LEVEL)
   include("${cpp-library_SOURCE_DIR}/cmake/cpp-library-install.cmake")
 
+  function(stlab_patch_package_config_module_path)
+    set(config_file "${CMAKE_CURRENT_BINARY_DIR}/stlabConfig.cmake")
+    file(READ "${config_file}" config_contents)
+
+    set(module_path_prelude [=[
+set(_stlab_saved_CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}")
+list(PREPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
+]=])
+    string(REPLACE
+      "include(CMakeFindDependencyMacro)\n\n# Find dependencies required by this package\n"
+      "include(CMakeFindDependencyMacro)\n\n${module_path_prelude}\n# Find dependencies required by this package\n"
+      config_contents
+      "${config_contents}")
+
+    set(module_path_restore [=[
+set(CMAKE_MODULE_PATH "${_stlab_saved_CMAKE_MODULE_PATH}")
+unset(_stlab_saved_CMAKE_MODULE_PATH)
+]=])
+    string(REPLACE
+      "include(\"\${CMAKE_CURRENT_LIST_DIR}/stlabTargets.cmake\")"
+      "${module_path_restore}\ninclude(\"\${CMAKE_CURRENT_LIST_DIR}/stlabTargets.cmake\")"
+      config_contents
+      "${config_contents}")
+
+    file(WRITE "${config_file}" "${config_contents}")
+  endfunction()
+
   install(TARGETS stlab-core
     EXPORT stlabTargets
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -268,6 +296,13 @@ if(PROJECT_IS_TOP_LEVEL)
     NAMESPACE "stlab"
     HEADERS TRUE  # Indicates the target has a FILE_SET named "headers"
   )
+  cmake_language(DEFER DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    CALL stlab_patch_package_config_module_path)
+  if((STLAB_TASK_SYSTEM STREQUAL "libdispatch") OR
+      (STLAB_MAIN_EXECUTOR STREQUAL "libdispatch"))
+    install(FILES cmake/Findlibdispatch.cmake
+      DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/stlab)
+  endif()
   
   message(STATUS "stlab: Installation support enabled with dependency auto-discovery")
 endif()
