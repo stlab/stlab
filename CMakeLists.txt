@@ -40,6 +40,19 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 # Create the main library target first
 add_library(stlab)
 add_library(stlab::stlab ALIAS stlab)
+option(STLAB_CORE_SHARED "Build the process-shared executor core as a shared library on Windows" OFF)
+set(STLAB_CORE_SHARED_REQUESTED ${STLAB_CORE_SHARED})
+if(STLAB_CORE_SHARED_REQUESTED OR (BUILD_SHARED_LIBS AND NOT WIN32))
+  set(STLAB_CORE_SHARED ON)
+else()
+  set(STLAB_CORE_SHARED OFF)
+endif()
+if(STLAB_CORE_SHARED)
+  add_library(stlab-core SHARED)
+else()
+  add_library(stlab-core STATIC)
+endif()
+add_library(stlab::stlab-core ALIAS stlab-core)
 
 ########################################################
 
@@ -138,7 +151,11 @@ endif()
 # and installation. Here we use a CMake generator expression to dispatch
 # on how the configuration under which this library is being consumed.
 #
-target_include_directories(stlab INTERFACE
+target_include_directories(stlab PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+target_include_directories(stlab-core PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
@@ -150,7 +167,17 @@ target_include_directories(stlab INTERFACE
 # + NOMINMAX
 #    disable the `min` and `max` macros defined in the windows.h header
 #
-target_compile_definitions(stlab INTERFACE $<$<CXX_COMPILER_ID:MSVC>:NOMINMAX>)
+target_compile_definitions(stlab PUBLIC $<$<CXX_COMPILER_ID:MSVC>:NOMINMAX>)
+if(WIN32 AND BUILD_SHARED_LIBS)
+  target_compile_definitions(stlab PRIVATE STLAB_BUILD_SHARED_LIBRARY)
+endif()
+target_compile_definitions(stlab-core PRIVATE $<$<CXX_COMPILER_ID:MSVC>:NOMINMAX>)
+if(NOT WIN32)
+  set_target_properties(stlab-core PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
+target_link_libraries(stlab PUBLIC
+  $<BUILD_INTERFACE:stlab-core>
+  $<INSTALL_INTERFACE:stlab::stlab-core>)
 
 add_subdirectory(include/stlab)
 add_subdirectory(src)
@@ -160,27 +187,29 @@ add_subdirectory(src)
 
 # https://github.com/stlab/stlab-copy-on-write
 CPMAddPackage("gh:stlab/stlab-copy-on-write@1.1.0")
-target_link_libraries(stlab INTERFACE $<BUILD_INTERFACE:stlab::copy-on-write>)
+target_link_libraries(stlab PUBLIC $<BUILD_INTERFACE:stlab::copy-on-write>)
 
 # https://github.com/stlab/stlab-enum-ops
 CPMAddPackage("gh:stlab/stlab-enum-ops@1.2.0")
-target_link_libraries(stlab INTERFACE $<BUILD_INTERFACE:stlab::enum-ops>)
+target_link_libraries(stlab PUBLIC $<BUILD_INTERFACE:stlab::enum-ops>)
 
 # System dependencies
 if(NOT STLAB_THREAD_SYSTEM STREQUAL "none")
-  target_link_libraries(stlab INTERFACE Threads::Threads)
+  target_link_libraries(stlab PUBLIC Threads::Threads)
+  target_link_libraries(stlab-core PUBLIC Threads::Threads)
 endif()
 
 if(STLAB_TASK_SYSTEM STREQUAL "libdispatch")
-  target_link_libraries(stlab INTERFACE libdispatch::libdispatch)
+  target_link_libraries(stlab PUBLIC libdispatch::libdispatch)
+  target_link_libraries(stlab-core PUBLIC libdispatch::libdispatch)
 endif()
 
 if(STLAB_MAIN_EXECUTOR STREQUAL "libdispatch")
-  target_link_libraries(stlab INTERFACE libdispatch::libdispatch)
+  target_link_libraries(stlab PUBLIC libdispatch::libdispatch)
 elseif(STLAB_MAIN_EXECUTOR STREQUAL "qt5")
-  target_link_libraries(stlab INTERFACE Qt5::Core)
+  target_link_libraries(stlab PUBLIC Qt5::Core)
 elseif(STLAB_MAIN_EXECUTOR STREQUAL "qt6")
-  target_link_libraries(stlab INTERFACE Qt6::Core)
+  target_link_libraries(stlab PUBLIC Qt6::Core)
 endif()
 
 message(STATUS "stlab: Disable Coroutines: ${STLAB_NO_STD_COROUTINES}")
@@ -219,6 +248,12 @@ endif()
 # Installation Support (using cpp-library dependency auto-discovery)
 if(PROJECT_IS_TOP_LEVEL)
   include("${cpp-library_SOURCE_DIR}/cmake/cpp-library-install.cmake")
+
+  install(TARGETS stlab-core
+    EXPORT stlabTargets
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
   
   # Use cpp-library's install function for automatic dependency discovery
   # No manual dependency mappings needed - cpp-library auto-discovers via dependency provider

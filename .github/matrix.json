@@ -18,7 +18,20 @@
     {
       "name": "Windows",
       "compiler": "Visual Studio",
-      "os": "windows-latest"
+      "os": "windows-latest",
+      "cmake_options": ""
+    },
+    {
+      "name": "Windows shared",
+      "compiler": "Visual Studio",
+      "os": "windows-latest",
+      "cmake_options": "-DSTLAB_CORE_SHARED=ON"
+    },
+    {
+      "name": "Windows shared portable",
+      "compiler": "Visual Studio",
+      "os": "windows-latest",
+      "cmake_options": "-DSTLAB_CORE_SHARED=ON -DSTLAB_TASK_SYSTEM=portable"
     },
     {
       "name": "Linux Webassembly",

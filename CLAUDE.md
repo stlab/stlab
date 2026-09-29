@@ -93,6 +93,43 @@ Formatting is enforced by `.clang-format`:
 
 Linting via `.clang-tidy` checks `cert-*`, `performance-*`, `modernize-*`, and `misc-include-cleaner` against headers in `include/stlab/**/*.hpp`. `modernize-use-trailing-return-type` is disabled.
 
+## Git and Worktree Workflow
+
+- Perform changes in an isolated git worktree; do not commit directly to `main`.
+- Before opening a PR, run the relevant build, test, sanitizer, and lint checks documented
+  above. Read the output and resolve warnings, not only errors.
+- For multi-phase work, maintain a dated handoff document under `docs/superpowers/` describing
+  completed work, deliberate deferrals, and remaining tasks.
+
+## Library-First Design
+
+STLab is a reusable library. Implement public behavior for the general problem described by
+the interface and contract, not only for the current test or one consuming application. If a
+general solution must be deferred, document the boundary explicitly and track the remaining
+work rather than silently special-casing the current use case.
+
+## Conflicting Goals
+
+When two stated goals or constraints cannot both be satisfied by any known design, do not
+silently pick one and drop the other. Stop and report the conflict explicitly: name both goals,
+explain why they are in tension for this specific change, and let the human partner decide which
+to relax (or ask for a design that avoids the trade-off entirely). Do not present a design that
+sacrifices a goal as if it fully satisfies all goals.
+
+## Allocation and Ownership
+
+Avoid unnecessary heap allocation and ownership transfer in performance-sensitive paths. Prefer
+references, views, iterators, existing small-buffer-optimized types, or static polymorphism when
+they express the contract clearly. In particular, preserve the allocation-free and ABI-boundary
+requirements of the Windows DLL-safe executor design.
+
+All communication with process-shared library state must cross a versioned C ABI; shared-library
+clients must not reference internal C++ implementation symbols. CI must cover each supported
+Windows shared-core task-system configuration, including the native and portable task systems.
+Except for `system_timer.hpp`, public concurrency headers must not branch on `STLAB_TASK_SYSTEM`,
+`STLAB_CORE_SHARED`, or `_WIN32`; those choices belong in compiled implementation files behind the
+versioned C ABI.
+
 ## Architecture
 
 The concurrency subsystem (`include/stlab/concurrency/`) is the core of the library:
@@ -114,7 +151,9 @@ Non-concurrency headers:
 
 ### Function Contracts
 
-Every function declaration must have a documentation comment written in contract style, using `///` syntax. The contract lives adjacent to the declaration so it stays synchronized with the code.
+Every class, struct, and function declaration must have a documentation comment written in
+contract style, using `///` syntax. The contract lives adjacent to the declaration so it stays
+synchronized with the code.
 
 **Required sections** (include only those that apply):
 
@@ -136,6 +175,22 @@ Project-wide policy: assume O(1) time and space unless a `Complexity:` note says
 
 If you cannot write a simple contract for a function, treat that as a signal that the design needs improvement.
 
+Do not recover from violated internal invariants with alternate behavior; assert the invariant and
+stop rather than silently changing execution semantics. In particular, executor scheduling must
+not execute queued work inline as a fallback.
+
+Prefer reasoning from established one-to-one accounting invariants over maintaining redundant
+state. When every submitted operation has exactly one completion token, preserve that token until
+the operation succeeds rather than adding counters to rediscover whether work remains.
+
+Preserve placement and routing information returned by sharded data structures. Notify the worker
+responsible for the selected shard first; allow active workers to steal work rather than discarding
+the locality hint and scanning for an arbitrary consumer.
+
+Use `# Examples` for public APIs where an example materially clarifies usage. For unsafe
+operations, document the caller invariants under `# Safety`; distinguish runtime errors from
+violated preconditions.
+
 ### Unit Tests
 
 When writing unit tests, derive them from the **contract and public interface only** — do not read or consider the implementation. The test suite should verify observable behavior as specified by the contract:
@@ -152,3 +207,9 @@ Tests written against the implementation risk encoding bugs rather than verifyin
 CI runs via GitHub Actions (`.github/workflows/stlab.yml`). The build matrix is defined in `.github/matrix.json` and flattened by `scripts/flatten_json.py`. CI tests: Linux GCC, Linux Clang, macOS Apple Clang, Windows MSVC, and Emscripten/WASM. macOS additionally runs with TSan+UBSan on both the native and portable task systems.
 
 CPM package downloads are cached in `.cache/cpm/` (gitignored).
+
+## Code Review Findings
+
+Address review findings in the same pass when the fix is small and in scope. If a finding
+requires a substantial design change or is out of scope, create a GitHub issue with
+`gh issue create` and reference it rather than silently deferring the work.
