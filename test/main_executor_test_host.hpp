@@ -40,10 +40,19 @@ inline void mark_run_started() noexcept {
     run_started_state().store(true, std::memory_order_release);
 }
 
+#if STLAB_MAIN_EXECUTOR(EMSCRIPTEN)
+/// Terminates the Emscripten runtime after the `noexcept` main-executor task returns.
+inline void force_exit_success(void*) { emscripten_force_exit(EXIT_SUCCESS); }
+
+/// Terminates the Emscripten runtime after the `noexcept` main-executor task returns.
+inline void force_exit_failure(void*) { emscripten_force_exit(EXIT_FAILURE); }
+#endif
+
 /// Runs pre-exit handlers and terminates the process with a status reflecting `ok`.
 ///
-/// - Postcondition: never returns, except on Emscripten where Node shutdown is requested directly;
-///   prints `message` to `stderr` when `ok` is `false`.
+/// - Postcondition: never returns, except on Emscripten where runtime shutdown is scheduled in a
+///   later callback so the current `noexcept` task can return; prints `message` to `stderr` when
+///   `ok` is `false`.
 #if !STLAB_MAIN_EXECUTOR(EMSCRIPTEN)
 [[noreturn]]
 #endif
@@ -51,7 +60,7 @@ inline void finish(bool ok, const char* message) {
     if (!ok) std::fprintf(stderr, "FAILED: %s\n", message);
     stlab::pre_exit();
 #if STLAB_MAIN_EXECUTOR(EMSCRIPTEN)
-    EM_ASM({ process.exit($0); }, ok ? EXIT_SUCCESS : EXIT_FAILURE);
+    emscripten_async_call(ok ? &force_exit_success : &force_exit_failure, nullptr, 0);
 #else
     std::exit(ok ? EXIT_SUCCESS : EXIT_FAILURE);
 #endif

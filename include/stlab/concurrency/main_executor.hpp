@@ -18,7 +18,9 @@
  *  application event loop, the Emscripten main runtime thread, or (opt-in) a portable
  *  stlab-owned queue. `main_executor_run()` services the main queue on the calling thread and
  *  never returns, like `dispatch_main()`; the program ends by calling `pre_exit()` and
- *  `std::exit()` from a task.
+ *  `std::exit()` from a task. On Emscripten, call `pre_exit()` from the task, schedule a separate
+ *  `emscripten_async_call()` callback, return from the task, and call `emscripten_force_exit()`
+ *  from that callback.
  *
  *  Windows has no process main queue (each UI thread owns its message queue), so no main executor
  *  is provided there unless `STLAB_MAIN_EXECUTOR` selects Qt or `portable`.
@@ -62,6 +64,8 @@ extern "C" void stlab_v2_main_executor_submit(const unsigned char* task_abi_guar
 ///
 /// - Precondition: called at most once per process, from the thread the platform designates as
 ///   main where it designates one.
+/// - Postcondition: on Emscripten, the runtime remains live until code calls
+///   `emscripten_force_exit()` from outside a `noexcept` executor task.
 extern "C" [[noreturn]] void stlab_v2_main_executor_run();
 
 /** @} */
@@ -118,6 +122,8 @@ inline constexpr auto main_executor = detail::main_executor_type{};
 ///
 /// - Precondition: called at most once per process, from the thread the platform designates as
 ///   main where it designates one.
+/// - Postcondition: on Emscripten, the runtime remains live until code calls
+///   `emscripten_force_exit()` from outside a `noexcept` executor task.
 [[noreturn]] inline void main_executor_run() { stlab_v2_main_executor_run(); }
 #endif
 

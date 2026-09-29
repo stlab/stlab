@@ -68,7 +68,7 @@ parity with the portable task system.
 |---|---|---|---|
 | `libdispatch` | libdispatch task system | `dispatch_async_f(dispatch_get_main_queue(), …)` | `dispatch_main()` |
 | `qt5` / `qt6` | Qt found (non-Apple, non-Emscripten) | `QCoreApplication::postEvent` to a receiver on the application thread | `std::exit(QCoreApplication::exec())` |
-| `emscripten` | Emscripten | `emscripten_async_run_in_main_runtime_thread` + `emscripten_async_call` (unchanged) | `emscripten_exit_with_live_runtime()` |
+| `emscripten` | Emscripten | pthreads: `emscripten_async_run_in_main_runtime_thread` + `emscripten_async_call`; single-threaded runtime: `emscripten_async_call` directly | `emscripten_exit_with_live_runtime()` |
 | `portable` | never (opt-in) | push to stlab-owned FIFO queue | drain the queue on the calling thread forever |
 | `none` | otherwise (including Windows without Qt) | not declared | not declared |
 
@@ -108,13 +108,19 @@ extern "C" [[noreturn]] void stlab_v2_main_executor_run();
 
 - Submission uses the same relocation arguments as the #604 executor submits, so the ABI performs
   no allocation beyond the backend's own task storage.
-- The process ends by calling `std::exit()` (after `pre_exit()`) from a task, as with
-  `dispatch_main()`.
+- The process usually ends by calling `std::exit()` (after `pre_exit()`) from a task, as with
+  `dispatch_main()`. On Emscripten, executor tasks remain `noexcept`: the task calls `pre_exit()`,
+  schedules a separate `emscripten_async_call()` callback, returns normally, and that callback calls
+  `emscripten_force_exit(status)` (with `-sEXIT_RUNTIME=1`).
 - The C++ surface is `stlab::main_executor` (unchanged usage) and a new inline
   `stlab::main_executor_run()` forwarding to the C symbol.
 - Deviation from the draft ABI: `run()` is not `noexcept`. Emscripten
   `emscripten_exit_with_live_runtime()` unwinds with a JavaScript exception; with `noexcept`,
   optimized Release wasm tests terminate in `stlab_v2_main_executor_run`.
+- The Emscripten backend supports both pthread and non-pthread builds. Pthread builds retain the
+  proxy-to-main-runtime-thread bounce to avoid running while the main thread holds locks; non-pthread
+  builds are already on the single runtime thread and post `run_one` directly with
+  `emscripten_async_call()`.
 
 ### 3. Header restructuring
 
@@ -152,8 +158,10 @@ compiled into `stlab-core`. Backend link dependencies (Qt, libdispatch) move fro
 ## Testing
 
 Tests are derived from the contract. Because `run()` never returns, each scenario is its own
-executable that finishes by calling `std::exit()` from a task, registered with CTest and built when
-the selected backend is `portable` (and, where CI supports it, native backends):
+executable that finishes by calling `std::exit()` from a task, or on Emscripten by calling
+`pre_exit()` from the task and scheduling a later `emscripten_force_exit(status)` callback,
+registered with CTest and built when the selected backend is `portable` (and, where CI supports it,
+native backends):
 
 - Tasks execute in submission order on the thread that called `run()`.
 - Tasks submitted before `run()` execute after `run()` starts.
