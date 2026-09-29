@@ -139,8 +139,9 @@ compiled into `stlab-core`. Backend link dependencies (Qt, libdispatch) move fro
   with a condition variable for wake-up. Task storage reuses the #604 relocation storage.
 - Tasks submitted before `run()` remain queued and execute once `run()` is called.
 - `run()` binds the calling thread as the main thread and loops: wait, pop front, invoke.
-- Registers an `at_pre_exit` handler. After `pre_exit()`, queued tasks and any later submissions
-  are destroyed without being invoked, and `run()` blocks until process exit.
+- Registers an `at_pre_exit` handler eagerly during static initialization. Therefore `pre_exit()`
+  before the first submission is supported: the queue closes, later submissions are destroyed
+  without invocation, and `run()` blocks until process exit.
 - Calling `run()` a second time violates a precondition and asserts.
 
 ### 5. Export surface and build
@@ -170,13 +171,16 @@ native backends):
 - Shared-core smoke test: a consumer linked only against the import library submits via
   `stlab_v2_main_executor_submit` and drives `stlab_v2_main_executor_run`.
 
-## Open questions
+## Resolved questions
 
-- Qt `run()`: `std::exit(exec())` assumes the caller constructed `QCoreApplication`; confirm this
-  matches expected Qt usage, or declare `run()` unsupported for Qt and keep `exec()` as the
-  application's loop.
-- Emscripten `run()`: confirm `emscripten_exit_with_live_runtime()` semantics for current
-  Emscripten releases.
+- Qt `run()` is `std::exit(QCoreApplication::exec())`. Its precondition is that a
+  `QCoreApplication` exists; applications must call `pre_exit()` before quitting the Qt loop so
+  STLab process-shared state is closed before exit.
+- Emscripten `run()` is `emscripten_exit_with_live_runtime()` and is intentionally not `noexcept`,
+  as recorded in Design §2. Task 4 verified the pthread path with `-sPROXY_TO_PTHREAD` and
+  `-fwasm-exceptions`; review fixes added and verified the non-pthread path, where the backend posts
+  with `emscripten_async_call()` directly. Test shutdown uses a two-stage `pre_exit()` plus
+  `emscripten_force_exit(status)` callback and requires `-sEXIT_RUNTIME=1`.
 
 ## Possible follow-on work
 

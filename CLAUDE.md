@@ -36,6 +36,7 @@ Key presets:
 | `debug-sanitizer` | TSan + UBSan |
 | `debug-asan` | Address sanitizer |
 | `debug-portable` | Force portable task system (no platform scheduler) |
+| `debug-portable-main` | Portable main executor |
 | `debug-clang-libcxx` | Clang + libc++ on Linux |
 | `clang-tidy-win64` | Static analysis on Windows (use from VS Developer Prompt) |
 | `docs` | Doxygen API reference |
@@ -78,8 +79,9 @@ The library auto-detects the platform's threading and task systems. You can over
 
 - `STLAB_THREAD_SYSTEM` — `win32`, `pthread`, `pthread-apple`, `none`
 - `STLAB_TASK_SYSTEM` — `libdispatch` (Apple GCD), `portable`, `windows`
-- `STLAB_MAIN_EXECUTOR` — `libdispatch`, `qt5`, `qt6`, `emscripten`, `none`
+- `STLAB_MAIN_EXECUTOR` — `libdispatch`, `qt5`, `qt6`, `emscripten`, `portable`, `none`
 - `STLAB_NO_STD_COROUTINES=ON` — suppress C++20 coroutines for non-conforming compilers
+- `STLAB_EMSCRIPTEN_PTHREADS=OFF` — disable Emscripten pthread compiler/linker flags for targeted non-pthread WebAssembly builds
 
 The `portable` task system is the cross-platform fallback that works on all platforms including Emscripten.
 
@@ -138,7 +140,7 @@ The concurrency subsystem (`include/stlab/concurrency/`) is the core of the libr
 - **`channel.hpp`** — `stlab::sender<T>` / `stlab::receiver<T>` for reactive pipelines. Multiple process stages can be composed.
 - **`executor_base.hpp`** / **`default_executor.hpp`** — Executors are `stlab::executor_t` (a type-erased callable). The default executor dispatches to the platform task pool.
 - **`serial_queue.hpp`** — A serial dispatch queue built on executors.
-- **`main_executor.hpp`** — Executor that runs on the application main thread (platform-specific).
+- **`main_executor.hpp`** — Executor for the application's main queue, behind the `stlab_v2_main_executor_*` C ABI; `main_executor_run()` services it and never returns.
 - **`task.hpp`** — `stlab::task<Sig>` — a move-only type-erased callable (like `std::function` but non-copyable).
 - **`system_timer.hpp`** — Timer-based future scheduling.
 

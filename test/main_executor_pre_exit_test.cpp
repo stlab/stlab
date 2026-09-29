@@ -15,6 +15,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <memory>
+#include <utility>
 
 namespace {
 
@@ -24,7 +25,7 @@ bool later_invoked = false;
 
 void report(bool ok, const char* message) {
     if (!ok) {
-        std::fprintf(stderr, "FAILED: %s\n", message);
+        (void)std::fprintf(stderr, "FAILED: %s\n", message);
         std::exit(EXIT_FAILURE);
     }
 }

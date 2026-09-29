@@ -274,23 +274,21 @@ if(PROJECT_IS_TOP_LEVEL)
         "${config_contents}")
     endif()
 
-    set(module_path_prelude [=[
-set(_stlab_saved_CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}")
-list(PREPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
+    set(libdispatch_dependency [=[
+if(TARGET libdispatch::libdispatch)
+  set(libdispatch_FOUND TRUE)
+else()
+  include("${CMAKE_CURRENT_LIST_DIR}/Findlibdispatch.cmake")
+endif()
+if(NOT libdispatch_FOUND)
+  set(stlab_FOUND FALSE)
+  set(stlab_NOT_FOUND_MESSAGE "libdispatch dependency was not found.")
+  return()
+endif()
 ]=])
     string(REPLACE
-      "include(CMakeFindDependencyMacro)\n\n# Find dependencies required by this package\n"
-      "include(CMakeFindDependencyMacro)\n\n${module_path_prelude}\n# Find dependencies required by this package\n"
-      config_contents
-      "${config_contents}")
-
-    set(module_path_restore [=[
-set(CMAKE_MODULE_PATH "${_stlab_saved_CMAKE_MODULE_PATH}")
-unset(_stlab_saved_CMAKE_MODULE_PATH)
-]=])
-    string(REPLACE
-      "include(\"\${CMAKE_CURRENT_LIST_DIR}/stlabTargets.cmake\")"
-      "${module_path_restore}\ninclude(\"\${CMAKE_CURRENT_LIST_DIR}/stlabTargets.cmake\")"
+      "find_dependency(libdispatch)"
+      "${libdispatch_dependency}"
       config_contents
       "${config_contents}")
 

@@ -60,9 +60,8 @@ extern "C" void stlab_v2_main_executor_submit(const unsigned char* /*task_abi_gu
         STLAB_VERSION_NAMESPACE()::detail::main_tasks().push(vtable, invoke, source);
     assert(pushed && "Emscripten main queue is never closed.");
 #if defined(__EMSCRIPTEN_PTHREADS__)
-    emscripten_async_run_in_main_runtime_thread(EM_FUNC_SIG_VI,
-                                                &STLAB_VERSION_NAMESPACE()::detail::bounce,
-                                                nullptr);
+    emscripten_async_run_in_main_runtime_thread(
+        EM_FUNC_SIG_VI, &STLAB_VERSION_NAMESPACE()::detail::bounce, nullptr);
 #else
     emscripten_async_call(&STLAB_VERSION_NAMESPACE()::detail::run_one, nullptr, 0);
 #endif

@@ -45,7 +45,7 @@ struct destruction_probe {
 /// Terminates the process with failure when `ok` is `false`.
 void report(bool ok, const char* message) {
     if (!ok) {
-        std::fprintf(stderr, "FAILED: %s\n", message);
+        (void)std::fprintf(stderr, "FAILED: %s\n", message);
         std::exit(EXIT_FAILURE);
     }
 }

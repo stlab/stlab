@@ -6,7 +6,9 @@
 
 #include "detail/main_task_queue.hpp"
 
+#include <stlab/concurrency/default_executor.hpp>
 #include <stlab/concurrency/main_executor.hpp>
+#include <stlab/concurrency/task.hpp>
 #include <stlab/config.hpp>
 #include <stlab/pre_exit.hpp>
 
