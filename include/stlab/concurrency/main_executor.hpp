@@ -20,7 +20,7 @@
  *  never returns, like `dispatch_main()`; the program ends by calling `pre_exit()` and
  *  `std::exit()` from a task. On Emscripten, call `pre_exit()` from the task, schedule a separate
  *  `emscripten_async_call()` callback, return from the task, and call `emscripten_force_exit()`
- *  from that callback.
+ *  from that callback; link the executable with `-sEXIT_RUNTIME=1` for it to terminate.
  *
  *  Windows has no process main queue (each UI thread owns its message queue), so no main executor
  *  is provided there unless `STLAB_MAIN_EXECUTOR` selects Qt or `portable`.
@@ -65,7 +65,8 @@ extern "C" void stlab_v2_main_executor_submit(const unsigned char* task_abi_guar
 /// - Precondition: called at most once per process, from the thread the platform designates as
 ///   main where it designates one.
 /// - Postcondition: on Emscripten, the runtime remains live until code calls
-///   `emscripten_force_exit()` from outside a `noexcept` executor task.
+///   `emscripten_force_exit()` from outside a `noexcept` executor task, with the executable linked
+///   with `-sEXIT_RUNTIME=1`.
 extern "C" [[noreturn]] void stlab_v2_main_executor_run();
 
 /** @} */
