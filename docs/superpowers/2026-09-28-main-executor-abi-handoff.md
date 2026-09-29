@@ -23,6 +23,7 @@
   - `60b8aae ci: cover portable, Qt6, shared portable, and non-pthread Emscripten main executors`
   - Added matrix coverage for Linux portable main, Linux Qt6 main, Windows shared portable main, and Linux WebAssembly non-pthread main executor. Added `STLAB_EMSCRIPTEN_PTHREADS` to the Emscripten toolchain file.
 - Task 6 — documentation, lint, and final handoff:
+  - `f0d967b docs: document main executor ABI backends and handoff`
   - Updated README, CLAUDE.md, and the design spec to reflect `portable`, eager portable pre-exit registration, Qt/Emscripten resolved questions, `STLAB_EMSCRIPTEN_PTHREADS`, and the ABI-backed main executor architecture.
   - Replaced generated-package `CMAKE_MODULE_PATH` prepending for libdispatch with direct inclusion of the installed `Findlibdispatch.cmake`, avoiding leaked caller state when a non-REQUIRED `find_package(stlab)` exits early.
 
@@ -60,5 +61,5 @@ No GitHub issues were created; issue creation requires explicit user approval.
 ## Remaining tasks
 
 - CI-only verification of real libdispatch behavior on macOS.
-- CI-only verification of Linux Qt6 through the apt-installed Qt6 workflow job.
+- Pending CI confirmation of the apt-installed qt6-base-dev workflow job (backend already verified locally in WSL).
 - Watch the installed-package libdispatch path in final CI/review; the known `CMAKE_MODULE_PATH` leak from non-REQUIRED `find_package(stlab)` has been addressed in Task 6 by removing the prepend/restore pattern.
