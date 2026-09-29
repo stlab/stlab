@@ -48,6 +48,13 @@ jobs:
           cat .emscripten
           popd
 
+      - name: Install dependencies // Linux Qt6
+        if: ${{ matrix.config.qt == 'qt6' }}
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qt6-base-dev
+
       - name: Set enviroment variables // Linux GCC
         if: ${{ matrix.config.compiler == 'gcc' }}
         shell: bash
@@ -67,7 +74,7 @@ jobs:
         shell: bash
         run: |
           mkdir ../build
-          cmake -S. -B../build -GNinja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=20
+          cmake -S. -B../build -GNinja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=20 ${{ matrix.config.cmake_options }}
 
       - name: Configure // Linux Emscripten
         if: ${{ startsWith(matrix.config.compiler, 'emscripten') }}
@@ -75,7 +82,8 @@ jobs:
         run: |
           mkdir ../build
           cmake -S. -B../build -GNinja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=23 \
-            -DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/cmake/Platform/Emscripten-STLab.cmake
+            -DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/cmake/Platform/Emscripten-STLab.cmake \
+            ${{ matrix.config.cmake_options }}
 
       - name: Setup MSVC
         if: ${{ startsWith(matrix.config.os, 'windows') }}  
@@ -93,7 +101,7 @@ jobs:
         if: ${{ startsWith(matrix.config.os, 'ubuntu') || startsWith(matrix.config.os, 'macos') }}
         shell: bash
         run: |
-          cmake --build ../build/
+          cmake --build ../build/ ${{ matrix.config.build_options }}
 
       - name: Build // Windows
         if: ${{ startsWith(matrix.config.os, 'windows') }}
@@ -104,7 +112,7 @@ jobs:
         shell: bash
         run: |
           cd ../build/
-          ctest --output-on-failure --verbose
+          ctest --output-on-failure --verbose ${{ matrix.config.ctest_options }}
 
   macos-tsan:
     name: macOS TSan

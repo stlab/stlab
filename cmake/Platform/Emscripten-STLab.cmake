@@ -19,12 +19,17 @@ include( ${EMSDK_ROOT}/cmake/Modules/Platform/Emscripten.cmake )
 # Set compiler and linker flags.
 #
 
+option( STLAB_EMSCRIPTEN_PTHREADS "Build Emscripten targets with pthread support." ON )
+
 #
 # `-pthread`
-# STLab uses threads. Without these, the tests will not compile.
+# STLab's default Emscripten test suite uses threads. Targeted non-pthread
+# builds can disable these flags with STLAB_EMSCRIPTEN_PTHREADS=OFF.
 #
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread" )
-set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pthread" )
+if ( STLAB_EMSCRIPTEN_PTHREADS )
+    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread" )
+    set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pthread" )
+endif()
 
 #
 # `-fwasm-exceptions`:
@@ -67,7 +72,9 @@ set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -sEXIT_RUNTIME=1" )
 # Smaller values (150MB, 200MB) produce intermittent failures. 300MB was chosen to give enough headroom for
 # tests written in the future. 
 #
-set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -sINITIAL_MEMORY=300MB" )
+if ( STLAB_EMSCRIPTEN_PTHREADS )
+    set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -sINITIAL_MEMORY=300MB" )
+endif()
 
 #
 # `-sPTHREAD_POOL_SIZE=32` 
@@ -75,7 +82,9 @@ set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -sINITIAL_MEMORY=300MB" )
 # 8 threads deadlocked consistently, 16 threads passed consistently. 
 # 32 was chosen to give enough headroom for tests written in the future. 
 #
-set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -sPTHREAD_POOL_SIZE=32" )
+if ( STLAB_EMSCRIPTEN_PTHREADS )
+    set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -sPTHREAD_POOL_SIZE=32" )
+endif()
 
 #
 # `-sPROXY_TO_PTHREAD`
@@ -87,7 +96,9 @@ set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -sPTHREAD_POOL_SIZE=32" )
 # 
 # You can read more about the setting here: https://emscripten.org/docs/porting/pthreads.html#blocking-on-the-main-browser-thread
 #
-set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -sPROXY_TO_PTHREAD" )
+if ( STLAB_EMSCRIPTEN_PTHREADS )
+    set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -sPROXY_TO_PTHREAD" )
+endif()
 
 #
 # Set the minimum required version for node; earlier versions lack sufficient exception support.
