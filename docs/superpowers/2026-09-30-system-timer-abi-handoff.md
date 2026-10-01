@@ -108,8 +108,20 @@ timer target without synchronizing with submission's owner mutex. Cancellation
 now acquires that mutex to establish publication, releases it before destroying
 user captures, then relocks for unlinking and notification. The record stays
 pending until capture destruction finishes. The failed CI reports are the
-pre-fix evidence; fresh macOS TSan CI is required to verify the correction because
-no local libdispatch runtime is available.
+pre-fix evidence. All 15 CI jobs passed at `2c07abe` in
+[run 36832092800](https://github.com/stlab/stlab/actions/runs/36832092800),
+including native and portable macOS TSan, both WebAssembly configurations, and
+all Windows shared-core variants.
+
+The next Copilot review identified Emscripten capture destruction under the timer
+admission mutex. A canceled capture that attempts resubmission reproduced the
+SDK's pthread-mutex deadlock assertion rather than the closed-admission
+diagnostic. Cancellation now detaches each record and clears any timeout under
+the mutex, then unlocks while destroying captures and releasing the list
+reference. Post-shutdown resubmission remains a precondition violation; the new
+regression checks that it is diagnosed rather than blocked by lock reentrancy.
+After this correction, the pthread suite passed 22/22 and the cooperative suite
+passed 12/12; the release cooperative timer selection passed 5/5.
 
 ## Final verification evidence
 

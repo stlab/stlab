@@ -155,18 +155,20 @@ void bounce_registration(void* context) noexcept {
 void close_on_main() noexcept {
     assert(emscripten_is_main_runtime_thread());
     auto& service = state();
-    std::scoped_lock lock{service.mutex};
+    std::unique_lock lock{service.mutex};
     service.closed = true;
     while (service.head) {
         auto& record = *service.head;
         service.remove(record);
-        record.target = nullptr;
         if (record.armed) {
             emscripten_clear_timeout(record.timeout_id);
             record.armed = false;
             record.release();
         }
+        lock.unlock();
+        record.target = nullptr;
         record.release();
+        lock.lock();
     }
 }
 

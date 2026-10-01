@@ -64,6 +64,25 @@ int main(int argc, char** argv) {
     using namespace std::chrono_literals;
     if (argc > 1) {
         const std::string_view scenario{argv[1]};
+        if (scenario == "cancel_capture_reentry") {
+            std::set_terminate([] {
+                (void)std::fputs("EXPECTED_STLAB_TERMINATE\n", stderr);
+                std::abort();
+            });
+            main_executor_test::run(argc, argv, [] {
+                stlab::main_executor([]() noexcept {
+                    auto capture = std::shared_ptr<int>(new int(42), [](int* value) noexcept {
+                        delete value;
+                        stlab::system_timer(0ns, []() noexcept { std::abort(); });
+                    });
+                    stlab::system_timer(1440h, [capture = std::move(capture)]() noexcept {
+                        require(false, "canceled timer executed");
+                    });
+                    stlab::pre_exit();
+                    emscripten_async_call(&main_executor_test::force_exit_success, nullptr, 0);
+                });
+            });
+        }
         if (scenario == "abi_guard" || scenario == "negative_abi_delay") {
             std::set_terminate([] {
                 (void)std::fputs("EXPECTED_STLAB_TERMINATE\n", stderr);
