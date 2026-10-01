@@ -13,7 +13,7 @@
 #include "detail/core_shutdown.hpp"
 
 #if STLAB_TASK_SYSTEM(EMSCRIPTEN)
-#include <stlab/concurrency/main_executor.hpp>
+#include "detail/cooperative_executor.hpp"
 #endif
 
 #if STLAB_TASK_SYSTEM(LIBDISPATCH)
@@ -841,7 +841,9 @@ extern "C" void stlab_v2_default_executor_submit(const unsigned char* task_abi_g
     assert(vtable != nullptr && invoke != nullptr && "Task vtable/invoke must not be null.");
     STLAB_VERSION_NAMESPACE()::detail::register_core_shutdown();
 #if STLAB_TASK_SYSTEM(EMSCRIPTEN)
-    stlab_v2_main_executor_submit(task_abi_guard, vtable, invoke, source);
+    (void)task_abi_guard;
+    STLAB_VERSION_NAMESPACE()::detail::submit_cooperative_task(
+        vtable, invoke, source, STLAB_VERSION_NAMESPACE()::detail::cooperative_task_kind::executor);
 #else
     (void)task_abi_guard;
     STLAB_VERSION_NAMESPACE()::detail::submit_executor_task(
@@ -858,7 +860,9 @@ extern "C" void stlab_v2_high_executor_submit(const unsigned char* task_abi_guar
     assert(vtable != nullptr && invoke != nullptr && "Task vtable/invoke must not be null.");
     STLAB_VERSION_NAMESPACE()::detail::register_core_shutdown();
 #if STLAB_TASK_SYSTEM(EMSCRIPTEN)
-    stlab_v2_main_executor_submit(task_abi_guard, vtable, invoke, source);
+    (void)task_abi_guard;
+    STLAB_VERSION_NAMESPACE()::detail::submit_cooperative_task(
+        vtable, invoke, source, STLAB_VERSION_NAMESPACE()::detail::cooperative_task_kind::executor);
 #else
     (void)task_abi_guard;
     STLAB_VERSION_NAMESPACE()::detail::submit_executor_task(
@@ -875,7 +879,9 @@ extern "C" void stlab_v2_low_executor_submit(const unsigned char* task_abi_guard
     assert(vtable != nullptr && invoke != nullptr && "Task vtable/invoke must not be null.");
     STLAB_VERSION_NAMESPACE()::detail::register_core_shutdown();
 #if STLAB_TASK_SYSTEM(EMSCRIPTEN)
-    stlab_v2_main_executor_submit(task_abi_guard, vtable, invoke, source);
+    (void)task_abi_guard;
+    STLAB_VERSION_NAMESPACE()::detail::submit_cooperative_task(
+        vtable, invoke, source, STLAB_VERSION_NAMESPACE()::detail::cooperative_task_kind::executor);
 #else
     (void)task_abi_guard;
     STLAB_VERSION_NAMESPACE()::detail::submit_executor_task(

@@ -133,6 +133,17 @@ earlier main tasks can still enqueue additional work behind the exit task.
 On Emscripten, the final main task schedules the non-`noexcept` force-exit callback
 described above instead of calling `std::exit()` inside the executor task.
 
+In threadless builds, `pre_exit()` initiates asynchronous retirement and returns.
+Default/high/low tasks and their continuations remain accepted and run before any
+deferred ordinary main task. Executor admission closes only after the last target
+and its captures are destroyed; the remaining pre-exit handlers then resume in
+reverse registration order. Producer main work and those handlers' main submissions
+precede the caller's deferred exit fence. Normal merged FIFO ordering is unchanged
+outside retirement, and FIFO is preserved within each shutdown stream.
+Drain work must not depend on deferred main tasks for progress. Use the main-queue
+exit fence rather than exiting directly on return from `pre_exit()`; its execution
+establishes that retirement has completed.
+
 We also suggest the installation of [Ninja](https://ninja-build.org/) and its use by adding
 `-GNinja` to your cmake command line… but ninja is not required.
 

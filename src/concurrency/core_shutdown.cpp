@@ -9,6 +9,10 @@
 
 #include <stlab/config.hpp>
 
+#if STLAB_TASK_SYSTEM(EMSCRIPTEN)
+#include "detail/cooperative_executor.hpp"
+#endif
+
 #include <array>
 #include <atomic>
 #include <cassert>
@@ -49,10 +53,14 @@ void check_open(const core_shutdown_state& value) noexcept {
 ///
 /// - Precondition: if cleanup blocks the main thread, workers and timer callbacks do not
 ///   synchronously require main-queue progress.
-/// - Postcondition: main-queue admission and servicing are unchanged.
+/// - Postcondition: main admission is unchanged; cooperative ordinary dispatch and remaining
+///   pre-exit handlers resume asynchronously after executor retirement.
 /// - Complexity: linear in pending timers, accepted executor work, and initialized workers.
 void shutdown_core() noexcept {
     shutdown_system_timer();
+#if STLAB_TASK_SYSTEM(EMSCRIPTEN)
+    shutdown_cooperative_executor();
+#else
     auto& value = state();
     for (;;) {
         core_executor_cleanup cleanup = nullptr;
@@ -66,6 +74,7 @@ void shutdown_core() noexcept {
         }
         cleanup();
     }
+#endif
 }
 
 } // namespace

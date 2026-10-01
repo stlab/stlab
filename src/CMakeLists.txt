@@ -1,5 +1,8 @@
 target_sources(stlab PRIVATE stlab.cpp)
 target_sources(stlab-core PRIVATE pre_exit.cpp concurrency/executor_abi.cpp concurrency/core_shutdown.cpp)
+if(STLAB_TASK_SYSTEM STREQUAL "emscripten")
+  target_sources(stlab-core PRIVATE concurrency/cooperative_executor.cpp)
+endif()
 if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
   target_sources(stlab-core PRIVATE concurrency/system_timer_emscripten.cpp)
 elseif(STLAB_TASK_SYSTEM STREQUAL "windows")

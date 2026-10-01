@@ -123,7 +123,52 @@ regression checks that it is diagnosed rather than blocked by lock reentrancy.
 After this correction, the pthread suite passed 22/22 and the cooperative suite
 passed 12/12; the release cooperative timer selection passed 5/5.
 
-## Final verification evidence
+## Cooperative shutdown review correction
+
+The next finding reproduced accepted cooperative executor work surviving
+`pre_exit()` and then losing its continuations to closed core admission. The user
+approved an asynchronous retirement barrier rather than inline draining, blocking
+the sole event-loop thread, or introducing a nested pump.
+
+The compiled dispatcher preserves normal merged FIFO across main and all three
+executor priorities. During retirement it services only executor work, including
+descendants submitted during invocation and capture destruction. Admission closes
+only after the last target is destroyed. The suspended pre-exit stack then resumes
+in LIFO order, including handlers registered during unwind; ordinary main dispatch
+resumes on a subsequent event-loop turn. Native and pthread-enabled shutdown remain
+synchronous.
+
+Main work posted by draining producers and resumed handlers precedes ordinary main
+submissions made by the initiating caller. This staging keeps a caller's early exit
+fence from overtaking later producer main work. The fence is still nontransitive:
+descendants of resumed main tasks can follow it. Drain work must not depend on
+deferred main tasks for progress.
+
+Pending/current/empty public-interface regressions failed before the fix and pass
+with the barrier. Additional scenarios cover actual future continuations, shutdown
+outside dispatch, timer-only initialization, unchanged normal FIFO, late use of all
+priorities, shutdown before first use, and duplicate shutdown during the drain.
+`emscripten_set_immediate()` owns the dispatch wake; replacing per-task timeout wakes
+reduced the existing 1,000-task FIFO test from about 1.15 seconds to about 0.04 seconds.
+The timer backend continues to use `emscripten_set_timeout()`.
+
+| Barrier validation | Result |
+| --- | --- |
+| Emscripten cooperative full suite | 24/24 passed |
+| Emscripten pthread full suite | 22/22 passed |
+| Release cooperative shutdown and timer selection | 17/17 passed |
+| Cooperative C++17 shutdown selection | 12/12 passed |
+| Windows portable-main timer/executor lifecycle selection | 13/13 passed |
+| Native C++17 lifecycle selection | 8/8 passed |
+| Native pre-exit/core lifecycle clang-tidy | No displayed diagnostics |
+| Cooperative dispatcher/main clang-tidy with wasm32 SDK headers | No displayed diagnostics |
+| Doxygen preset | Built |
+
+After direct-include lint corrections, the affected cooperative runtime selection
+passed 18/18 and the pthread timer/main selection passed 9/9. Full CI evidence above
+belongs to earlier commits; the new barrier requires a fresh CI and bot review pass.
+
+## Original implementation verification evidence
 
 | Configuration | Result |
 | --- | --- |

@@ -18,9 +18,11 @@
  * callbacks. The core handler releases pending timer captures before joining default executors.
  * When `pre_exit()` blocks the main thread, workers and timer callbacks must not synchronously
  * require main-queue progress. The shared core handler does not close or drain the main queue.
- * On native platforms `pre_exit()` must not be called from a timer callback. Client modules
- * supplying task operations must remain loaded until their accepted tasks have completed or have
- * been canceled and destroyed.
+ * On threadless Emscripten, timer cancellation finishes during `pre_exit()`, but executor
+ * retirement and remaining handlers finish asynchronously before the next ordinary main task. On
+ * native platforms `pre_exit()` must not be called from a timer callback. Client modules supplying
+ * task operations must remain loaded until their accepted tasks have completed or have been
+ * canceled and destroyed.
  */
 
 #include <stlab/concurrency/task.hpp>

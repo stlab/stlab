@@ -24,6 +24,21 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten" AND NOT STLAB_EMSCRIPTEN_PTHREADS)
+  add_executable(stlab.test.cooperative_shutdown cooperative_shutdown_test.cpp)
+  target_link_libraries(stlab.test.cooperative_shutdown PRIVATE stlab-core)
+  foreach(scenario IN ITEMS pending current empty normal_fifo future_chain outside timer_only)
+    add_test(NAME stlab.test.cooperative_shutdown_${scenario}
+      COMMAND stlab.test.cooperative_shutdown ${scenario})
+    set_tests_properties(stlab.test.cooperative_shutdown_${scenario} PROPERTIES TIMEOUT 60)
+  endforeach()
+  foreach(scenario IN ITEMS late_default late_high late_low shutdown_first repeat_pre_exit)
+    add_test(NAME stlab.test.cooperative_shutdown_${scenario}
+      COMMAND ${CMAKE_COMMAND} "-Demulator=${CMAKE_CROSSCOMPILING_EMULATOR}"
+        "-Dexecutable=$<TARGET_FILE:stlab.test.cooperative_shutdown>" "-Dscenario=${scenario}"
+        "-Dexpected=EXPECTED_STLAB_TERMINATE|core service use after pre_exit|pre_exit invoked more than once"
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/expect_emscripten_terminate.cmake)
+    set_tests_properties(stlab.test.cooperative_shutdown_${scenario} PROPERTIES TIMEOUT 60)
+  endforeach()
   add_executable(stlab.test.main_executor_shutdown_order main_executor_shutdown_order_test.cpp)
   target_link_libraries(stlab.test.main_executor_shutdown_order PRIVATE stlab-core)
   add_test(NAME stlab.test.main_executor_shutdown_order COMMAND stlab.test.main_executor_shutdown_order)

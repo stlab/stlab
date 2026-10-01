@@ -13,8 +13,8 @@
  *  @brief Executor for the application's main queue.
  *
  *  @details
- *  Tasks submitted to `main_executor` run in submission order on the main queue selected by
- *  `STLAB_MAIN_EXECUTOR` when `stlab-core` is built: the libdispatch main queue, the Qt
+ *  Tasks submitted to `main_executor` normally run in submission order on the main queue selected
+ * by `STLAB_MAIN_EXECUTOR` when `stlab-core` is built: the libdispatch main queue, the Qt
  *  application event loop, the Emscripten main runtime thread, or (opt-in) a portable
  *  stlab-owned queue. On native platforms, `main_executor_run()` services the main queue on the
  *  calling thread and never returns, like `dispatch_main()`. The main queue remains available
@@ -30,6 +30,12 @@
  *  alive without returning. The final main task schedules a separate `emscripten_async_call()`
  *  callback, returns normally, and calls `emscripten_force_exit()` from that callback; link the
  *  executable with `-sEXIT_RUNTIME=1` for it to terminate.
+ *
+ *  Threadless Emscripten shutdown is an asynchronous barrier: default/high/low tasks drain
+ *  before ordinary main dispatch resumes. Main submissions by draining executor callbacks,
+ *  their capture destructors, and the remaining pre-exit handlers precede ordinary main
+ *  submissions deferred by that barrier. FIFO order is preserved within each stream and
+ *  normal merged submission order is unchanged outside retirement.
  *
  *  Windows has no process main queue (each UI thread owns its message queue), so no main executor
  *  is provided there unless `STLAB_MAIN_EXECUTOR` selects Qt or `portable`.
@@ -63,7 +69,8 @@ inline namespace v2 {
 /// - Precondition: `source` is the `relocation_source()` of a live `task<void() noexcept>` sharing
 ///   `vtable`/`invoke`, valid for the duration of this call.
 /// - Postcondition: exactly one invocation of the relocated target is scheduled on the main queue,
-///   after every task previously submitted from the calling thread.
+///   normally after every task previously submitted from the calling thread. Cooperative
+///   retirement stages ordinary main submissions behind main work posted by draining producers.
 /// - Postcondition: main submission remains available after `pre_exit()`.
 extern "C" void stlab_v2_main_executor_submit(const unsigned char* task_abi_guard,
                                               const stlab_v2_task_concept* vtable,
@@ -107,8 +114,7 @@ namespace detail {
 struct main_executor_type {
     using result_type = void;
 
-    /// Schedules `f` to run on the main queue after every task previously submitted from the
-    /// calling thread.
+    /// Schedules `f` in main-queue order, subject to the cooperative shutdown barrier.
     template <class F>
     auto operator()(F&& f) const -> std::enable_if_t<std::is_nothrow_invocable_v<std::decay_t<F>>> {
         task<void() noexcept> t{std::forward<F>(f)};
@@ -126,7 +132,8 @@ struct main_executor_type {
 
 #if !STLAB_MAIN_EXECUTOR(NONE)
 
-/// Runs `void() noexcept` tasks in submission order on the configured main queue.
+/// Runs `void() noexcept` tasks on the configured main queue in submission order, except that
+/// cooperative retirement prioritizes main work posted by draining producers.
 /// Remains available after `pre_exit()` so a final queued task can terminate the process.
 inline constexpr auto main_executor = detail::main_executor_type{};
 

@@ -23,7 +23,8 @@ using core_executor_cleanup = void (*)() noexcept;
 void register_core_shutdown_handler(core_executor_cleanup cleanup);
 
 /// Registers the single shared core handler at the first use of timers or default executors.
-/// The handler joins timers and default executors without closing or draining the main queue.
+/// The handler retires timers and default executors without closing main admission. Cooperative
+/// retirement defers ordinary main dispatch and the remaining handlers until executor quiescence.
 /// When `pre_exit()` blocks the main thread, workers and timer callbacks must not synchronously
 /// require main-queue progress.
 ///
@@ -39,8 +40,17 @@ void register_core_shutdown();
 /// - Postcondition: does not allocate; registration remains possible while timers are joining.
 void register_core_executor_cleanup(core_executor_cleanup cleanup);
 
-/// Closes core admission after the public pre-exit stack is exhausted, including before first use.
+/// Closes core admission at executor retirement or stack exhaustion, including before first use.
 void complete_core_shutdown() noexcept;
+
+/// Suspends handler popping until cooperative executor retirement completes.
+/// - Precondition: called by a handler during the active pre-exit operation.
+void defer_pre_exit() noexcept;
+
+/// Resumes deferred handler popping in registration-reverse order.
+/// - Precondition: the pre-exit operation is deferred and core retirement has completed.
+/// - Complexity: linear in invoked handlers, excluding their work.
+void resume_pre_exit() noexcept;
 
 } // namespace detail
 STLAB_VERSION_NAMESPACE_END()

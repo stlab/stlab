@@ -154,7 +154,8 @@ Timers and default-executor resources share one core teardown handler, registere
 lazily on the first use of either service. Public `at_pre_exit()` handlers retain
 their existing reverse-registration order, including the ability to register more
 handlers during `pre_exit()`. Application handlers needed to unblock running core
-work must be registered after that first use, so they run before core teardown.
+work must be registered after that first use and before invoking `pre_exit()`, so
+they run before core teardown.
 
 Within the shared core handler, close timer admission and destroy pending captures,
 wait for committed timer callbacks, then drain and join initialized default
@@ -168,6 +169,25 @@ A main task can retire producers with `pre_exit()` and then enqueue a final exit
 That task follows main work posted by the retired producers; it does not transitively
 drain work that earlier main tasks enqueue behind it. Producers being joined must not
 synchronously require main-queue progress while `pre_exit()` occupies the main thread.
+
+In threadless Emscripten, `pre_exit()` initiates asynchronous retirement rather than
+waiting on the sole event-loop thread. Default/high/low admission remains open while
+their accepted tasks, descendants, and target capture destruction drain through
+event-loop callbacks. Ordinary main tasks are deferred. An empty executor queue is
+not quiescence until the currently invoked target and its captures have finished.
+Close executor admission at quiescence, resume the remaining pre-exit handlers in
+LIFO order (including handlers registered during unwind), then resume ordinary main
+dispatch on a later event-loop turn.
+
+Main work posted by draining executor callbacks, capture cleanup, and resumed
+pre-exit handlers precedes the caller's deferred main exit fence. Stage ordinary
+main submissions separately during retirement so an early exit submission cannot
+overtake later producer main work. Preserve FIFO within each stream and normal
+merged ordering outside retirement. This remains a nontransitive fence: resumed
+main callbacks can enqueue descendants behind the exit task. Drain work must not
+depend on deferred main work for progress. Returning from cooperative `pre_exit()`
+means retirement has started; reaching the next ordinary main task establishes
+completion. No nested event-loop pump or inline shutdown task execution is added.
 
 Cancellation and callback execution have one synchronized ownership transition:
 each accepted task is either invoked once or canceled without invocation, and is
@@ -184,9 +204,9 @@ may initiate `pre_exit()` on the main runtime thread: the current callback is al
 committed, and shutdown cancels other pending timers without waiting for itself.
 That callback must return normally.
 
-Keep the existing Emscripten final-exit protocol: initiate `pre_exit()`, then perform
-`emscripten_force_exit()` from a separate non-`noexcept` callback with the executable
-linked using `-sEXIT_RUNTIME=1`.
+Keep the Emscripten final-exit protocol: initiate `pre_exit()`, then enqueue the main
+completion fence. That final main task schedules `emscripten_force_exit()` in a
+separate non-`noexcept` callback with the executable linked using `-sEXIT_RUNTIME=1`.
 
 ## Threadless configuration and execution
 
@@ -203,9 +223,9 @@ Pthread-enabled Emscripten builds retain the portable default task system. Detec
 reject mismatches between requested threading configuration and actual toolchain
 pthread support. Non-Emscripten executor configurations retain their existing behavior.
 
-In cooperative mode, executor submissions enter the existing main queue through the
-core implementation. They are not executed inline. Tasks and coroutine continuations
-cooperate by returning control to the JavaScript event loop; this design does not add
+In cooperative mode, executor and main submissions share a compiled event-loop
+dispatcher with distinct submission streams. They are not executed inline. Tasks and
+coroutine continuations cooperate by returning control to the JavaScript event loop; this design does not add
 preemption, Asyncify, stack switching, or a nested event-loop pump.
 
 Public concurrency headers must not acquire task-system, shared-core, or Windows
