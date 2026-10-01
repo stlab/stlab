@@ -8,6 +8,8 @@
 
 #include <atomic>
 #include <chrono>
+#include <coroutine>
+#include <exception>
 #include <memory>
 #include <string>
 #include <thread>
@@ -171,7 +173,7 @@ namespace {
 std::coroutine_handle<> g_escaped_handle;
 
 struct escape_awaitable {
-    bool await_ready() const { return false; }
+    [[nodiscard]] auto await_ready() const -> bool { return false; }
     void await_suspend(std::coroutine_handle<> ch) { g_escaped_handle = ch; }
     int await_resume() { return 0; }
 };
@@ -245,7 +247,7 @@ namespace {
 std::coroutine_handle<> g_proxy_handle;
 
 struct manual_complete_awaitable {
-    bool await_ready() const { return false; }
+    [[nodiscard]] bool await_ready() const { return false; }
     void await_suspend(std::coroutine_handle<> ch) { g_proxy_handle = ch; }
     int await_resume() { return 7; }
     manual_complete_awaitable& operator co_await() { return *this; }
@@ -253,28 +255,28 @@ struct manual_complete_awaitable {
 
 struct ready_value_awaitable {
     int value;
-    bool await_ready() const { return true; }
+    [[nodiscard]] bool await_ready() const { return true; }
     void await_suspend(std::coroutine_handle<>) {}
     int await_resume() { return value; }
     ready_value_awaitable& operator co_await() { return *this; }
 };
 
 struct throwing_awaitable {
-    bool await_ready() const { return true; }
+    [[nodiscard]] bool await_ready() const { return true; }
     void await_suspend(std::coroutine_handle<>) {}
     int await_resume() { throw test_exception("generic resume_on throw"); }
     throwing_awaitable& operator co_await() { return *this; }
 };
 
 struct suspend_throwing_awaitable {
-    bool await_ready() const { return false; }
+    [[nodiscard]] bool await_ready() const { return false; }
     void await_suspend(std::coroutine_handle<> ch) { g_proxy_handle = ch; }
     int await_resume() { throw test_exception("generic resume_on suspend throw"); }
     suspend_throwing_awaitable& operator co_await() { return *this; }
 };
 
 struct manual_complete_void_awaitable {
-    bool await_ready() const { return false; }
+    [[nodiscard]] bool await_ready() const { return false; }
     void await_suspend(std::coroutine_handle<> ch) { g_proxy_handle = ch; }
     void await_resume() {}
     manual_complete_void_awaitable& operator co_await() { return *this; }
@@ -285,7 +287,7 @@ inline std::atomic<int> g_co_await_invocation_count{0};
 
 struct co_await_counting_awaitable {
     struct awaiter {
-        bool await_ready() const noexcept { return false; }
+        [[nodiscard]] bool await_ready() const noexcept { return false; }
         void await_suspend(std::coroutine_handle<> h) { g_proxy_handle = h; }
         int await_resume() { return 99; }
     };
