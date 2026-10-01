@@ -6,6 +6,7 @@
 
 #include "detail/core_shutdown.hpp"
 #include "detail/system_timer_shutdown.hpp"
+#include "detail/timer_common.hpp"
 
 #include <stlab/concurrency/default_executor.hpp>
 #include <stlab/concurrency/system_timer.hpp>
@@ -208,7 +209,7 @@ void close_timers() noexcept {
 
 } // namespace
 
-/// Cancels accepted timers before normal pre-exit handlers drain executor work.
+/// Cancels accepted timers when the shared core shutdown handler runs.
 void shutdown_system_timer() noexcept { close_timers(); }
 
 } // namespace detail
@@ -217,14 +218,15 @@ STLAB_VERSION_NAMESPACE_END()
 inline namespace v2 {
 
 /// Relocates an accepted timer target into the core, reporting resource failures explicitly.
-extern "C" auto stlab_v2_system_timer_submit(const unsigned char* /*task_abi_guard*/,
+extern "C" auto stlab_v2_system_timer_submit(const unsigned char* task_abi_guard,
                                              const stlab_v2_task_concept* vtable,
                                              stlab_v2_task_proc invoke,
                                              void* source,
                                              std::int64_t delay_ns) noexcept
     -> stlab_v2_timer_status {
-    assert(vtable && invoke && source && delay_ns >= 0);
     using namespace STLAB_VERSION_NAMESPACE()::detail;
+    check_timer_submission(task_abi_guard, delay_ns);
+    assert(vtable && invoke && source);
     try {
         register_core_shutdown();
         auto record = std::make_unique<timer_record>(delay_ns);

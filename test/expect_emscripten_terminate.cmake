@@ -4,6 +4,9 @@ execute_process(
   OUTPUT_VARIABLE output
   ERROR_VARIABLE error
   TIMEOUT 30)
-if(result STREQUAL "0" OR NOT "${output}${error}" MATCHES "EXPECTED_STLAB_TERMINATE")
+if(NOT DEFINED expected)
+  set(expected "EXPECTED_STLAB_TERMINATE")
+endif()
+if(result STREQUAL "0" OR NOT "${output}${error}" MATCHES "${expected}")
   message(FATAL_ERROR "Expected terminate handler was not called: ${result}\n${output}${error}")
 endif()

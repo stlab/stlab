@@ -3,6 +3,14 @@ include(stlab/development)
 if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
   add_executable(stlab.test.emscripten_timer emscripten_timer_test.cpp)
   target_link_libraries(stlab.test.emscripten_timer PRIVATE stlab-core)
+  foreach(scenario IN ITEMS abi_guard negative_abi_delay)
+    add_test(NAME stlab.test.emscripten_timer_${scenario}
+      COMMAND ${CMAKE_COMMAND} "-Demulator=${CMAKE_CROSSCOMPILING_EMULATOR}"
+        "-Dexecutable=$<TARGET_FILE:stlab.test.emscripten_timer>" "-Dscenario=${scenario}"
+        "-Dexpected=EXPECTED_STLAB_TERMINATE|system timer task storage ABI mismatch|delay_ns >= 0"
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/expect_emscripten_terminate.cmake)
+    set_tests_properties(stlab.test.emscripten_timer_${scenario} PROPERTIES TIMEOUT 60)
+  endforeach()
   add_test(NAME stlab.test.emscripten_timer COMMAND stlab.test.emscripten_timer)
   add_test(NAME stlab.test.emscripten_timer_cancel_pending
     COMMAND stlab.test.emscripten_timer cancel_pending)

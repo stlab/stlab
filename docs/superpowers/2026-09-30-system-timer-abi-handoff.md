@@ -75,6 +75,42 @@ it passed the full suites, native/portable ASan selections, and 25 additional na
 repetitions. Cold/warm allocation failure, unconsumed target ownership, and successful
 retry remain covered; the timeout was not reproduced.
 
+## PR review and CI corrections
+
+The PR review reproduced an Emscripten ABI-boundary defect: submission accepted an
+incompatible task-storage guard. The backend now uses the same guard and normalized
+delay check as native timers, before resource preparation or relocation. Raw-ABI
+death regressions cover an incompatible guard and a negative delay.
+
+The cooperative CI configuration failure was reproduced with an explicit SDK path
+and no `em-config` on `PATH`. Nested `try_compile` configurations did not inherit
+that SDK selection or the pthread option. The toolchain now propagates these
+variables and the selected Node executable/flags. Configuration rejection tests
+remove the SDK directory from `PATH` so an inherited shell environment cannot hide
+this failure.
+
+The pthread CI startup failure was reproduced deterministically by waiting for a
+main task during host startup. With `PROXY_TO_PTHREAD`, the main runtime already
+services tasks before the startup pthread calls `main_executor_run()`. The host
+now marks this already-active loop correctly. Concurrent-test thread handles are
+published by a main task only after construction completes, preventing the final
+callback from joining a vector still being modified. FIFO and exactly-once checks
+remain intact.
+
+After these corrections, Emscripten pthread tests passed 21/21, including 20
+additional concurrent-startup repetitions; cooperative tests passed 11/11,
+including all five configuration rejection scenarios without SDK discovery on
+`PATH`. Windows portable-main tests passed 5/5. The release cooperative timer
+selection also passed 4/4, including both ABI violations with assertions disabled.
+
+The macOS native TSan failures identified cancellation reading and destroying the
+timer target without synchronizing with submission's owner mutex. Cancellation
+now acquires that mutex to establish publication, releases it before destroying
+user captures, then relocks for unlinking and notification. The record stays
+pending until capture destruction finishes. The failed CI reports are the
+pre-fix evidence; fresh macOS TSan CI is required to verify the correction because
+no local libdispatch runtime is available.
+
 ## Final verification evidence
 
 | Configuration | Result |

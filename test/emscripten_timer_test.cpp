@@ -17,6 +17,7 @@
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
+#include <exception>
 #include <memory>
 #include <string_view>
 #include <utility>
@@ -63,6 +64,22 @@ int main(int argc, char** argv) {
     using namespace std::chrono_literals;
     if (argc > 1) {
         const std::string_view scenario{argv[1]};
+        if (scenario == "abi_guard" || scenario == "negative_abi_delay") {
+            std::set_terminate([] {
+                (void)std::fputs("EXPECTED_STLAB_TERMINATE\n", stderr);
+                std::abort();
+            });
+            static const unsigned char incompatible_guard = 0;
+            stlab::task<void() noexcept> target = []() noexcept { std::abort(); };
+            const auto* guard = scenario == "abi_guard" ?
+                                    &incompatible_guard :
+                                    &stlab::detail::current_task_storage_abi_guard::value;
+            (void)stlab::stlab_v2_system_timer_submit(
+                guard, target.relocation_concept(), target.relocation_invoke(),
+                target.relocation_source(), scenario == "abi_guard" ? 1000000000 : -7);
+            stlab::pre_exit();
+            emscripten_force_exit(EXIT_SUCCESS);
+        }
         main_executor_test::run(argc, argv, [scenario] {
             stlab::main_executor([scenario]() noexcept {
                 auto submit_pending = [] {

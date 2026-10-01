@@ -81,8 +81,11 @@ class dispatch_timers {
     static void canceled(void* context) noexcept {
         auto& entry = *static_cast<record*>(context);
         auto& owner = entry.owner;
+        std::unique_lock<std::mutex> lock(owner._mutex);
+        // Cancellation owns the record after event handlers return; synchronize its publication.
+        lock.unlock();
         entry.target = nullptr;
-        std::scoped_lock lock(owner._mutex);
+        lock.lock();
         if (entry.previous)
             entry.previous->next = entry.next;
         else

@@ -1,4 +1,10 @@
 # Each incompatible configuration must fail with the intended diagnostic, not a toolchain error.
+# Require nested toolchain checks to inherit the explicitly selected SDK.
+get_filename_component(em_config_dir "${em_config}" DIRECTORY)
+cmake_path(CONVERT "$ENV{PATH}" TO_CMAKE_PATH_LIST search_path NORMALIZE)
+list(REMOVE_ITEM search_path "${em_config_dir}")
+cmake_path(CONVERT "${search_path}" TO_NATIVE_PATH_LIST search_path)
+set(ENV{PATH} "${search_path}")
 foreach(scenario IN ITEMS task main threads pool compiler)
   if(scenario STREQUAL "task")
     set(option -DSTLAB_TASK_SYSTEM=portable)
