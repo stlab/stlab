@@ -10,7 +10,6 @@
 #include <stlab/concurrency/main_executor.hpp>
 #include <stlab/concurrency/task.hpp>
 #include <stlab/config.hpp>
-#include <stlab/pre_exit.hpp>
 
 #include <atomic>
 #include <cassert>
@@ -19,12 +18,6 @@ namespace stlab {
 STLAB_VERSION_NAMESPACE_BEGIN()
 namespace detail {
 namespace {
-
-/// Registers the portable main queue's pre-exit handler during static initialization.
-[[maybe_unused]] const bool pre_exit_registered = [] {
-    at_pre_exit([]() noexcept { main_tasks().close(); });
-    return true;
-}();
 
 /// Set once the main queue starts being serviced.
 std::atomic<bool> running{false};
@@ -41,7 +34,7 @@ extern "C" void stlab_v2_main_executor_submit(const unsigned char* /*task_abi_gu
                                               stlab_v2_task_proc invoke,
                                               void* source) noexcept {
     assert(vtable != nullptr && invoke != nullptr && "Task vtable/invoke must not be null.");
-    (void)STLAB_VERSION_NAMESPACE()::detail::main_tasks().push(vtable, invoke, source);
+    STLAB_VERSION_NAMESPACE()::detail::main_tasks().push(vtable, invoke, source);
 }
 
 /// Services the portable main queue on the calling thread; never returns.

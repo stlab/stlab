@@ -1,5 +1,55 @@
 include(stlab/development)
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+  add_executable(stlab.test.emscripten_timer emscripten_timer_test.cpp)
+  target_link_libraries(stlab.test.emscripten_timer PRIVATE stlab-core)
+  add_test(NAME stlab.test.emscripten_timer COMMAND stlab.test.emscripten_timer)
+  add_test(NAME stlab.test.emscripten_timer_cancel_pending
+    COMMAND stlab.test.emscripten_timer cancel_pending)
+  set_tests_properties(stlab.test.emscripten_timer stlab.test.emscripten_timer_cancel_pending
+    PROPERTIES TIMEOUT 60)
+  if(STLAB_EMSCRIPTEN_PTHREADS)
+    add_test(NAME stlab.test.emscripten_timer_shutdown_worker
+      COMMAND stlab.test.emscripten_timer shutdown_worker)
+    set_tests_properties(stlab.test.emscripten_timer_shutdown_worker PROPERTIES TIMEOUT 60)
+  endif()
+endif()
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten" AND NOT STLAB_EMSCRIPTEN_PTHREADS)
+  add_executable(stlab.test.main_executor_shutdown_order main_executor_shutdown_order_test.cpp)
+  target_link_libraries(stlab.test.main_executor_shutdown_order PRIVATE stlab-core)
+  add_test(NAME stlab.test.main_executor_shutdown_order COMMAND stlab.test.main_executor_shutdown_order)
+  set_tests_properties(stlab.test.main_executor_shutdown_order PROPERTIES TIMEOUT 60)
+  add_test(NAME stlab.test.emscripten_configuration
+    COMMAND ${CMAKE_COMMAND} "-Dsource_dir=${PROJECT_SOURCE_DIR}"
+      "-Dbinary_dir=${PROJECT_BINARY_DIR}/configuration-tests"
+      "-Dem_config=${EM_CONFIG_EXECUTABLE}"
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/emscripten_config_test.cmake)
+  set_tests_properties(stlab.test.emscripten_configuration PROPERTIES TIMEOUT 450)
+  add_executable(stlab.test.emscripten_cooperative emscripten_cooperative_test.cpp)
+  target_link_libraries(stlab.test.emscripten_cooperative PRIVATE stlab::stlab)
+  add_test(NAME stlab.test.emscripten_cooperative COMMAND stlab.test.emscripten_cooperative)
+  if(NOT STLAB_NO_STD_COROUTINES)
+    add_test(NAME stlab.test.emscripten_coroutine
+      COMMAND stlab.test.emscripten_cooperative coroutine)
+    set_tests_properties(stlab.test.emscripten_coroutine PROPERTIES TIMEOUT 60)
+  endif()
+  add_test(NAME stlab.test.emscripten_await_terminate
+    COMMAND ${CMAKE_COMMAND} "-Demulator=${CMAKE_CROSSCOMPILING_EMULATOR}"
+      "-Dexecutable=$<TARGET_FILE:stlab.test.emscripten_cooperative>"
+      -Dscenario=await -P ${CMAKE_CURRENT_SOURCE_DIR}/expect_emscripten_terminate.cmake)
+  add_test(NAME stlab.test.emscripten_waiting_terminate
+    COMMAND ${CMAKE_COMMAND} "-Demulator=${CMAKE_CROSSCOMPILING_EMULATOR}"
+      "-Dexecutable=$<TARGET_FILE:stlab.test.emscripten_cooperative>"
+      -Dscenario=invoke_waiting -P ${CMAKE_CURRENT_SOURCE_DIR}/expect_emscripten_terminate.cmake)
+  add_executable(stlab.test.main_executor_order main_executor_order_test.cpp)
+  target_link_libraries(stlab.test.main_executor_order PRIVATE stlab-core)
+  add_test(NAME stlab.test.main_executor_order COMMAND stlab.test.main_executor_order)
+  set_tests_properties(stlab.test.emscripten_cooperative stlab.test.emscripten_await_terminate
+    stlab.test.emscripten_waiting_terminate stlab.test.main_executor_order PROPERTIES TIMEOUT 60)
+  return()
+endif()
+
 # test dependencies: doctest is fetched in root CMakeLists when BUILD_TESTING is ON
 # Sanitizer options from development.cmake apply to test targets; stlab target gets them in src/CMakeLists.txt.
 
@@ -101,7 +151,7 @@ endif()
 # use the main executor through the exported C ABI alone.
 #
 if(NOT STLAB_MAIN_EXECUTOR STREQUAL "none")
-  set(stlab_main_executor_tests order concurrent)
+  set(stlab_main_executor_tests order concurrent shutdown_order)
   if(STLAB_MAIN_EXECUTOR STREQUAL "portable")
     list(APPEND stlab_main_executor_tests pre_exit pre_exit_before_submit)
   endif()
@@ -178,6 +228,33 @@ add_test(
   NAME stlab.test.system_timer
   COMMAND stlab.test.system_timer
 )
+
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+  add_executable(stlab.test.executor_priority_shutdown executor_priority_shutdown.cpp)
+  target_link_libraries(stlab.test.executor_priority_shutdown PRIVATE stlab-core)
+  add_test(NAME stlab.test.executor_priority_shutdown COMMAND stlab.test.executor_priority_shutdown)
+  set_tests_properties(stlab.test.executor_priority_shutdown PROPERTIES TIMEOUT 10)
+  stlab_copy_runtime_dlls(stlab.test.executor_priority_shutdown)
+
+  add_executable(stlab.test.core_shutdown_first core_shutdown_first.cpp)
+  target_link_libraries(stlab.test.core_shutdown_first PRIVATE stlab-core)
+  add_test(NAME stlab.test.core_shutdown_first COMMAND stlab.test.core_shutdown_first)
+  set_tests_properties(stlab.test.core_shutdown_first PROPERTIES TIMEOUT 60)
+  stlab_copy_runtime_dlls(stlab.test.core_shutdown_first)
+
+  set(stlab_timer_scenarios lifecycle shutdown_first executor_shutdown application_shutdown)
+  if(WIN32 AND NOT STLAB_CORE_SHARED)
+    list(APPEND stlab_timer_scenarios resource_failure)
+  endif()
+  foreach(scenario IN LISTS stlab_timer_scenarios)
+    set(target stlab.test.system_timer_${scenario})
+    add_executable(${target} system_timer_${scenario}.cpp)
+    target_link_libraries(${target} PRIVATE stlab-core)
+    add_test(NAME ${target} COMMAND ${target})
+    set_tests_properties(${target} PROPERTIES TIMEOUT 10)
+    stlab_copy_runtime_dlls(${target})
+  endforeach()
+endif()
 ################################################################################
 
 add_executable(stlab.test.tuple_algorithm

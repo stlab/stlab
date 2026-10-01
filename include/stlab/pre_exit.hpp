@@ -16,6 +16,11 @@
  *  (before `std::exit()` or when leaving `main()`). Handlers run in reverse registration order.
  *  Required when using the default executor so detached or canceled tasks do not overlap global
  *  teardown (see `default_executor.hpp`). `std::quick_exit()` is an alternative when appropriate.
+ *
+ *  Timer and default-executor resources share a teardown handler registered on their first use.
+ *  Register application handlers that release running work after that first use, so they execute
+ *  before core teardown. Core teardown cancels pending timers, waits for running timer callbacks,
+ *  then drains the default executor.
  */
 
 /**************************************************************************************************/
@@ -46,6 +51,8 @@ extern "C" void stlab_at_pre_exit(pre_exit_handler f);
 /// Invoke all registered pre-exit handlers in the reverse order they are registered. It is safe
 /// to register additional handlers during this operation. Must be invoked exactly once prior to
 /// program exit.
+/// Handlers needed to unblock running core work must be registered after the first timer or
+/// default-executor use.
 inline void pre_exit() { stlab_pre_exit(); }
 
 /// Register a pre-exit handler. The `pre-exit-handler` may not throw. With C++17 or later it

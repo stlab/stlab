@@ -4,9 +4,9 @@
     (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 */
 
-// Contract (portable backend): after `pre_exit()`, later-submitted main-executor tasks are
-// destroyed without being invoked, even when no task was submitted before `pre_exit()`.
+// Contract: the main executor remains available after shutdown before its first submission.
 
+#include "main_executor_test_host.hpp"
 #include <stlab/concurrency/main_executor.hpp>
 #include <stlab/pre_exit.hpp>
 
@@ -52,7 +52,7 @@ void report(bool ok, const char* message) {
 
 } // namespace
 
-int main() {
+int main(int argc, char** argv) {
     stlab::pre_exit();
 
     bool invoked = false;
@@ -62,8 +62,12 @@ int main() {
         invoked = true;
     });
 
-    report(destroyed, "task submitted after pre_exit() was not destroyed");
-    report(!invoked, "task submitted after pre_exit() was invoked");
-
-    std::exit(EXIT_SUCCESS); // pre_exit() already ran.
+    report(!destroyed, "first main submission after pre_exit() was discarded");
+    report(!invoked, "first main submission after pre_exit() ran inline");
+    main_executor_test::run(argc, argv, [&] {
+        stlab::main_executor([&]() noexcept {
+            report(invoked && destroyed, "main task did not execute and release its capture");
+            std::exit(EXIT_SUCCESS);
+        });
+    });
 }

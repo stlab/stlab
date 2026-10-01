@@ -51,8 +51,10 @@ STLAB_VERSION_NAMESPACE_BEGIN()
 
 /// Assumes `f` will block waiting; on the portable task system, wakes the pool or adds a worker
 /// (up to the limit) before calling `f`.
+/// Terminates without invoking `f` when the core uses cooperative threadless execution.
 template <class F>
 auto invoke_waiting(F&& f) {
+    if (!stlab_v2_default_executor_supports_blocking()) std::terminate();
     stlab_v2_notify_default_executor_before_waiting();
 
     return std::forward<F>(f)();
@@ -63,10 +65,12 @@ auto invoke_waiting(F&& f) {
 /// Synchronously wait for the result `x`. If `x` resolves as an exception, the exception is
 /// rethrown. When using the portable task system, an additional thread is added to the pool if no
 /// threads are available and the maximum number of threads has not been reached.
+/// In cooperative threadless execution, terminates if `x` is not already ready.
 
 template <class T>
 auto await(future<T>&& x) -> T {
     if (x.is_ready()) return std::move(x).get_ready(); // if ready, done
+    if (!stlab_v2_default_executor_supports_blocking()) std::terminate();
 
     std::mutex m;
     std::condition_variable condition;
@@ -129,9 +133,12 @@ struct blocking_get_guarded {
 
 } // namespace detail
 
+/// Waits at most `timeout`, returning a future that retains any pending result.
+/// In cooperative threadless execution, ignores `timeout` and returns immediately without waiting.
+/// Repeated polling must yield to the host event loop to allow the result to become ready.
 template <class T>
 auto await_for(future<T>&& x, const std::chrono::nanoseconds& timeout) -> future<T> {
-    if (x.is_ready()) return std::move(x);
+    if (x.is_ready() || !stlab_v2_default_executor_supports_blocking()) return std::move(x);
 
     auto p = std::make_shared<detail::blocking_get_guarded<T>>();
 

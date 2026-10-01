@@ -150,13 +150,33 @@ not committed to execution, and destroys their captures. It synchronizes with ca
 already executing on other threads before returning. Shutdown must also account for
 accepted Emscripten submissions still awaiting main-thread registration.
 
+Timers and default-executor resources share one core teardown handler, registered
+lazily on the first use of either service. Public `at_pre_exit()` handlers retain
+their existing reverse-registration order, including the ability to register more
+handlers during `pre_exit()`. Application handlers needed to unblock running core
+work must be registered after that first use, so they run before core teardown.
+
+Within the shared core handler, close timer admission and destroy pending captures,
+wait for committed timer callbacks, then drain and join initialized default
+executors. Keep executors available to active timer callbacks until timer shutdown
+finishes, including first use of an executor by a finishing callback. Do not register
+timer and executor cleanup independently: their relative initialization order cannot
+determine their correct shutdown order.
+
+The main queue remains available after `pre_exit()`, including the portable backend.
+A main task can retire producers with `pre_exit()` and then enqueue a final exit task.
+That task follows main work posted by the retired producers; it does not transitively
+drain work that earlier main tasks enqueue behind it. Producers being joined must not
+synchronously require main-queue progress while `pre_exit()` occupies the main thread.
+
 Cancellation and callback execution have one synchronized ownership transition:
 each accepted task is either invoked once or canceled without invocation, and is
 destroyed once in either case.
 
 Scheduling after timer shutdown is a diagnosed precondition violation. Shutdown
-before the first timer submission must not permit a new live timer service to be
-created afterward.
+before the first timer or executor submission must not permit a new live core service
+to be created afterward, even though no core teardown handler was needed before that
+first use. Diagnose late first-use without creating a timer thread or task pool.
 
 On native backends, do not call `pre_exit()` from a timer callback that shutdown would
 need to join or wait for. Document this precondition. On Emscripten, a timer callback
@@ -197,14 +217,14 @@ core C ABI.
 Add a versioned ABI query for whether blocking waits are supported by the configured
 core. Threaded cores report support; the cooperative Emscripten core does not.
 
-| Operation | Threadless behavior |
-|---|---|
-| `await()` on a ready future | Existing value, void, or exception behavior |
-| `await()` on a non-ready future | `std::terminate()`, without blocking |
-| `await_for()` with any timeout | Return the supplied future immediately |
-| Deprecated `blocking_get` helpers | Follow their corresponding await operation |
-| Coroutine `co_await` | Existing nonblocking continuation behavior |
-| `invoke_waiting()` | Terminate before invoking the supplied blocking-style operation |
+| Operation                         | Threadless behavior                                             |
+| --------------------------------- | --------------------------------------------------------------- |
+| `await()` on a ready future       | Existing value, void, or exception behavior                     |
+| `await()` on a non-ready future   | `std::terminate()`, without blocking                            |
+| `await_for()` with any timeout    | Return the supplied future immediately                          |
+| Deprecated `blocking_get` helpers | Follow their corresponding await operation                      |
+| Coroutine `co_await`              | Existing nonblocking continuation behavior                      |
+| `invoke_waiting()`                | Terminate before invoking the supplied blocking-style operation |
 
 Threadless `await_for()` does not attach a continuation, allocate wait state, or
 consume a pending result merely to poll. Its return type remains `future<T>`, not an

@@ -5,9 +5,13 @@
 */
 /**************************************************************************************************/
 
+#include <stlab/config.hpp>
 #include <stlab/pre_exit.hpp>
 
+#include "concurrency/detail/core_shutdown.hpp"
+
 #include <cassert>
+#include <exception>
 #include <mutex>
 #include <vector>
 
@@ -20,15 +24,17 @@ struct pre_exit_stack_t {
     using lock_t = std::unique_lock<std::mutex>;
 
     std::mutex _mutex;
-    std::vector<pre_exit_handler> _stack;
+    // The size constructor can propagate debug-iterator allocation failure; vector() is noexcept.
+    std::vector<pre_exit_handler> _stack = std::vector<pre_exit_handler>(0);
     bool _closed{false};
 
     /// Push an exit handler. Precondition that stack is not closed.
     void push(pre_exit_handler f) {
         lock_t lock{_mutex};
-        assert(
-            !_closed &&
-            "WARNING: Adding pre-exit handler with `at_pre_exit()` after `pre_exit()` completed.");
+        if (_closed) {
+            assert(false && "Adding a pre-exit handler after pre_exit() completed.");
+            std::terminate();
+        }
         _stack.push_back(f);
     }
 
@@ -62,9 +68,21 @@ extern "C" void stlab_pre_exit() {
     while (auto f = _s.pop()) {
         f();
     };
+    detail::complete_core_shutdown();
 }
 
 extern "C" void stlab_at_pre_exit(pre_exit_handler f) { pre_exit_stack().push(f); }
 
 } // namespace v2
+
+STLAB_VERSION_NAMESPACE_BEGIN()
+namespace detail {
+
+void register_core_shutdown_handler(core_executor_cleanup cleanup) {
+    v2::pre_exit_stack().push(cleanup);
+}
+
+} // namespace detail
+STLAB_VERSION_NAMESPACE_END()
+
 } // namespace stlab

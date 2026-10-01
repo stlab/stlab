@@ -33,9 +33,7 @@ extern "C" void stlab_v2_main_executor_submit(const unsigned char* /*task_abi_gu
                                               stlab_v2_task_proc invoke,
                                               void* source) noexcept {
     assert(vtable != nullptr && invoke != nullptr && "Task vtable/invoke must not be null.");
-    [[maybe_unused]] const bool pushed =
-        STLAB_VERSION_NAMESPACE()::detail::main_tasks().push(vtable, invoke, source);
-    assert(pushed && "libdispatch main queue is never closed.");
+    STLAB_VERSION_NAMESPACE()::detail::main_tasks().push(vtable, invoke, source);
     dispatch_async_f(dispatch_get_main_queue(), nullptr,
                      &STLAB_VERSION_NAMESPACE()::detail::run_one);
 }

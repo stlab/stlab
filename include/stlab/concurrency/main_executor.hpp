@@ -17,10 +17,16 @@
  *  `STLAB_MAIN_EXECUTOR` when `stlab-core` is built: the libdispatch main queue, the Qt
  *  application event loop, the Emscripten main runtime thread, or (opt-in) a portable
  *  stlab-owned queue. `main_executor_run()` services the main queue on the calling thread and
- *  never returns, like `dispatch_main()`; the program ends by calling `pre_exit()` and
- *  `std::exit()` from a task. On Emscripten, call `pre_exit()` from the task, schedule a separate
- *  `emscripten_async_call()` callback, return from the task, and call `emscripten_force_exit()`
- *  from that callback; link the executable with `-sEXIT_RUNTIME=1` for it to terminate.
+ *  never returns, like `dispatch_main()`. The main queue remains available after `pre_exit()`.
+ *  A shutdown task can call `pre_exit()` to retire timer/default-executor producers, then post
+ *  another main task that calls `std::exit()`. That exit task follows main work submitted by the
+ *  retired producers, but does not drain work that earlier main tasks subsequently enqueue.
+ *  Producers being joined must not synchronously depend on main-queue progress while the main
+ *  thread is inside `pre_exit()`.
+ *
+ *  On Emscripten, the final main task schedules a separate `emscripten_async_call()` callback,
+ *  returns normally, and calls `emscripten_force_exit()` from that callback; link the executable
+ *  with `-sEXIT_RUNTIME=1` for it to terminate.
  *
  *  Windows has no process main queue (each UI thread owns its message queue), so no main executor
  *  is provided there unless `STLAB_MAIN_EXECUTOR` selects Qt or `portable`.
@@ -55,6 +61,7 @@ inline namespace v2 {
 ///   `vtable`/`invoke`, valid for the duration of this call.
 /// - Postcondition: exactly one invocation of the relocated target is scheduled on the main queue,
 ///   after every task previously submitted from the calling thread.
+/// - Postcondition: main submission remains available after `pre_exit()`.
 extern "C" void stlab_v2_main_executor_submit(const unsigned char* task_abi_guard,
                                               const stlab_v2_task_concept* vtable,
                                               stlab_v2_task_proc invoke,
@@ -117,6 +124,7 @@ struct main_executor_type {
 #if !STLAB_MAIN_EXECUTOR(NONE)
 
 /// Runs `void() noexcept` tasks in submission order on the configured main queue.
+/// Remains available after `pre_exit()` so a final queued task can terminate the process.
 inline constexpr auto main_executor = detail::main_executor_type{};
 
 /// Services the main queue on the calling thread; never returns.

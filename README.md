@@ -86,7 +86,52 @@ STlab specific configuration options:
 - `-DSTLAB_TASK_POOL_MAXIMUM=`[`integer`] Define the maximum number threads in the task pool. Default of zero implies a pool size of std::thread::hardware_concurrency. Non-zero implies STLAB_TASK_SYSTEM=portable.
 - `-DSTLAB_NO_STD_COROUTINES=`[`ON`, **`OFF`**] to suppress usage of standard coroutines. Useful for non-conforming compilers.
 - `-DSTLAB_THREAD_SYSTEM=`[`win32`, `pthread`, `pthread-emscripten`, `pthread-apple`, `none`] to select the thread system to use. Default is platform dependent.
-- `-DSTLAB_TASK_SYSTEM=`[`portable`, `libdispatch`, `windows`] to select the task system to use. Default is platform dependent.
+- `-DSTLAB_TASK_SYSTEM=`[`portable`, `libdispatch`, `windows`, `emscripten`] to select the task system to use. Default is platform dependent; `emscripten` is the cooperative, threadless backend.
+- `-DSTLAB_EMSCRIPTEN_PTHREADS=`[**`ON`**, `OFF`] controls Emscripten pthread support. `OFF` selects `STLAB_THREAD_SYSTEM=none`, `STLAB_TASK_SYSTEM=emscripten`, and `STLAB_MAIN_EXECUTOR=emscripten`. Conflicting explicit selections and a nonzero task-pool maximum are rejected. The compiler's pthread flags must match this option.
+
+### Emscripten cooperative execution and timers
+
+With pthreads disabled, high/default/low executors all submit asynchronously to the
+main runtime event loop. Tasks must return to that loop to permit other tasks, timers,
+and coroutine continuations to run; synchronous busy polling prevents progress.
+`await()` accepts an already-ready future but terminates on a non-ready future.
+`await_for()` ignores its timeout and immediately returns the supplied future,
+preserving a pending result for later polling or continuation attachment.
+
+`system_timer` accepts either a duration or a supported
+`std::chrono::steady_clock::time_point` deadline. Nonpositive delays and past deadlines
+schedule asynchronously without delay. Timer scheduling and state live in `stlab-core`
+behind its versioned C ABI. Resource failures are reported as client-side
+`std::bad_alloc` or `std::system_error`; C++ exceptions do not cross the ABI.
+
+Emscripten timers use `emscripten_set_timeout()` on the main runtime thread, including
+submissions from pthreads. Native backends retain their platform timer execution
+placement. `pre_exit()` cancels pending timers, destroys their captures, and waits
+for callbacks executing on other threads before draining the default executor.
+The timer and default executor share one teardown handler, registered on their first
+use. Application shutdown handlers registered afterward run before core teardown in
+the usual reverse-registration order; handlers that release running callbacks must
+use that ordering. Do not call `pre_exit()` from a native timer callback
+that shutdown would need to join. An Emscripten timer callback may call `pre_exit()`,
+but must return before final runtime shutdown. Schedule `emscripten_force_exit()` in
+a separate non-`noexcept` callback and link with `-sEXIT_RUNTIME=1`.
+
+The main executor stays available after core shutdown, including the portable main
+backend. A native shutdown task can retire producers and then enqueue an exit fence:
+
+```cpp
+stlab::main_executor([]() noexcept {
+    stlab::pre_exit();
+    stlab::main_executor([]() noexcept { std::exit(EXIT_SUCCESS); });
+});
+```
+
+The exit task follows main-queue work submitted by the retired timers and default
+executor. Producers must not synchronously wait for main-queue progress while
+`pre_exit()` occupies the main thread. This is a FIFO fence, not a transitive drain:
+earlier main tasks can still enqueue additional work behind the exit task.
+On Emscripten, the final main task schedules the non-`noexcept` force-exit callback
+described above instead of calling `std::exit()` inside the executor task.
 
 We also suggest the installation of [Ninja](https://ninja-build.org/) and its use by adding
 `-GNinja` to your cmake command line… but ninja is not required.
