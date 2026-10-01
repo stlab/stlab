@@ -10,18 +10,25 @@
 #include <stlab/concurrency/task.hpp>
 #include <stlab/config.hpp>
 
+#include "detail/core_shutdown.hpp"
+
+#if STLAB_TASK_SYSTEM(EMSCRIPTEN)
+#include "detail/cooperative_executor.hpp"
+#endif
+
 #if STLAB_TASK_SYSTEM(LIBDISPATCH)
 #include <stlab/concurrency/detail/libdispatch_executor_group.hpp>
 #endif
 
 #if STLAB_TASK_SYSTEM(PORTABLE)
 #include "detail/waiter_state.hpp"
-#include <condition_variable>
 #include <memory>
 #include <stlab/concurrency/set_current_thread_name.hpp>
 #endif
 
-#include <stlab/pre_exit.hpp>
+#if STLAB_TASK_SYSTEM(PORTABLE) || STLAB_TASK_SYSTEM(WINDOWS)
+#include <condition_variable>
+#endif
 
 #include <algorithm>
 #include <array>
@@ -30,6 +37,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <deque>
+#include <exception>
 #include <mutex>
 #include <thread>
 #include <utility>
@@ -55,6 +63,7 @@ struct task_relocation {
     void* source;
 };
 
+#if !STLAB_TASK_SYSTEM(EMSCRIPTEN)
 namespace {
 
 /// Maps an executor priority to its queue index.
@@ -306,9 +315,11 @@ void schedule_dispatch_wake(std::size_t hint) {
 
 /// Returns the dispatch group used by the executor.
 auto group() -> const group_t& {
+    register_core_shutdown();
     static const group_t g = [] {
         group_t result;
-        at_pre_exit([]() noexcept { dispatch_group_wait(group()._group, DISPATCH_TIME_FOREVER); });
+        register_core_executor_cleanup(
+            []() noexcept { dispatch_group_wait(group()._group, DISPATCH_TIME_FOREVER); });
         return result;
     }();
 
@@ -352,6 +363,84 @@ void submit_executor_task(executor_priority priority, task_relocation r) {
 // NOLINTBEGIN(misc-include-cleaner)
 namespace {
 
+/// Drains completion tokens across all priorities before destroying any native executor pool.
+class windows_executor_lifecycle {
+    static constexpr std::size_t closed = std::size_t{1} << (sizeof(std::size_t) * 8 - 1);
+    static constexpr std::size_t draining = closed >> 1;
+    static constexpr std::size_t count_mask = draining - 1;
+
+    std::atomic<std::size_t> _state{0};
+    std::mutex _mutex;
+    std::condition_variable _ready;
+    std::array<core_executor_cleanup, 3> _cleanup{};
+
+public:
+    /// Retains one completion token before queuing an accepted operation.
+    void accept() noexcept {
+        const auto previous = _state.fetch_add(1, std::memory_order_acq_rel);
+        if ((previous & closed) != 0 || (previous & count_mask) == count_mask) {
+            assert(false && "default executor submission after teardown or token overflow");
+            std::terminate();
+        }
+    }
+
+    /// Releases a token after invocation and capture destruction; rescheduling retains the token.
+    void complete() noexcept {
+        auto value = _state.load(std::memory_order_relaxed);
+        for (;;) {
+            assert((value & count_mask) != 0 && (value & closed) == 0);
+            if (value == (draining | 1)) {
+                std::scoped_lock lock(_mutex);
+                if (_state.fetch_sub(1, std::memory_order_acq_rel) == (draining | 1))
+                    _ready.notify_one();
+                return;
+            }
+            if (_state.compare_exchange_weak(value, value - 1, std::memory_order_acq_rel,
+                                             std::memory_order_relaxed))
+                return;
+        }
+    }
+
+    /// Records an initialized pool without allocating or closing any other priority.
+    ///
+    /// - Precondition: called once per priority while an accepted completion token is retained.
+    void register_pool(executor_priority priority, core_executor_cleanup cleanup) noexcept {
+        auto& slot = _cleanup[executor_priority_index(priority)];
+        assert(slot == nullptr && cleanup != nullptr);
+        slot = cleanup;
+    }
+
+    /// Keeps all priorities available until every accepted token is retired, then closes pools.
+    ///
+    /// - Precondition: called once, not from an executor callback.
+    /// - Complexity: linear in accepted operations and initialized native pools.
+    void join() noexcept {
+        {
+            std::unique_lock<std::mutex> lock(_mutex);
+            _state.fetch_or(draining, std::memory_order_acq_rel);
+            _ready.wait(lock, [&] {
+                auto expected = draining;
+                return _state.compare_exchange_strong(expected, draining | closed,
+                                                      std::memory_order_acq_rel,
+                                                      std::memory_order_acquire);
+            });
+        }
+        for (auto cleanup : _cleanup)
+            if (cleanup) cleanup();
+    }
+};
+
+/// Returns the shared Windows lifecycle and lazily registers one subsystem cleanup operation.
+auto windows_executor() -> windows_executor_lifecycle& {
+    static windows_executor_lifecycle result;
+    static const auto registered = [] {
+        register_core_executor_cleanup([]() noexcept { windows_executor().join(); });
+        return true;
+    }();
+    (void)registered;
+    return result;
+}
+
 /// Maps an executor priority to its Windows thread-pool callback priority.
 constexpr auto platform_priority(executor_priority priority) {
     switch (priority) {
@@ -378,6 +467,7 @@ auto wake_system() -> windows_wake_system<Priority>&;
 /// Owns a Windows thread pool and its cleanup group.
 template <executor_priority Priority>
 class windows_wake_system {
+    std::atomic<bool> _closed{false};
     PTP_POOL _pool = nullptr;
     TP_CALLBACK_ENVIRON _callback_environment{};
     PTP_CLEANUP_GROUP _cleanup_group = nullptr;
@@ -420,9 +510,12 @@ public:
         SubmitThreadpoolWork(work);
     }
 
-    /// Joins pending callbacks and releases all Windows resources.
+    /// Releases native callback resources after subsystem-wide quiescence.
+    ///
+    /// - Precondition: shared admission is closed and all accepted completion tokens are retired.
     void join() {
         CloseThreadpoolCleanupGroupMembers(_cleanup_group, FALSE, nullptr);
+        _closed.store(true, std::memory_order_release);
         CloseThreadpoolCleanupGroup(_cleanup_group);
         CloseThreadpool(_pool);
         DestroyThreadpoolEnvironment(&_callback_environment);
@@ -430,15 +523,29 @@ public:
         _pool = nullptr;
     }
 
+    /// Diagnoses access after this priority's executor resources have been joined.
+    void check_open() const noexcept {
+        if (_closed.load(std::memory_order_acquire)) {
+            assert(false && "default executor priority used after teardown");
+            std::terminate();
+        }
+    }
+
 private:
     /// Runs one queued task and schedules remaining work.
     static void CALLBACK callback(PTP_CALLBACK_INSTANCE /*instance*/,
                                   PVOID parameter,
                                   PTP_WORK work) {
-        run_wake<Priority>(unpack_hint(parameter), [](std::size_t next_hint) {
-            wake_system<Priority>().schedule(next_hint);
+        bool completed = true;
+        run_wake<Priority>(unpack_hint(parameter), [&](std::size_t /*next_hint*/) {
+            completed = false;
+            // Retain the same completion token and shard hint until a task is obtained.
+            SubmitThreadpoolWork(work);
         });
-        CloseThreadpoolWork(work);
+        if (completed) {
+            CloseThreadpoolWork(work);
+            windows_executor().complete();
+        }
     }
 };
 
@@ -447,10 +554,12 @@ template <executor_priority Priority>
 auto wake_system() -> windows_wake_system<Priority>& {
     static windows_wake_system<Priority> result;
     static const auto registered = [] {
-        at_pre_exit([]() noexcept { wake_system<Priority>().join(); });
+        windows_executor().register_pool(Priority,
+                                         []() noexcept { wake_system<Priority>().join(); });
         return true;
     }();
     (void)registered;
+    result.check_open();
     return result;
 }
 
@@ -458,6 +567,7 @@ auto wake_system() -> windows_wake_system<Priority>& {
 
 /// Submits one task to the Windows executor at the requested priority.
 void submit_executor_task(executor_priority priority, task_relocation r) {
+    windows_executor().accept();
     switch (priority) {
         case executor_priority::high:
             submit_and_schedule(priority, r, [](std::size_t hint) {
@@ -484,6 +594,7 @@ void submit_executor_task(executor_priority priority, task_relocation r) {
 class priority_task_system {
     struct implementation;
     std::unique_ptr<implementation> _impl;
+    std::atomic<bool> _closed{false};
 
 public:
     /// Constructs the portable task system and starts its initial workers.
@@ -518,6 +629,9 @@ public:
 
     /// Joins all worker threads after shared executor shutdown begins.
     void join();
+
+    /// Diagnoses access after portable executor workers have been joined.
+    void check_open() const noexcept;
 };
 
 /// Coordinates one portable executor worker's sleep, wake, and shutdown state.
@@ -663,16 +777,29 @@ auto priority_task_system::wake() -> bool { return _impl->wake(); }
 void priority_task_system::add_thread() { _impl->add_thread(); }
 
 /// Signals and joins all portable executor workers.
-void priority_task_system::join() { _impl->join(); }
+void priority_task_system::join() {
+    _impl->join();
+    _closed.store(true, std::memory_order_release);
+}
+
+/// Diagnoses access after the portable executor has been joined.
+void priority_task_system::check_open() const noexcept {
+    if (_closed.load(std::memory_order_acquire)) {
+        assert(false && "default executor used after teardown");
+        std::terminate();
+    }
+}
 
 /// Returns the process-shared portable task system.
 auto pts() -> priority_task_system& {
+    register_core_shutdown();
     static priority_task_system only_task_system;
     static const auto registered = [] {
-        at_pre_exit([]() noexcept { pts().join(); });
+        register_core_executor_cleanup([]() noexcept { pts().join(); });
         return true;
     }();
     (void)registered;
+    only_task_system.check_open();
     return only_task_system;
 }
 
@@ -683,10 +810,21 @@ void submit_executor_task(executor_priority priority, task_relocation r) {
 
 #endif
 
+#endif // !STLAB_TASK_SYSTEM(EMSCRIPTEN)
+
 } // namespace detail
 STLAB_VERSION_NAMESPACE_END()
 
 inline namespace v2 {
+/// Returns whether blocking waits can make progress with the configured task system.
+extern "C" std::int32_t stlab_v2_default_executor_supports_blocking() noexcept {
+#if STLAB_TASK_SYSTEM(EMSCRIPTEN)
+    return 0;
+#else
+    return 1;
+#endif
+}
+
 /// Notifies the shared default executor that the calling thread is about to wait.
 extern "C" void stlab_v2_notify_default_executor_before_waiting() noexcept {
 #if STLAB_TASK_SYSTEM(PORTABLE)
@@ -696,36 +834,60 @@ extern "C" void stlab_v2_notify_default_executor_before_waiting() noexcept {
 }
 
 /// Submits one task to the shared default-priority executor.
-extern "C" void stlab_v2_default_executor_submit(const unsigned char* /*task_abi_guard*/,
+extern "C" void stlab_v2_default_executor_submit(const unsigned char* task_abi_guard,
                                                  const stlab_v2_task_concept* vtable,
                                                  stlab_v2_task_proc invoke,
                                                  void* source) noexcept {
     assert(vtable != nullptr && invoke != nullptr && "Task vtable/invoke must not be null.");
+    STLAB_VERSION_NAMESPACE()::detail::register_core_shutdown();
+#if STLAB_TASK_SYSTEM(EMSCRIPTEN)
+    (void)task_abi_guard;
+    STLAB_VERSION_NAMESPACE()::detail::submit_cooperative_task(
+        vtable, invoke, source, STLAB_VERSION_NAMESPACE()::detail::cooperative_task_kind::executor);
+#else
+    (void)task_abi_guard;
     STLAB_VERSION_NAMESPACE()::detail::submit_executor_task(
         STLAB_VERSION_NAMESPACE()::detail::executor_priority::medium,
         STLAB_VERSION_NAMESPACE()::detail::task_relocation{vtable, invoke, source});
+#endif
 }
 
 /// Submits one task to the shared high-priority executor.
-extern "C" void stlab_v2_high_executor_submit(const unsigned char* /*task_abi_guard*/,
+extern "C" void stlab_v2_high_executor_submit(const unsigned char* task_abi_guard,
                                               const stlab_v2_task_concept* vtable,
                                               stlab_v2_task_proc invoke,
                                               void* source) noexcept {
     assert(vtable != nullptr && invoke != nullptr && "Task vtable/invoke must not be null.");
+    STLAB_VERSION_NAMESPACE()::detail::register_core_shutdown();
+#if STLAB_TASK_SYSTEM(EMSCRIPTEN)
+    (void)task_abi_guard;
+    STLAB_VERSION_NAMESPACE()::detail::submit_cooperative_task(
+        vtable, invoke, source, STLAB_VERSION_NAMESPACE()::detail::cooperative_task_kind::executor);
+#else
+    (void)task_abi_guard;
     STLAB_VERSION_NAMESPACE()::detail::submit_executor_task(
         STLAB_VERSION_NAMESPACE()::detail::executor_priority::high,
         STLAB_VERSION_NAMESPACE()::detail::task_relocation{vtable, invoke, source});
+#endif
 }
 
 /// Submits one task to the shared low-priority executor.
-extern "C" void stlab_v2_low_executor_submit(const unsigned char* /*task_abi_guard*/,
+extern "C" void stlab_v2_low_executor_submit(const unsigned char* task_abi_guard,
                                              const stlab_v2_task_concept* vtable,
                                              stlab_v2_task_proc invoke,
                                              void* source) noexcept {
     assert(vtable != nullptr && invoke != nullptr && "Task vtable/invoke must not be null.");
+    STLAB_VERSION_NAMESPACE()::detail::register_core_shutdown();
+#if STLAB_TASK_SYSTEM(EMSCRIPTEN)
+    (void)task_abi_guard;
+    STLAB_VERSION_NAMESPACE()::detail::submit_cooperative_task(
+        vtable, invoke, source, STLAB_VERSION_NAMESPACE()::detail::cooperative_task_kind::executor);
+#else
+    (void)task_abi_guard;
     STLAB_VERSION_NAMESPACE()::detail::submit_executor_task(
         STLAB_VERSION_NAMESPACE()::detail::executor_priority::low,
         STLAB_VERSION_NAMESPACE()::detail::task_relocation{vtable, invoke, source});
+#endif
 }
 
 } // namespace v2

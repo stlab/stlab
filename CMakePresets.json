@@ -53,6 +53,18 @@
             "inherits": "base-cpp17"
         },
         {
+            "name": "debug-emscripten",
+            "inherits": "base-cpp20",
+            "toolchainFile": "${sourceDir}/cmake/Platform/Emscripten-STLab.cmake"
+        },
+        {
+            "name": "debug-emscripten-threadless",
+            "inherits": "debug-emscripten",
+            "cacheVariables": {
+                "STLAB_EMSCRIPTEN_PTHREADS": "OFF"
+            }
+        },
+        {
             "name": "debug-sanitizer",
             "description": "Debug build with thread and undefined behavior sanitizers",
             "inherits": "base-sanitizer"
@@ -206,6 +218,14 @@
     ],
     "buildPresets": [
         {
+            "name": "debug-emscripten",
+            "configurePreset": "debug-emscripten"
+        },
+        {
+            "name": "debug-emscripten-threadless",
+            "configurePreset": "debug-emscripten-threadless"
+        },
+        {
             "name": "debug-cpp20",
             "configurePreset": "debug-cpp20"
         },
@@ -272,6 +292,16 @@
         }
     ],
     "testPresets": [
+        {
+            "name": "debug-emscripten",
+            "configurePreset": "debug-emscripten",
+            "output": { "outputOnFailure": true }
+        },
+        {
+            "name": "debug-emscripten-threadless",
+            "configurePreset": "debug-emscripten-threadless",
+            "output": { "outputOnFailure": true }
+        },
         {
             "name": "debug-cpp20",
             "description": "Run tests with debug-cpp20 build",

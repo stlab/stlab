@@ -53,12 +53,10 @@
       "cmake_options": "-DSTLAB_CORE_SHARED=ON -DSTLAB_MAIN_EXECUTOR=portable"
     },
     {
-      "name": "Linux Webassembly non-pthread main executor",
+      "name": "Linux Webassembly cooperative",
       "compiler": "emscripten",
       "os": "ubuntu-latest",
-      "cmake_options": "-DSTLAB_EMSCRIPTEN_PTHREADS=OFF -DSTLAB_MAIN_EXECUTOR=emscripten -DSTLAB_TASK_SYSTEM=portable -DSTLAB_THREAD_SYSTEM=none",
-      "build_options": "--target stlab-core stlab.test.main_executor_order stlab.test.main_executor_concurrent",
-      "ctest_options": "-R main_executor_order"
+      "cmake_options": "-DSTLAB_EMSCRIPTEN_PTHREADS=OFF"
     },
     {
       "name": "Linux Webassembly",

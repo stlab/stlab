@@ -87,6 +87,22 @@ else()
   set(STLAB_STD_COROUTINES 1)
 endif()
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+  option(STLAB_EMSCRIPTEN_PTHREADS "Build Emscripten targets with pthread support." ON)
+  include(CheckCXXSourceCompiles)
+  check_cxx_source_compiles("
+    #ifndef __EMSCRIPTEN_PTHREADS__
+    #error Pthread support is not enabled
+    #endif
+    int main() {}
+  " STLAB_EMSCRIPTEN_HAS_PTHREADS)
+  if(STLAB_EMSCRIPTEN_PTHREADS AND NOT STLAB_EMSCRIPTEN_HAS_PTHREADS)
+    message(FATAL_ERROR "STLAB_EMSCRIPTEN_PTHREADS=ON requires a toolchain with -pthread.")
+  elseif(NOT STLAB_EMSCRIPTEN_PTHREADS AND STLAB_EMSCRIPTEN_HAS_PTHREADS)
+    message(FATAL_ERROR "STLAB_EMSCRIPTEN_PTHREADS=OFF requires a toolchain without -pthread.")
+  endif()
+endif()
+
 stlab_detect_thread_system(STLAB_DEFAULT_THREAD_SYSTEM)
 set(STLAB_THREAD_SYSTEM ${STLAB_DEFAULT_THREAD_SYSTEM} CACHE STRING "Thread system to use (win32|pthread|pthread-emscripten|pthread-apple|none)")
 
@@ -117,17 +133,39 @@ if(STLAB_MINIMAL_TASK_POOL)
 endif()
 
 if(STLAB_TASK_POOL_MAXIMUM GREATER 0)
+  if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten" AND NOT STLAB_EMSCRIPTEN_PTHREADS)
+    message(FATAL_ERROR "Threadless Emscripten does not support STLAB_TASK_POOL_MAXIMUM>0.")
+  endif()
   set(STLAB_TASK_SYSTEM "portable" CACHE STRING "Task system to use (portable|libdispatch|windows)." FORCE)
 else()
   stlab_detect_task_system(STLAB_DEFAULT_TASK_SYSTEM)
 endif()
-set(STLAB_TASK_SYSTEM ${STLAB_DEFAULT_TASK_SYSTEM} CACHE STRING "Task system to use (portable|libdispatch|windows).")
+set(STLAB_TASK_SYSTEM ${STLAB_DEFAULT_TASK_SYSTEM} CACHE STRING "Task system to use (portable|libdispatch|windows|emscripten).")
+set_property(CACHE STLAB_TASK_SYSTEM PROPERTY STRINGS portable libdispatch windows emscripten)
+if(NOT STLAB_TASK_SYSTEM MATCHES "^(portable|libdispatch|windows|emscripten)$")
+  message(FATAL_ERROR "Unknown STLAB_TASK_SYSTEM: ${STLAB_TASK_SYSTEM}.")
+endif()
 
 stlab_detect_main_executor(STLAB_DEFAULT_MAIN_EXECUTOR)
 set(STLAB_MAIN_EXECUTOR ${STLAB_DEFAULT_MAIN_EXECUTOR} CACHE STRING "Main executor to use (qt5|qt6|libdispatch|emscripten|portable|none).")
 set_property(CACHE STLAB_MAIN_EXECUTOR PROPERTY STRINGS qt5 qt6 libdispatch emscripten portable none)
 if(NOT STLAB_MAIN_EXECUTOR MATCHES "^(qt5|qt6|libdispatch|emscripten|portable|none)$")
   message(FATAL_ERROR "STLAB_MAIN_EXECUTOR must be one of qt5|qt6|libdispatch|emscripten|portable|none (got \"${STLAB_MAIN_EXECUTOR}\").")
+endif()
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+  if(NOT STLAB_EMSCRIPTEN_PTHREADS)
+    if(NOT STLAB_THREAD_SYSTEM STREQUAL "none" OR
+       NOT STLAB_TASK_SYSTEM STREQUAL "emscripten" OR
+       NOT STLAB_MAIN_EXECUTOR STREQUAL "emscripten")
+      message(FATAL_ERROR
+        "Threadless Emscripten requires STLAB_THREAD_SYSTEM=none, STLAB_TASK_SYSTEM=emscripten, and STLAB_MAIN_EXECUTOR=emscripten.")
+    endif()
+  elseif(STLAB_THREAD_SYSTEM STREQUAL "none" OR STLAB_TASK_SYSTEM STREQUAL "emscripten")
+    message(FATAL_ERROR "Pthread-enabled Emscripten requires a threaded task system.")
+  endif()
+elseif(STLAB_TASK_SYSTEM STREQUAL "emscripten")
+  message(FATAL_ERROR "STLAB_TASK_SYSTEM=emscripten is only supported on threadless Emscripten.")
 endif()
 
 if((NOT STLAB_THREAD_SYSTEM STREQUAL "none") AND NOT Threads_FOUND)

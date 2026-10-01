@@ -4,351 +4,227 @@
     (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 */
 
-/**************************************************************************************************/
-
 #ifndef STLAB_CONCURRENCY_SYSTEM_TIMER_HPP
 #define STLAB_CONCURRENCY_SYSTEM_TIMER_HPP
 
 /*! @file system_timer.hpp
- *  @brief System timer / delayed execution (platform run loop or portable thread).
+ *  @brief Asynchronous delayed execution through the process-shared timer service.
  *
- *  @details
- *  `system_timer` schedules `void() noexcept` tasks after a delay. The implementation is
- *  platform-specific (Grand Central Dispatch, Windows thread-pool timers, or a portable thread with
- *  a priority queue).
- *
- *  Destroying a `system_timer` does not tear down the underlying run loop or timer thread; tasks
- *  already submitted still run. On libdispatch builds, scheduling after `pre_exit()` is ignored.
- *
- *  Prefer `std::chrono::duration` overloads. Deprecated `time_point` overloads run immediately if
- *  the time is in the past. If a prior task overruns its interval, later tasks may run later than
- *  requested (never earlier).
+ *  Positive delays round upward to the timer resolution; execution can be late, never early.
+ *  Nonpositive delays and past steady-clock deadlines request asynchronous execution without delay.
+ *  `pre_exit()` closes admission, destroys canceled captures, and waits for committed callbacks on
+ *  other threads through one core cleanup handler registered at first timer or default-executor
+ * use. Application handlers registered afterward run first, in LIFO order, and can signal
+ * callbacks. The core handler releases pending timer captures before joining default executors.
+ * When `pre_exit()` blocks the main thread, workers and timer callbacks must not synchronously
+ * require main-queue progress. The shared core handler does not close or drain the main queue.
+ * On threadless Emscripten, timer cancellation finishes during `pre_exit()`, but executor
+ * retirement and remaining handlers finish asynchronously before the next ordinary main task. On
+ * native platforms `pre_exit()` must not be called from a timer callback. Client modules supplying
+ * task operations must remain loaded until their accepted tasks have completed or have been
+ * canceled and destroyed.
  */
 
-/**************************************************************************************************/
+#include <stlab/concurrency/task.hpp>
+#include <stlab/config.hpp>
+#include <stlab/pre_exit.hpp> // IWYU pragma: export
 
 #include <cassert>
-#include <stlab/config.hpp>
-#include <stlab/pre_exit.hpp>
-
 #include <chrono>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <exception>
+#include <limits>
+#include <new>
+#include <stdexcept>
+#include <system_error>
 #include <type_traits>
 
-#if STLAB_TASK_SYSTEM(LIBDISPATCH)
-#include <dispatch/dispatch.h>
-#include <stlab/concurrency/detail/libdispatch_executor_group.hpp>
-#elif STLAB_TASK_SYSTEM(WINDOWS)
-#include <Windows.h>
-#include <memory>
-#elif STLAB_TASK_SYSTEM(PORTABLE)
-#include <algorithm>
-#include <condition_variable>
-#include <thread>
-#include <vector>
-#endif
-
-#include <stlab/concurrency/task.hpp>
-
-/**************************************************************************************************/
-
 namespace stlab {
+inline namespace v2 {
+
+/// Resource result: code 0 is success, 1 allocation failure, 2 generic-category error,
+/// and 3 system-category error. `native_error` is the category's numeric error value.
+struct stlab_v2_timer_status {
+    std::int32_t code;
+    std::int32_t native_error;
+};
+
+static_assert(std::is_standard_layout_v<stlab_v2_timer_status>);
+static_assert(sizeof(stlab_v2_timer_status) == 2 * sizeof(std::int32_t));
+static_assert(offsetof(stlab_v2_timer_status, native_error) == sizeof(std::int32_t));
+
+/// Invocation operation for a relocated `void() noexcept` task.
+using stlab_v2_task_proc = void (*)(void*) noexcept;
+
+/// Accepts a task into the core timer service without propagating exceptions.
+///
+/// - Precondition: the task ABI guard and relocation operations describe the live task at `source`;
+///   `delay_ns` is nonnegative, and `pre_exit()` has not closed timer admission.
+/// - Postcondition: success relocates the target exactly once; failure leaves `source` unconsumed.
+///   Accepted targets are invoked once or canceled, and destroyed once.
+extern "C" stlab_v2_timer_status stlab_v2_system_timer_submit(const unsigned char* task_abi_guard,
+                                                              const stlab_v2_task_concept* vtable,
+                                                              stlab_v2_task_proc invoke,
+                                                              void* source,
+                                                              std::int64_t delay_ns) noexcept;
+
+} // namespace v2
+
 STLAB_VERSION_NAMESPACE_BEGIN()
 
 /** @defgroup stlab_concurrency_system_timer system_timer
  *  @ingroup stlab_concurrency
- *  @brief System timer / delayed execution (platform run loop or portable thread).
- *
- *  @details
- *  See `system_timer.hpp` for scheduling semantics and platform behavior.
+ *  @brief Asynchronous delayed execution through the process-shared timer service.
  *  @{
  */
 
-/**************************************************************************************************/
-
 namespace detail {
 
-/**************************************************************************************************/
-
-#if STLAB_TASK_SYSTEM(LIBDISPATCH)
-
-struct system_timer {
-    inline static bool _closed{false};
-
-    static inline auto mutex() -> std::mutex& {
-        alignas(std::mutex) static std::array<unsigned char, sizeof(std::mutex)> _storage = {0};
-        static std::mutex* _mutex = [&] { return new (&_storage[0]) std::mutex{}; }();
-        return *_mutex;
-    }
-
-    static bool enter_group_if_open() {
-        std::scoped_lock<std::mutex> lock(mutex());
-        if (_closed) {
-            return false;
-        }
-        dispatch_group_enter(detail::group()._group);
-        return true;
-    }
-
-    static void set_closed() {
-        std::scoped_lock<std::mutex> lock(mutex());
-        _closed = true;
-    }
-
-    static bool is_closed() {
-        std::scoped_lock<std::mutex> lock(mutex());
-        return _closed;
-    }
-
-    system_timer() {
-        // ensure the group is created and registered with pre_exit first
-        (void)detail::group();
-        at_pre_exit([]() noexcept { set_closed(); });
-    }
-
-    ~system_timer() {
-        assert(is_closed() && "system_timer is not closed, pre_exit() was not called");
-    }
-
-    template <typename F, typename Rep, typename Per = std::ratio<1>>
-    auto operator()(std::chrono::duration<Rep, Per> duration, F f) const
-        -> std::enable_if_t<std::is_nothrow_invocable_v<F>> {
-        assert(!is_closed() && "scheduling a task after pre_exit() was called");
-
-        using namespace std::chrono;
-
-        auto grouped = [f = std::move(f)]() mutable {
-            // pre_exit tasks are executed in the reverse order of registration.
-            // By entering the group before we check if the timer is closed we ensure that the
-            // task is waited on if it starts.
-            if (!enter_group_if_open()) {
-                return;
+/// Returns ceil(`count * numerator * multiplier / denominator`) without overflowing products.
+///
+/// - Precondition: ratio factors fit `intmax_t`; the denominator and multipliers are positive.
+inline auto timer_integral_nanoseconds(std::uintmax_t count,
+                                       std::uintmax_t numerator,
+                                       std::uintmax_t denominator,
+                                       std::uintmax_t multiplier = 1) -> std::int64_t {
+    constexpr auto limit = static_cast<std::uintmax_t>(std::numeric_limits<std::int64_t>::max());
+    std::uintmax_t quotient = 0;
+    std::uintmax_t remainder = 0;
+    if (count <= std::numeric_limits<std::uintmax_t>::max() / numerator) {
+        const auto product = count * numerator;
+        quotient = product / denominator;
+        remainder = product % denominator;
+    } else {
+        // Long division avoids overflowing the intermediate product for fractional periods.
+        const auto whole = numerator / denominator;
+        const auto fraction = numerator % denominator;
+        for (int bit = std::numeric_limits<std::uintmax_t>::digits - 1; bit >= 0; --bit) {
+            if (quotient > limit / 2)
+                throw std::overflow_error("system_timer delay exceeds signed nanoseconds");
+            quotient *= 2;
+            remainder *= 2; // The ratio denominator is at most INTMAX_MAX.
+            auto carry = remainder / denominator;
+            remainder %= denominator;
+            if ((count >> bit) & 1) {
+                if (whole > limit - carry)
+                    throw std::overflow_error("system_timer delay exceeds signed nanoseconds");
+                carry += whole;
+                remainder += fraction;
+                carry += remainder / denominator;
+                remainder %= denominator;
             }
-            std::move(f)();
-            dispatch_group_leave(detail::group()._group);
-        };
-
-        using f_t = decltype(grouped);
-
-        dispatch_after_f(dispatch_time(0, duration_cast<nanoseconds>(duration).count()),
-                         dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),
-                         new f_t(std::move(grouped)), [](void* f_) {
-                             auto f = static_cast<f_t*>(f_);
-                             (*f)();
-                             delete f;
-                         });
+            if (carry > limit - quotient)
+                throw std::overflow_error("system_timer delay exceeds signed nanoseconds");
+            quotient += carry;
+        }
     }
-};
+    if (quotient > limit / multiplier)
+        throw std::overflow_error("system_timer delay exceeds signed nanoseconds");
+    quotient *= multiplier;
+    const auto rounded_fraction =
+        multiplier == 1 ? static_cast<std::uintmax_t>(remainder != 0) :
+                          static_cast<std::uintmax_t>(
+                              timer_integral_nanoseconds(remainder, multiplier, denominator));
+    if (rounded_fraction > limit - quotient)
+        throw std::overflow_error("system_timer delay exceeds signed nanoseconds");
+    return static_cast<std::int64_t>(quotient + rounded_fraction);
+}
 
-/**************************************************************************************************/
-
-#elif STLAB_TASK_SYSTEM(WINDOWS)
-
-class system_timer {
-    PTP_POOL _pool = nullptr;
-    TP_CALLBACK_ENVIRON _callBackEnvironment;
-    PTP_CLEANUP_GROUP _cleanupgroup = nullptr;
-
-public:
-    system_timer() {
-        InitializeThreadpoolEnvironment(&_callBackEnvironment);
-        _pool = CreateThreadpool(nullptr);
-        if (_pool == nullptr) throw std::bad_alloc();
-
-        _cleanupgroup = CreateThreadpoolCleanupGroup();
-        if (_pool == nullptr) throw std::bad_alloc();
-
-        SetThreadpoolCallbackPool(&_callBackEnvironment, _pool);
-        SetThreadpoolCallbackCleanupGroup(&_callBackEnvironment, _cleanupgroup, nullptr);
+/// Normalizes nonpositive delays and rounds positive finite delays upward to signed nanoseconds.
+template <typename Rep, typename Period>
+auto timer_nanoseconds(std::chrono::duration<Rep, Period> duration) -> std::int64_t {
+    if constexpr (std::is_floating_point_v<Rep>) {
+        if (!std::isfinite(duration.count()))
+            throw std::invalid_argument("system_timer delay must be finite");
     }
-
-    ~system_timer() {
-        CloseThreadpoolCleanupGroupMembers(_cleanupgroup, FALSE, nullptr);
-        CloseThreadpoolCleanupGroup(_cleanupgroup);
-        CloseThreadpool(_pool);
+    if (duration.count() <= 0) return 0;
+    if constexpr (std::is_integral_v<Rep>) {
+        return timer_integral_nanoseconds(static_cast<std::uintmax_t>(duration.count()),
+                                          Period::num, Period::den, 1000000000);
+    } else {
+        const auto value =
+            std::ceil(static_cast<long double>(duration.count()) *
+                      static_cast<long double>(Period::num) / Period::den * 1000000000);
+        // 2^63 is exactly representable even when long double has only double precision.
+        const auto bound = -static_cast<long double>(std::numeric_limits<std::int64_t>::min());
+        if (!std::isfinite(value) || value >= bound)
+            throw std::overflow_error("system_timer delay exceeds signed nanoseconds");
+        return value < 1 ? 1 : static_cast<std::int64_t>(value);
     }
+}
 
-    template <typename F>
-    [[deprecated("Use chrono::duration as parameter instead")]] void operator()(
-        std::chrono::steady_clock::time_point when, F&& f) {
-        using namespace std::chrono;
-        operator()(when - steady_clock::now(), std::forward<F>(f));
-    }
-
-    template <typename F, typename Rep, typename Per = std::ratio<1>>
-    auto operator()(std::chrono::duration<Rep, Per> duration, F&& f)
-        -> std::enable_if_t<std::is_nothrow_invocable_v<F>> {
-        using namespace std::chrono;
-        auto timer = CreateThreadpoolTimer(&timer_callback_impl<F>, new F(std::forward<F>(f)),
-                                           &_callBackEnvironment);
-
-        if (timer == nullptr) {
+/// Submits a normalized delay and translates only the ABI's explicit resource failures.
+inline void submit_system_timer(std::int64_t delay_ns, task<void() noexcept>& f) {
+    const auto result =
+        stlab_v2_system_timer_submit(&current_task_storage_abi_guard::value, f.relocation_concept(),
+                                     f.relocation_invoke(), f.relocation_source(), delay_ns);
+    switch (result.code) {
+        case 0:
+            return;
+        case 1:
             throw std::bad_alloc();
-        }
-
-        auto file_time = duration_to_FILETIME(duration);
-
-#pragma warning(push)
-#pragma warning(disable : 6553) // bad annotation on SetThreadpoolTimer
-        SetThreadpoolTimer(timer, &file_time, 0, 0);
-#pragma warning(pop)
+        case 2:
+            throw std::system_error(result.native_error, std::generic_category());
+        case 3:
+            throw std::system_error(result.native_error, std::system_category());
+        default:
+            assert(false && "invalid timer ABI resource status");
+            std::terminate();
     }
+}
 
-private:
-    template <typename F>
-    static void CALLBACK timer_callback_impl(PTP_CALLBACK_INSTANCE /*Instance*/,
-                                             PVOID parameter,
-                                             PTP_TIMER /*timer*/) {
-        std::unique_ptr<F> f(static_cast<F*>(parameter));
-        (*f)();
-    }
-
-    template <typename Rep, typename Per = std::ratio<1>>
-    FILETIME duration_to_FILETIME(std::chrono::duration<Rep, Per> duration) const {
-        using namespace std::chrono;
-        FILETIME ft = {0, 0};
-        SYSTEMTIME st = {0};
-        auto when = system_clock::now() + duration_cast<system_clock::duration>(duration);
-        time_t t = system_clock::to_time_t(when);
-        tm utc_tm;
-        if (!gmtime_s(&utc_tm, &t)) {
-            st.wSecond = static_cast<WORD>(utc_tm.tm_sec);
-            st.wMinute = static_cast<WORD>(utc_tm.tm_min);
-            st.wHour = static_cast<WORD>(utc_tm.tm_hour);
-            st.wDay = static_cast<WORD>(utc_tm.tm_mday);
-            st.wMonth = static_cast<WORD>(utc_tm.tm_mon + 1);
-            st.wYear = static_cast<WORD>(utc_tm.tm_year + 1900);
-            st.wMilliseconds =
-                std::chrono::duration_cast<std::chrono::milliseconds>(when.time_since_epoch())
-                    .count() %
-                1000;
-            SystemTimeToFileTime(&st, &ft);
-        }
-        return ft;
-    }
-};
-
-/**************************************************************************************************/
-
-#elif STLAB_TASK_SYSTEM(PORTABLE)
-
-class system_timer {
-    using element_t = std::pair<std::chrono::steady_clock::time_point, task<void() noexcept>>;
-    using queue_t = std::vector<element_t>;
-    using lock_t = std::unique_lock<std::mutex>;
-
-    queue_t _timed_queue;
-    std::condition_variable _condition;
-    bool _stop = false;
-    std::mutex _timed_queue_mutex;
-    std::thread _timed_queue_thread;
-
-    struct greater_first {
-        using result_type = bool;
-
-        template <typename T>
-        bool operator()(const T& x, const T& y) {
-            return x.first > y.first;
-        }
-    };
-
-    void timed_queue_run() {
-        while (true) {
-            task<void() noexcept> task;
-            {
-                lock_t lock(_timed_queue_mutex);
-
-                while (_timed_queue.empty() && !_stop)
-                    _condition.wait(lock);
-                if (_stop) return;
-                while (std::chrono::steady_clock::now() < _timed_queue.front().first) {
-                    auto when = _timed_queue.front().first;
-                    _condition.wait_until(lock, when);
-                    if (_stop) return;
-                }
-                std::pop_heap(begin(_timed_queue), end(_timed_queue), greater_first());
-                task = std::move(_timed_queue.back().second);
-                _timed_queue.pop_back();
-            }
-
-            task();
-        }
-    }
-
-public:
-    system_timer() {
-        _timed_queue_thread = std::thread([this] { this->timed_queue_run(); });
-    }
-
-    ~system_timer() {
-        {
-            lock_t lock(_timed_queue_mutex);
-            _stop = true;
-        }
-        _condition.notify_one();
-        _timed_queue_thread.join();
-    }
-
-    template <typename F>
-    [[deprecated("Use chrono::duration as parameter instead")]] void operator()(
-        std::chrono::steady_clock::time_point when, F&& f) {
-        using namespace std::chrono;
-        operator()(when - steady_clock::now(), std::forward<decltype(f)>(f));
-    }
-
-    template <typename F, typename Rep, typename Per = std::ratio<1>>
-    auto operator()(std::chrono::duration<Rep, Per> duration, F&& f)
-        -> std::enable_if_t<std::is_nothrow_invocable_v<F>> {
-        lock_t lock(_timed_queue_mutex);
-        _timed_queue.emplace_back(std::chrono::steady_clock::now() + duration, std::forward<F>(f));
-        std::push_heap(std::begin(_timed_queue), std::end(_timed_queue), greater_first());
-        _condition.notify_one();
-    }
-};
-
-#endif
-
-/**************************************************************************************************/
-
-/// Schedules `void() noexcept` tasks after a duration (or at a deprecated time point).
+/// Adapter to the core-owned timer service.
 struct system_timer_type {
     using result_type = void;
 
-    static auto get_system_timer() -> system_timer& {
-        static system_timer only_system_timer;
-        return only_system_timer;
+    /// Schedules `f` asynchronously no earlier than `when`, or without delay for past deadlines.
+    ///
+    /// - Precondition: timer admission has not been closed by `pre_exit()`.
+    /// - Throws: `std::overflow_error` if the remaining delay exceeds signed nanoseconds;
+    ///   `std::bad_alloc` or `std::system_error` on submission resource failure.
+    /// - Complexity: backend-dependent; portable submission is amortized logarithmic in the
+    ///   number of pending timers, with a linear worst case when queue storage grows.
+    void operator()(std::chrono::steady_clock::time_point when, task<void() noexcept>&& f) const {
+        const auto now = std::chrono::steady_clock::now();
+        if (when <= now) {
+            submit_system_timer(0, f);
+            return;
+        }
+        using duration = std::chrono::steady_clock::duration;
+        using unsigned_rep = std::make_unsigned_t<typename duration::rep>;
+        const auto remaining = static_cast<unsigned_rep>(when.time_since_epoch().count()) -
+                               static_cast<unsigned_rep>(now.time_since_epoch().count());
+        submit_system_timer(
+            timer_nanoseconds(
+                std::chrono::duration<unsigned_rep, typename duration::period>(remaining)),
+            f);
     }
 
-    /// @deprecated Use a `duration` overload instead.
-    [[deprecated("Use chrono::duration as parameter instead")]] void operator()(
-        std::chrono::steady_clock::time_point when, task<void() noexcept>&& f) const {
-        operator()(when - std::chrono::steady_clock().now(), std::move(f));
-    }
-
-    /// Executes `f` after `duration` (via the process-wide `system_timer` instance).
-    template <typename Rep, typename Per = std::ratio<1>>
-    void operator()(std::chrono::duration<Rep, Per> duration, task<void() noexcept>&& f) const {
-        get_system_timer()(duration, std::move(f));
+    /// Schedules `f` asynchronously after `duration`, rounded upward; nonpositive delays do not
+    /// wait.
+    ///
+    /// - Precondition: timer admission has not been closed by `pre_exit()`.
+    /// - Throws: `std::invalid_argument` for nonfinite input, `std::overflow_error` for positive
+    ///   delays exceeding signed nanoseconds, or `std::bad_alloc`/`std::system_error` for resource
+    ///   failure. Failure leaves the supplied task unconsumed.
+    /// - Complexity: backend-dependent; portable submission is amortized logarithmic in the
+    ///   number of pending timers, with a linear worst case when queue storage grows.
+    template <typename Rep, typename Period>
+    void operator()(std::chrono::duration<Rep, Period> duration, task<void() noexcept>&& f) const {
+        submit_system_timer(timer_nanoseconds(duration), f);
     }
 };
 
-/**************************************************************************************************/
-
 } // namespace detail
 
-/**************************************************************************************************/
-
-/// Schedules `void() noexcept` tasks on a system timer / run loop (platform-dependent).
+/// Schedules move-only `void() noexcept` tasks through the process-shared timer service.
 inline constexpr auto system_timer = detail::system_timer_type{};
-
-/**************************************************************************************************/
 
 /** @} */
 
 STLAB_VERSION_NAMESPACE_END()
 } // namespace stlab
 
-/**************************************************************************************************/
-
 #endif
-
-/**************************************************************************************************/

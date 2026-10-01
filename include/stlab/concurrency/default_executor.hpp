@@ -19,10 +19,17 @@
  *
  *  Submit work through `high_executor`, `default_executor`, or `low_executor` as **priority
  *  hints**; the runtime prefers high, then default, then low, but order is not strict under load.
+ *  Threadless Emscripten routes all three priorities asynchronously to the main runtime queue.
+ *  Tasks must return control to the host event loop for other tasks to make progress.
+ *  During cooperative `pre_exit()`, these tasks and their descendants drain ahead of deferred
+ *  main tasks. Submission closes after the last executor target and its captures are destroyed.
+ *  A subsequent ordinary main task is the shutdown-completion fence.
  *
  *  @note Call `pre_exit()` before normal process exit when using these executors so detached tasks
  *  do not overlap teardown of globals or other exit handlers (the implementation registers a
  *  pre-exit hook). `std::quick_exit()` is an alternative when it fits your program.
+ *  In cooperative builds, do not exit immediately on return from `pre_exit()`; enqueue final
+ *  exit through `main_executor` so it follows asynchronous retirement and producer main work.
  */
 
 #include <stlab/concurrency/task.hpp>
@@ -88,7 +95,11 @@ extern "C" void stlab_v2_low_executor_submit(const unsigned char* task_abi_guard
 ///
 /// The portable task system may add a worker to preserve forward progress. Task systems with
 /// operating-system-managed blocking compensation perform no action.
+/// Cooperative task systems perform no action; callers must not block.
 extern "C" void stlab_v2_notify_default_executor_before_waiting() noexcept;
+
+/// Returns one when the configured core supports blocking waits, otherwise zero.
+extern "C" std::int32_t stlab_v2_default_executor_supports_blocking() noexcept;
 
 /** @} */
 

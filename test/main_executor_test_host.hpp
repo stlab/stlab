@@ -71,8 +71,8 @@ inline void require_run_started() {
     if (!run_started()) finish(false, "task ran before main_executor_run() started");
 }
 
-/// Establishes the host application the backend requires, calls `start()`, then services the main
-/// queue on the calling thread.
+/// Establishes the host application the backend requires, calls `start()`, then keeps the main
+/// queue live. The Emscripten runtime may already service its main queue during `start()`.
 ///
 /// - Precondition: called once, from `main()`, with `main()`'s own `argc` (Qt retains a
 ///   reference to it).
@@ -84,8 +84,13 @@ template <class F>
     (void)argc;
     (void)argv;
 #endif
-    start();
+#if STLAB_MAIN_EXECUTOR(EMSCRIPTEN)
     mark_run_started();
+#endif
+    start();
+#if !STLAB_MAIN_EXECUTOR(EMSCRIPTEN)
+    mark_run_started();
+#endif
     stlab::main_executor_run();
 }
 
