@@ -11,11 +11,14 @@
 
 #include <stlab/concurrency/main_executor.hpp>
 
-#include <condition_variable>
 #include <cstddef>
-#include <mutex>
 #include <thread>
 #include <vector>
+
+#if defined(__EMSCRIPTEN_PTHREADS__)
+#include <condition_variable>
+#include <mutex>
+#endif
 
 namespace {
 
