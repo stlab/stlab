@@ -16,7 +16,8 @@
  *
  *  @details
  *  Abstractions for multi-core algorithms with less contention: **futures**, **channels**,
- *  executors, and related utilities.
+ *  serial queues, and related utilities. Tasks, executors, timers, and process lifecycle APIs
+ *  belong to the public dependency stlab-execution, using their original header paths.
  *
  *  `stlab::future` differs from `std::future` in several ways:
  *  - Continuations (`then`, `recover`) and combinators (`when_all`, `when_any`).
@@ -25,8 +26,8 @@
  *    before completion.
  *  - Custom **executors** and automatic flattening of `future<future<T>>` to `future<T>`.
  *
- *  A **default executor** uses the system thread pool when the platform provides one; otherwise
- *  a portable task-stealing implementation is used (see @ref stlab_concurrency_default_executor).
+ *  Executor/backend contracts are documented by stlab-execution's own local Doxygen
+ *  build, not this package. That package and its documentation site are unpublished.
  *
  *  **Tooling:** building tests uses CMake and doctest. **Contributors** include Sean Parent,
  *  Foster Brereton, Felix Petriconi, and others.

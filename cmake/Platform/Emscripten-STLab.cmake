@@ -1,4 +1,9 @@
 #
+# Compatibility bootstrap: CMake loads toolchains before project()/CPM, so this
+# SDK/test-driver setup must remain locally available. Execution owns backend
+# detection and runtime configuration; keep SDK flags aligned with its toolchain.
+# This file does not select or implement an execution backend.
+#
 # This toolchain file extends `Emscripten.cmake` provided by the Emscripten SDK,
 # and set options required to run STLab test drivers with
 # CTest (using a node runner).

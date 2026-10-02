@@ -11,6 +11,12 @@
       "os": "ubuntu-latest"
     },
     {
+      "name": "Linux GCC C++17 integration",
+      "compiler": "gcc",
+      "os": "ubuntu-latest",
+      "standard": "17"
+    },
+    {
       "name": "macOS apple-clang latest",
       "compiler": "apple-clang",
       "os": "macos-latest"
@@ -22,6 +28,12 @@
       "cmake_options": ""
     },
     {
+      "name": "macOS portable integration",
+      "compiler": "apple-clang",
+      "os": "macos-latest",
+      "cmake_options": "-DSTLAB_TASK_SYSTEM=portable"
+    },
+    {
       "name": "Windows shared",
       "compiler": "Visual Studio",
       "os": "windows-latest",
@@ -31,7 +43,7 @@
       "name": "Windows shared portable",
       "compiler": "Visual Studio",
       "os": "windows-latest",
-      "cmake_options": "-DSTLAB_CORE_SHARED=ON -DSTLAB_TASK_SYSTEM=portable"
+      "cmake_options": "-DSTLAB_EXECUTION_SHARED=ON -DSTLAB_TASK_SYSTEM=portable"
     },
     {
       "name": "Linux GCC portable main executor",

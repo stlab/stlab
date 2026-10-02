@@ -49,6 +49,7 @@ function(stlab_setup_docs)
   set(PROJECT_NAME "${ARG_NAME}")
   set(PROJECT_BRIEF "${ARG_DESCRIPTION}")
   set(PROJECT_VERSION "${ARG_VERSION}")
+  # Only STLab-owned declarations: execution builds its canonical API separately.
   set(INPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
   set(OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}")
   set(AWESOME_CSS_PATH "${AWESOME_CSS_DIR}")
