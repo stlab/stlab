@@ -58,6 +58,24 @@ target_link_libraries(stlab.test.execution_dependency PRIVATE stlab::stlab)
 add_test(NAME stlab.test.execution_dependency COMMAND stlab.test.execution_dependency)
 set_tests_properties(stlab.test.execution_dependency PROPERTIES TIMEOUT 60)
 stlab_copy_runtime_dlls(stlab.test.execution_dependency)
+option(STLAB_PACKAGE_TESTS "Verify native execution/STLab installed and source consumers" OFF)
+if(STLAB_PACKAGE_TESTS AND NOT CMAKE_CROSSCOMPILING AND NOT stlab_execution_imported)
+  get_directory_property(execution_shared DIRECTORY "${stlab_execution_source}"
+    DEFINITION STLAB_EXECUTION_SHARED)
+  add_test(NAME stlab.package.roundtrip
+    COMMAND ${CMAKE_COMMAND}
+      "-DSTLAB_SOURCE:PATH=${PROJECT_SOURCE_DIR}"
+      "-DEXECUTION_SOURCE:PATH=${stlab_execution_source}"
+      "-DTOOLKIT_SOURCE:PATH=${cpp-library_SOURCE_DIR}"
+      "-DVERIFY_PARENT:PATH=${PROJECT_BINARY_DIR}/package-test"
+      "-DVERIFY_ROOT:PATH=${PROJECT_BINARY_DIR}/package-test/execution-packages"
+      "-DSTLAB_EXECUTION_SHARED:BOOL=${execution_shared}"
+      "-DSTLAB_TASK_SYSTEM=${STLAB_TASK_SYSTEM}"
+      "-DTEST_COMPILER:FILEPATH=${CMAKE_CXX_COMPILER}"
+      "-DTEST_MAKE_PROGRAM:FILEPATH=${CMAKE_MAKE_PROGRAM}"
+      -P "${CMAKE_CURRENT_SOURCE_DIR}/verify_execution_packages.cmake")
+  set_tests_properties(stlab.package.roundtrip PROPERTIES TIMEOUT 900 LABELS package)
+endif()
 
 # Independently generated configurations must compose without sharing coroutine policy.
 if(NOT CMAKE_CROSSCOMPILING AND NOT stlab_execution_imported)

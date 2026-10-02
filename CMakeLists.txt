@@ -25,10 +25,18 @@ include(GNUInstallDirs)
 include(CMakeDependentOption)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
+# A development SHA makes CPM infer version 0, which rejects independently
+# installed major versions. There is deliberately no execution version floor yet.
+if(CPM_USE_LOCAL_PACKAGES AND NOT CPM_stlab-execution_SOURCE)
+  find_package(stlab-execution QUIET CONFIG GLOBAL)
+  if(stlab-execution_FOUND)
+    CPMRegisterPackage(stlab-execution "${stlab-execution_VERSION}")
+  endif()
+endif()
 CPMAddPackage(
   NAME stlab-execution
   GITHUB_REPOSITORY stlab/stlab-execution
-  GIT_TAG 7f42eab4a6830c2d373d026198aacc829896af54)
+  GIT_TAG 9200f7ac2f66812e02433016d994aa7cdac21ff8)
 # Backend selection belongs to execution. These resolved values are needed only by private tests.
 get_target_property(stlab_execution_imported stlab::execution IMPORTED)
 if(NOT stlab_execution_imported)
@@ -80,10 +88,22 @@ endif()
 add_subdirectory(include/stlab)
 add_subdirectory(src)
 
-CPMAddPackage("gh:stlab/stlab-copy-on-write@1.1.0")
-target_link_libraries(stlab PUBLIC $<BUILD_INTERFACE:stlab::copy-on-write>)
-CPMAddPackage("gh:stlab/stlab-enum-ops@1.2.0")
-target_link_libraries(stlab PUBLIC $<BUILD_INTERFACE:stlab::enum-ops>)
+CPMAddPackage(
+  NAME stlab-copy-on-write
+  GITHUB_REPOSITORY stlab/stlab-copy-on-write
+  VERSION 1.1.0
+  GIT_TAG v1.1.0)
+target_link_libraries(stlab PUBLIC
+  $<BUILD_INTERFACE:stlab::copy-on-write>
+  $<INSTALL_INTERFACE:stlab::$<1:copy-on-write>>)
+CPMAddPackage(
+  NAME stlab-enum-ops
+  GITHUB_REPOSITORY stlab/stlab-enum-ops
+  VERSION 1.2.0
+  GIT_TAG v1.2.0)
+target_link_libraries(stlab PUBLIC
+  $<BUILD_INTERFACE:stlab::enum-ops>
+  $<INSTALL_INTERFACE:stlab::$<1:enum-ops>>)
 
 message(STATUS "stlab: Disable Coroutines: ${STLAB_NO_STD_COROUTINES}")
 

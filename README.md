@@ -207,6 +207,23 @@ and the future API with warnings as errors. Only STLab defines the coroutine
 macro; execution's headers also compile in C++17 regardless of its build standard.
 This check uses generated source-build headers, not installed-consumer fixtures.
 
+Native package round trips use separate, fresh install-preset children:
+
+```powershell
+cmake --preset=test-packages
+ctest --preset=test-packages
+```
+
+Use `test-packages-shared` or `test-packages-portable-shared` for shared execution.
+Development checkouts require the same `:PATH` CPM overrides as source builds.
+The verifier checks independent install controls, disjoint installed header file sets,
+installed consumers, and source STLab using an imported installed execution package.
+Children disable `BUILD_TESTING`; logs and package evidence remain under
+`build/<preset>/package-test/execution-packages`. On Windows use an x64 developer
+environment; runtime DLLs are copied beside each consumer before it runs.
+Runtime imports use the C ABI; the existing decorated task-storage data guard is
+retained to enforce link-time ABI mismatch rejection.
+
 ## Generating Documentation
 
 For generating the documentation, see the [README.md](docs/README.md) in the `docs` directory.
