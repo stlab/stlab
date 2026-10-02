@@ -117,8 +117,13 @@ Preserve existing scheduler options and defaults. Introduce
 `STLAB_EXECUTION_SHARED` as the canonical execution shared-library control,
 accepting `STLAB_CORE_SHARED` as a compatibility spelling. Preserve the existing
 effective shared/static selection when the new option is not specified.
-Conflicting explicitly supplied settings fail with a diagnostic rather than
-silently selecting one.
+On a fresh configuration, conflicting supplied settings fail with a diagnostic.
+On reconfiguration, the spelling changed since the last resolved configuration
+wins over an unchanged cached counterpart. This preserves single-option changes
+through either spelling. CMake cannot distinguish an unchanged cached value from
+the same value redundantly supplied again on the command line; in that case,
+the changed spelling still wins. This policy was approved during implementation
+review on 2026-10-01.
 
 Execution shared/static selection must not change the parent project's
 `BUILD_SHARED_LIBS`. Preserve Windows native and portable shared-execution

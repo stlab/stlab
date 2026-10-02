@@ -520,7 +520,11 @@ Keep private implementation headers private.
 
 Choose static/shared using the approved canonical option and legacy spelling:
 capture whether each option was supplied before declaring defaults; differing
-explicit values fail. Without a new explicit setting, preserve existing behavior:
+values fail on a fresh configuration. On reconfiguration, a spelling changed
+since the last resolved configuration wins over its unchanged cached counterpart,
+even if that counterpart was redundantly supplied again. Preserve both controls
+without falsely treating generated defaults as independent requests.
+Without a new explicit setting, preserve existing behavior:
 legacy ON selects shared; non-Windows BUILD_SHARED_LIBS ON selects shared;
 otherwise static. Retain effective `STLAB_CORE_SHARED` for downstream compatibility.
 Link Threads/libdispatch/Qt only as required by the selected execution backend.
