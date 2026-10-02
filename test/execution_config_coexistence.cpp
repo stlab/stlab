@@ -4,7 +4,7 @@
 #else
 #include <stlab/execution/config.hpp>
 #ifdef STLAB_STD_COROUTINES
-#error Execution must not define STLab's coroutine policy
+#error "Execution must not define STLab's coroutine policy"
 #endif
 #include <stlab/config.hpp>
 #endif
