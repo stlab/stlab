@@ -4,9 +4,9 @@ Local validation spans 2026-10-01/02; the filename retains the approved plan dat
 
 ## Delivery boundary and actual commits
 
-Tasks 1–6 were accepted by the controller; Task 7 supplies local documentation,
-CI configuration, validation, and this handoff. Controller final review is still
-required. No nested agents/reviewers, push, tag, remote repository creation,
+All seven local implementation tasks were accepted by the controller. Final
+cross-repository review passed with no Critical or Important findings; publication
+remains blocked as described below. No push, tag, remote repository creation,
 release, branch cleanup, or ledger deletion was performed.
 
 - Toolkit: `cd552af39ee4c71fe4342dfba4517c70dddba0b3`, unchanged in Task 7.
@@ -147,6 +147,13 @@ runtime function imports.
 
 ## Pending checks and publication order
 
+Controller verification after final review repeated the full STLab C++20 suite
+(14/14), execution header/timer selection (2/2), and toolkit nested-install/type
+fixtures (10/10 and 11/11). These repeats are not added to the matrix totals.
+Review acceptance is recorded in the ignored `task-7-final-review.md` artifact.
+An untracked execution-root `compile_commands.json` appeared during review with
+an unidentified producer; it was left untouched. Tracked changes are committed.
+
 macOS native/libdispatch, native/portable TSan+UBSan, and Qt5/Qt6 runtime checks
 remain **CI pending**, not local passes. Compilation is not a substitute for
 runtime, lifecycle, or race evidence. Lint baseline warnings remain explicit.
@@ -162,5 +169,5 @@ Publication needs separate authorization:
    minimum installed dependency requirement; verify STLab without overrides.
 4. Only then publish STLab.
 
-Stop at local Task 7 deliverables. Keep branches, caches, reports, and progress
-ledger for the controller's final review.
+Local extraction is approved. Preserve branches, caches, reports, and the
+progress ledger pending the integration/publication decision.
