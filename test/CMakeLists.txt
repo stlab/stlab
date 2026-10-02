@@ -59,6 +59,23 @@ add_test(NAME stlab.test.execution_dependency COMMAND stlab.test.execution_depen
 set_tests_properties(stlab.test.execution_dependency PROPERTIES TIMEOUT 60)
 stlab_copy_runtime_dlls(stlab.test.execution_dependency)
 
+# Independently generated configurations must compose without sharing coroutine policy.
+if(NOT CMAKE_CROSSCOMPILING AND NOT stlab_execution_imported)
+  add_test(NAME stlab.config.execution_coexistence
+    COMMAND ${CMAKE_COMMAND}
+      "-DSTLAB_SOURCE:PATH=${PROJECT_SOURCE_DIR}"
+      "-DEXECUTION_SOURCE:PATH=${stlab_execution_source}"
+      "-DTOOLKIT_SOURCE:PATH=${cpp-library_SOURCE_DIR}"
+      "-DTEST_BINARY:PATH=${CMAKE_CURRENT_BINARY_DIR}/execution_coexistence"
+      "-DTEST_COMPILER:FILEPATH=${CMAKE_CXX_COMPILER}"
+      "-DTEST_MSVC:BOOL=${MSVC}"
+      "-DTEST_GENERATOR=${CMAKE_GENERATOR}"
+      "-DTEST_MAKE_PROGRAM:FILEPATH=${CMAKE_MAKE_PROGRAM}"
+      "-DTEST_CACHE:PATH=${CPM_SOURCE_CACHE}"
+      -P "${CMAKE_CURRENT_SOURCE_DIR}/execution_config_coexistence.cmake")
+  set_tests_properties(stlab.config.execution_coexistence PROPERTIES TIMEOUT 450)
+endif()
+
 add_library(testing INTERFACE)
 add_library(stlab::testing ALIAS testing)
 target_link_libraries(testing INTERFACE doctest::doctest stlab::development stlab::stlab)

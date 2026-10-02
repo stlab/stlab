@@ -28,7 +28,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 CPMAddPackage(
   NAME stlab-execution
   GITHUB_REPOSITORY stlab/stlab-execution
-  GIT_TAG 22c14217be84c7e03fc78415e661013a006a8c29)
+  GIT_TAG 7f42eab4a6830c2d373d026198aacc829896af54)
 # Backend selection belongs to execution. These resolved values are needed only by private tests.
 get_target_property(stlab_execution_imported stlab::execution IMPORTED)
 if(NOT stlab_execution_imported)

@@ -195,6 +195,18 @@ ctest -C Release
 
 depending on which configuration (`CMAKE_BUILD_TYPE) you choose to build.
 
+The focused native source-build configuration regression runs with:
+
+```powershell
+ctest --preset=debug-cpp20 -R "^stlab.config.execution_coexistence$" --output-on-failure
+```
+
+It independently builds execution in C++17/20 and STLab in C++17/20 with
+`STLAB_NO_STD_COROUTINES=ON/OFF`, then compiles both configuration include orders
+and the future API with warnings as errors. Only STLab defines the coroutine
+macro; execution's headers also compile in C++17 regardless of its build standard.
+This check uses generated source-build headers, not installed-consumer fixtures.
+
 ## Generating Documentation
 
 For generating the documentation, see the [README.md](docs/README.md) in the `docs` directory.
