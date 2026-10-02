@@ -1,4 +1,5 @@
 include(stlab/development)
+include("${CMAKE_CURRENT_SOURCE_DIR}/RuntimeDlls.cmake")
 
 get_target_property(stlab_public_dependencies stlab INTERFACE_LINK_LIBRARIES)
 if(NOT "$<BUILD_INTERFACE:stlab::execution>" IN_LIST stlab_public_dependencies OR
@@ -14,15 +15,6 @@ if(NOT "$<BUILD_INTERFACE:stlab::execution>" IN_LIST stlab_core_dependencies OR
    NOT "$<INSTALL_INTERFACE:stlab::$<1:execution>>" IN_LIST stlab_core_dependencies)
   message(FATAL_ERROR "The compatibility target must refer to execution in builds and installs.")
 endif()
-
-function(stlab_copy_runtime_dlls target_name)
-  if(WIN32)
-    add_custom_command(TARGET ${target_name} POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy -t $<TARGET_FILE_DIR:${target_name}>
-        $<TARGET_RUNTIME_DLLS:${target_name}>
-      COMMAND_EXPAND_LISTS)
-  endif()
-endfunction()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten" AND NOT STLAB_EMSCRIPTEN_PTHREADS)
   add_executable(stlab.test.cooperative_shutdown cooperative_shutdown_test.cpp

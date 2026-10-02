@@ -221,6 +221,8 @@ installed consumers, and source STLab using an imported installed execution pack
 Children disable `BUILD_TESTING`; logs and package evidence remain under
 `build/<preset>/package-test/execution-packages`. On Windows use an x64 developer
 environment; runtime DLLs are copied beside each consumer before it runs.
+The shared test/fixture helper supports CMake 3.24 and skips empty static DLL lists
+(the repository's preset schema still requires CMake 3.28).
 Runtime imports use the C ABI; the existing decorated task-storage data guard is
 retained to enforce link-time ABI mismatch rejection.
 

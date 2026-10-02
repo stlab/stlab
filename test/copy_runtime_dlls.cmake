@@ -1,0 +1,11 @@
+# Distributed under the Boost Software License, Version 1.0.
+cmake_minimum_required(VERSION 3.24)
+if(NOT DEFINED destination OR destination STREQUAL "" OR NOT IS_DIRECTORY "${destination}")
+  message(FATAL_ERROR "Runtime DLL destination must be an existing directory: ${destination}")
+endif()
+foreach(dll IN LISTS runtime_dlls)
+  if(NOT EXISTS "${dll}" OR IS_DIRECTORY "${dll}")
+    message(FATAL_ERROR "Runtime DLL must be an existing file: ${dll}")
+  endif()
+  file(COPY "${dll}" DESTINATION "${destination}")
+endforeach()
