@@ -36,7 +36,7 @@ endif()
 CPMAddPackage(
   NAME stlab-execution
   GITHUB_REPOSITORY stlab/stlab-execution
-  GIT_TAG 8d23dd07161782ac3d756b2883a7c77c952faa6c)
+  GIT_TAG 261602164de790e072f7b09b07698b0148363f4d)
 # Backend selection belongs to execution. These resolved values are needed only by private tests.
 get_target_property(stlab_execution_imported stlab::execution IMPORTED)
 if(NOT stlab_execution_imported)

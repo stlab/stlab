@@ -66,13 +66,13 @@ not the C++ ABI of previously built clients.
 
 `stlab/config.hpp` includes `stlab/execution/config.hpp`. STLab owns only its release
 version/namespace and coroutine configuration; execution owns backend selection, export,
-and common feature macros. The current execution/toolkit SHA pins are unpublished local
-development dependencies, not release versions. Local CPM source overrides must use
-`:PATH` cache types on Windows.
+and common feature macros. The current execution/toolkit SHA pins are development
+dependencies available on public review branches, not release versions. Local CPM source
+overrides must use `:PATH` cache types on Windows.
 
-**Publication blocker:** these local SHAs cannot currently be fetched remotely;
-the extraction branch's CI remains pending until toolkit → execution → STLab
-publication is authorized and completed. The historical release example above
+**Release blocker:** approved release pins and the matching installed dependency
+requirement still need toolkit → execution → STLab publication. The development
+commits are remotely available for review and CI. The historical release example above
 does not represent a published extraction release. No execution minimum version
 is guessed. Current local validation uses generic developer overrides:
 
@@ -91,8 +91,8 @@ target_link_libraries(app PRIVATE stlab::stlab)
 
 Set `CMAKE_PREFIX_PATH` to the prefix containing both packages, or supply an
 independently installed execution prefix. Execution's README and local Doxygen
-build contain the lower-level contracts; its repository/site are unpublished,
-so links are prospective, not claims of an existing documentation endpoint.
+build contain the lower-level contracts. The repository is public, but there is no
+published execution documentation site yet.
 
 ### Preparation
 
@@ -248,7 +248,7 @@ ctest --preset=test-packages
 ```
 
 Use `test-packages-shared` or `test-packages-portable-shared` for shared execution.
-Development checkouts require the same `:PATH` CPM overrides as source builds.
+To test local dependency changes, supply the same `:PATH` CPM source overrides.
 The verifier checks independent install controls, disjoint installed header file sets,
 installed consumers, and source STLab using an imported installed execution package.
 Children disable `BUILD_TESTING`; logs and package evidence remain under

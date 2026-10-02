@@ -6,8 +6,9 @@ Local validation spans 2026-10-01/02; the filename retains the approved plan dat
 
 All seven local implementation tasks were accepted by the controller. Final
 cross-repository review passed with no Critical or Important findings; publication
-remains blocked as described below. No push, tag, remote repository creation,
-release, branch cleanup, or ledger deletion was performed.
+remains blocked as described below. During local Task 7 implementation no push,
+tag, remote repository creation, release, branch cleanup, or ledger deletion
+was performed. The later authorized PR operations are recorded below.
 
 - Toolkit: `cd552af39ee4c71fe4342dfba4517c70dddba0b3`, unchanged in Task 7.
 - Execution: `8d23dd07161782ac3d756b2883a7c77c952faa6c`, local docs/CI commit.
@@ -46,9 +47,9 @@ jobs, docs, and matrix generation (21 instances). Its native Windows shared
 job retains `STLAB_CORE_SHARED=ON`; portable/shared uses the canonical option.
 Emscripten configure/build/test retain the activated SDK environment.
 
-These are prepared jobs, **not CI passes**. Unpublished SHAs prevent remote
-execution until authorized publication. Toolkit's Task 1/2 fixture workflow
-remains unchanged.
+These are prepared jobs, **not CI passes**. At local Task 7 delivery the dependency
+SHAs were unavailable remotely; the subsequently authorized branch pushes allow
+hosted CI to run. Toolkit's Task 1/2 fixture workflow remains unchanged.
 
 ## Final validation and evidence
 
@@ -169,5 +170,29 @@ Publication needs separate authorization:
    minimum installed dependency requirement; verify STLab without overrides.
 4. Only then publish STLab.
 
+## Authorized PR follow-up
+
+The user selected pushing/opening PRs and separately authorized creation of public
+`stlab/stlab-execution`. Toolkit support is reviewed in `stlab/cpp-library#27`;
+the full execution library is reviewed in `stlab/stlab-execution#1`.
+Execution has an empty `main` bootstrap and a full-library `execution-library`
+snapshot branch. Original implementation history remains on `extract-execution`;
+the initial review snapshot has an identical tree, without rewritten commits.
+Both development dependency SHAs are now remotely reachable. They are not released
+versions, and no tag or release was authorized or created.
+
+The current execution development pin is
+`261602164de790e072f7b09b07698b0148363f4d`; its review branch snapshot is
+`68419c4c42a726935cbecebc684ea7940e0e1a34`, with an identical tree.
+A fresh Windows C++20 configuration without either CPM source override fetched
+toolkit `cd552af` and execution `2616021` from their GitHub remotes; dependency,
+future, and timer integration passed 3/3. Cache and Git identities were checked.
+Expected no-release-tag/toolkit-development-version warnings remain.
+
+Initial hosted toolkit CI passed. Execution's hosted native/portable macOS,
+both macOS TSan+UBSan variants, Qt5/Qt6, lint/docs, and package jobs passed on
+the review snapshot. Other execution jobs and STLab hosted checks were still
+pending at this follow-up; this is not a claim of a completed overall CI matrix.
+
 Local extraction is approved. Preserve branches, caches, reports, and the
-progress ledger pending the integration/publication decision.
+progress ledger while the PRs and release gates are resolved.
