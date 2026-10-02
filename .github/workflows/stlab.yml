@@ -6,8 +6,8 @@ on:
     branches:
       - main
 
-# Unpublished local dependency SHAs block remote execution until the authorized
-# toolkit -> execution -> STLab publication sequence is complete.
+# Development SHAs are remotely reachable for CI; approved release pins remain
+# publication gates in the toolkit -> execution -> STLab sequence.
 jobs:
   generate-matrix:
     name: Generate job matrix
