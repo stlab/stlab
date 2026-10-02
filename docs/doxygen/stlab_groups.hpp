@@ -26,7 +26,8 @@
  *    before completion.
  *  - Custom **executors** and automatic flattening of `future<future<T>>` to `future<T>`.
  *
- *  Executor/backend contracts are documented by stlab-execution, not this package.
+ *  Executor/backend contracts are documented by stlab-execution's own local Doxygen
+ *  build, not this package. That package and its documentation site are unpublished.
  *
  *  **Tooling:** building tests uses CMake and doctest. **Contributors** include Sean Parent,
  *  Foster Brereton, Felix Petriconi, and others.

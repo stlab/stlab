@@ -57,5 +57,8 @@ cmake --build --preset=docs
 Open `build/docs/html/index.html` (preset `doxygen` writes to `build/doxygen/html`). CI merges this into `docs/_site/doxygen/` via [`build-site.sh`](tools/docs/build-site.sh) (see [`.github/workflows/jekyll.yml`](../.github/workflows/jekyll.yml)).
 
 Authoritative prose lives in `include/stlab/**/*.hpp` as Doxygen comments. The old Hyde YAML/Markdown mirror under `docs/include/stlab/` has been removed; see [`include/README.md`](include/README.md).
+This reference covers only STLab-owned APIs. Tasks, executors, timers, thread
+naming, and process lifecycle are documented by the unpublished execution
+checkout's standalone `docs` preset; no execution site is assumed to exist.
 
 See also [`DOCUMENTATION.md`](DOCUMENTATION.md).

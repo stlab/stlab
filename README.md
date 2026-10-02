@@ -10,6 +10,7 @@ The recommended approach to using the libraries is to use [CPM](https://github.c
 
 ```cmake
 CPMAddPackage("gh:stlab/stlab@2.1.2")
+target_link_libraries(app PRIVATE stlab::stlab)
 ```
 
 (replace `2.1.2` with the [desired version](https://github.com/stlab/stlab/releases)).
@@ -26,7 +27,7 @@ This library provides futures and channels, high-level abstractions for implemen
 
 ## Documentation
 
-The complete documentation is available on the [STLab home page](http://stlab.cc).
+Documentation for STLab-owned APIs is available on the [STLab home page](http://stlab.cc).
 
 API reference (Doxygen, including [doxygen-awesome-css](https://github.com/jothepro/doxygen-awesome-css)) is built with `-DBUILD_DOCS=ON` or the CMake preset `docs` (`cmake --preset=docs` then `cmake --build --preset=docs`). Output is under `build/docs/html` (preset `doxygen` is an alias with output in `build/doxygen/html`). On GitHub Pages, it is published under `/doxygen/` next to the Jekyll blog site. See [`docs/DOCUMENTATION.md`](docs/DOCUMENTATION.md).
 
@@ -44,8 +45,9 @@ Release changelogs are listed in [CHANGES.md](CHANGES.md).
 ## Requirements
 
 - A standards-compliant C++17, C++20, or C++23 compiler
-- **Building** the library requires CMake 3.23 or later
-- **Testing or developing** the library requires Boost.Test >= 1.74.0
+- **Building** the library requires CMake 3.24 or later; this repository's
+  schema-8 presets require CMake 3.28 or later (execution's schema-5 presets use 3.24).
+- **Testing or developing** uses Ninja and doctest, fetched by CMake.
 
 ## Building
 
@@ -58,6 +60,9 @@ and the compiled execution runtime. Link `stlab::stlab` to obtain both layers; s
 execution clients link `stlab::execution`. The legacy `stlab-core` and `stlab::stlab-core`
 targets are INTERFACE compatibility targets referring to execution, not a second binary.
 Consumers must rebuild; existing v2 C entry points and source spellings are preserved.
+Futures, channels, await helpers, ready futures, serial queues, and general utilities
+remain STLab-owned. Independent inline namespaces preserve source-level names,
+not the C++ ABI of previously built clients.
 
 `stlab/config.hpp` includes `stlab/execution/config.hpp`. STLab owns only its release
 version/namespace and coroutine configuration; execution owns backend selection, export,
@@ -65,12 +70,37 @@ and common feature macros. The current execution/toolkit SHA pins are unpublishe
 development dependencies, not release versions. Local CPM source overrides must use
 `:PATH` cache types on Windows.
 
+**Publication blocker:** these local SHAs cannot currently be fetched remotely;
+the extraction branch's CI remains pending until toolkit → execution → STLab
+publication is authorized and completed. The historical release example above
+does not represent a published extraction release. No execution minimum version
+is guessed. Current local validation uses generic developer overrides:
+
+```powershell
+cmake --preset=debug-cpp20 -DCPM_cpp-library_SOURCE:PATH=<toolkit-checkout> -DCPM_stlab-execution_SOURCE:PATH=<execution-checkout>
+cmake --build --preset=debug-cpp20
+ctest --preset=debug-cpp20
+```
+
+Source CPM consumers continue linking `stlab::stlab`. Installed consumers use:
+
+```cmake
+find_package(stlab CONFIG REQUIRED)
+target_link_libraries(app PRIVATE stlab::stlab)
+```
+
+Set `CMAKE_PREFIX_PATH` to the prefix containing both packages, or supply an
+independently installed execution prefix. Execution's README and local Doxygen
+build contain the lower-level contracts; its repository/site are unpublished,
+so links are prospective, not claims of an existing documentation endpoint.
+
 ### Preparation
 
 1. Create a build directory outside this library's source tree. In this guide, we'll use a sibling
    directory called `BUILD`.
 
-1. Install a version of CMake >= 3.23. If you are on Debian or Ubuntu Linux you may need to use
+1. Install CMake >= 3.28 for this repository's presets (direct configuration requires
+   >= 3.24). If you are on Debian or Ubuntu Linux you may need to use
    `snap` to find one that's new enough.
 
 1. If you are using MSVC, you may need to set environment variables appropriately for your target
@@ -103,6 +133,9 @@ STLab and execution configuration options (backend options are resolved only by 
 - `-DSTLAB_EMSCRIPTEN_PTHREADS=`[**`ON`**, `OFF`] controls Emscripten pthread support. `OFF` selects `STLAB_THREAD_SYSTEM=none`, `STLAB_TASK_SYSTEM=emscripten`, and `STLAB_MAIN_EXECUTOR=emscripten`. Conflicting explicit selections and a nonzero task-pool maximum are rejected. The compiler's pthread flags must match this option.
 - `-DSTLAB_EXECUTION_SHARED=`[`ON`, `OFF`] selects a shared execution runtime independently of
   STLab's `BUILD_SHARED_LIBS`; `STLAB_CORE_SHARED` remains a compatibility spelling.
+  Contradictory fresh settings fail. On reconfiguration the changed spelling wins over
+  the unchanged cached counterpart, even when the latter is supplied redundantly;
+  both caches are reconciled by execution. Neither changes the parent's `BUILD_SHARED_LIBS`.
 - `-DSTLAB_INSTALL=`[`ON`, `OFF`] controls STLab installation, independently of
   `STLAB_EXECUTION_INSTALL`. Enable both when installing both packages from this source build.
 

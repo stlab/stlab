@@ -6,6 +6,8 @@ on:
     branches:
       - main
 
+# Unpublished local dependency SHAs block remote execution until the authorized
+# toolkit -> execution -> STLab publication sequence is complete.
 jobs:
   generate-matrix:
     name: Generate job matrix
@@ -38,14 +40,9 @@ jobs:
         run: |
           git clone --depth 1 https://github.com/emscripten-core/emsdk.git $HOME/emsdk
           pushd $HOME/emsdk
-          ./emsdk install latest
-          ./emsdk activate latest
+          ./emsdk install 6.0.10
+          ./emsdk activate 6.0.10
           echo 'source "$HOME/emsdk/emsdk_env.sh"' >> $HOME/.bash_profile
-
-          # Override Emsdk's bundled node (14.18.2) to the GH Actions system installation (>= 16.16.0)
-          sed -i "/^NODE_JS = .*/c\NODE_JS = '`which node`'" .emscripten
-          echo "Overwrote .emscripten config file to:"
-          cat .emscripten
           popd
 
       - name: Install dependencies // Linux Qt6
@@ -74,7 +71,7 @@ jobs:
         shell: bash
         run: |
           mkdir ../build
-          cmake -S. -B../build -GNinja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=20 ${{ matrix.config.cmake_options }}
+          cmake -S. -B../build -GNinja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=${{ matrix.config.standard || '20' }} ${{ matrix.config.cmake_options }}
 
       - name: Configure // Linux Emscripten
         if: ${{ startsWith(matrix.config.compiler, 'emscripten') }}
@@ -99,7 +96,7 @@ jobs:
 
       - name: Build // Unix
         if: ${{ startsWith(matrix.config.os, 'ubuntu') || startsWith(matrix.config.os, 'macos') }}
-        shell: bash
+        shell: bash -l {0}
         run: |
           cmake --build ../build/ ${{ matrix.config.build_options }}
 
@@ -109,7 +106,7 @@ jobs:
           cmake --build ../build/
 
       - name: Test
-        shell: bash
+        shell: bash -l {0}
         run: |
           cd ../build/
           ctest --output-on-failure --verbose ${{ matrix.config.ctest_options }}
@@ -130,6 +127,30 @@ jobs:
         run: |
           cd build/debug-sanitizer
           ctest --output-on-failure --verbose
+
+  packages:
+    name: Installed/source consumers (${{ matrix.os }}, ${{ matrix.preset }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            preset: test-packages
+          - os: windows-latest
+            preset: test-packages
+          - os: windows-latest
+            preset: test-packages-shared
+          - os: windows-latest
+            preset: test-packages-portable-shared
+    steps:
+      - uses: actions/checkout@v6
+      - if: ${{ startsWith(matrix.os, 'windows') }}
+        uses: TheMrMilchmann/setup-msvc-dev@v4
+        with:
+          arch: x64
+      - run: cmake --preset=${{ matrix.preset }}
+      - run: ctest --preset=${{ matrix.preset }}
 
   macos-tsan-portable:
     name: macOS TSan (portable)
