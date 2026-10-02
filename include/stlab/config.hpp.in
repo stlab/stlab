@@ -8,115 +8,20 @@
 #define STLAB_CONFIG_HPP
 
 /*! @file config.hpp
- *  @brief Generated configuration, feature, and version-namespace macros.
+ *  @brief STLab version and coroutine configuration; includes execution configuration.
  */
 
-// Version information generated from CMake project version
+#include <stlab/execution/config.hpp>
+
 #define STLAB_VERSION_MAJOR() @PROJECT_VERSION_MAJOR@
 #define STLAB_VERSION_MINOR() @PROJECT_VERSION_MINOR@
 #define STLAB_VERSION_PATCH() @PROJECT_VERSION_PATCH@
 
-// Release version macro - used for inline namespace incremented on each release
 #define STLAB_VERSION_NAMESPACE() \
     v@PROJECT_VERSION_MAJOR@_@PROJECT_VERSION_MINOR@_@PROJECT_VERSION_PATCH@
-
-// Wrap the version inline namespace so Doxygen can expand these to nothing (see docs/Doxyfile PREDEFINED).
 #define STLAB_VERSION_NAMESPACE_BEGIN() inline namespace STLAB_VERSION_NAMESPACE() {
 #define STLAB_VERSION_NAMESPACE_END() } /* inline version */
 
-// Helper macro for string construction
-#define STLAB_STRINGIZE(x) STLAB_STRINGIZE2(x)
-#define STLAB_STRINGIZE2(x) #x
-
-// Configuration generated from CMake
-
 #cmakedefine01 STLAB_STD_COROUTINES()
-#cmakedefine01 STLAB_CORE_SHARED()
-
-#if defined(_WIN32) && STLAB_CORE_SHARED()
-#if defined(STLAB_CORE_BUILD)
-#define STLAB_CORE_API __declspec(dllexport)
-#else
-#define STLAB_CORE_API __declspec(dllimport)
-#endif
-#else
-#define STLAB_CORE_API
-#endif
-
-#define STLAB_THREADS(X) (STLAB_THREADS_##X())
-#cmakedefine01 STLAB_THREADS_WIN32()
-#cmakedefine01 STLAB_THREADS_PTHREAD()
-#cmakedefine01 STLAB_THREADS_PTHREAD_EMSCRIPTEN()
-#cmakedefine01 STLAB_THREADS_PTHREAD_APPLE()
-#cmakedefine01 STLAB_THREADS_NONE()
-
-#define STLAB_TASK_SYSTEM(X) (STLAB_TASK_SYSTEM_##X())
-#cmakedefine01 STLAB_TASK_SYSTEM_PORTABLE()
-#cmakedefine01 STLAB_TASK_SYSTEM_LIBDISPATCH()
-#cmakedefine01 STLAB_TASK_SYSTEM_EMSCRIPTEN()
-#cmakedefine01 STLAB_TASK_SYSTEM_WINDOWS()
-
-#define STLAB_MAIN_EXECUTOR(X) (STLAB_MAIN_EXECUTOR_##X())
-#cmakedefine01 STLAB_MAIN_EXECUTOR_LIBDISPATCH()
-#cmakedefine01 STLAB_MAIN_EXECUTOR_EMSCRIPTEN()
-#cmakedefine01 STLAB_MAIN_EXECUTOR_QT5()
-#cmakedefine01 STLAB_MAIN_EXECUTOR_QT6()
-#cmakedefine01 STLAB_MAIN_EXECUTOR_PORTABLE()
-#cmakedefine01 STLAB_MAIN_EXECUTOR_NONE()
-
-#define STLAB_TASK_POOL_MAXIMUM() @STLAB_TASK_POOL_MAXIMUM@u
-
-// Various functionality macros
-
-#define STLAB_FEATURE_PRIVATE_OBJC_ARC() 0
-#define STLAB_FEATURE(X) (STLAB_FEATURE_PRIVATE_##X())
-
-#define STLAB_CPP_VERSION(X) (STLAB_CPP_VERSION_PRIVATE() == (X))
-#define STLAB_CPP_VERSION_LESS_THAN(X) (STLAB_CPP_VERSION_PRIVATE() < (X))
-#define STLAB_CPP_VERSION_AT_LEAST(X) (STLAB_CPP_VERSION_PRIVATE() >= (X))
-
-#if __APPLE__
-#if defined(__has_feature)
-#if __has_feature(objc_arc)
-#undef STLAB_FEATURE_PRIVATE_OBJC_ARC
-#define STLAB_FEATURE_PRIVATE_OBJC_ARC() 1
-#endif // _has_feature(objc_arc)
-#endif // __has_feature
-#endif // __APPLE__
-
-// Check C++ language standard, e.g. C++17 vs. C++20/23.
-//
-// Note that on Windows the value for __cplusplus is only set properly if /Zc:__cplusplus is set.
-// This should be the case with the most projects setup but we're not taking any chances.
-// https://devblogs.microsoft.com/cppblog/msvc-now-correctly-reports-__cplusplus/
-//
-// For MSVS for now there is no c++23 only /std:c++latest which is
-// "It's set to a higher, unspecified value when the /std:c++latest option is specified."
-// Newer compiler has /std:c++23preview, but we are not using it yet.
-#if (defined(__cplusplus) && __cplusplus >= 202302L) || \
-    (defined(_MSVC_LANG) && _MSVC_LANG > 202002L)
-#define STLAB_CPP_VERSION_PRIVATE() 23
-#elif (defined(__cplusplus) && __cplusplus >= 202002L) || \
-    (defined(_MSVC_LANG) && _MSVC_LANG >= 202002L)
-#define STLAB_CPP_VERSION_PRIVATE() 20
-#elif (defined(__cplusplus) && __cplusplus >= 201703L) || \
-    (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
-#define STLAB_CPP_VERSION_PRIVATE() 17
-#elif (defined(__cplusplus) && __cplusplus >= 201402L) || \
-    (defined(_MSVC_LANG) && _MSVC_LANG >= 201402L)
-#define STLAB_CPP_VERSION_PRIVATE() 14
-#else
-// #warning Unknown version of C++, assuming C++23.
-#define STLAB_CPP_VERSION_PRIVATE() 23
-#endif // (defined(__cplusplus) && __cplusplus >= 201402L) || (defined(_MSVC_LANG) && _MSVC_LANG >=
-       // 201402L)
-
-// STLAB_NODISCARD macro
-
-#if STLAB_CPP_VERSION_AT_LEAST(17)
-#define STLAB_NODISCARD() [[nodiscard]]
-#else
-#define STLAB_NODISCARD()
-#endif
 
 #endif // STLAB_CONFIG_HPP

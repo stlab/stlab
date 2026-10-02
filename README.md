@@ -52,6 +52,19 @@ Release changelogs are listed in [CHANGES.md](CHANGES.md).
 STLab is a standard CMake project. See the [running CMake](https://cmake.org/runningcmake) tutorial
 for an introduction to this tool.
 
+STLab publicly depends on [stlab-execution](https://github.com/stlab/stlab-execution).
+That package owns tasks, executors, timers, `pre_exit`, their existing public header paths,
+and the compiled execution runtime. Link `stlab::stlab` to obtain both layers; standalone
+execution clients link `stlab::execution`. The legacy `stlab-core` and `stlab::stlab-core`
+targets are INTERFACE compatibility targets referring to execution, not a second binary.
+Consumers must rebuild; existing v2 C entry points and source spellings are preserved.
+
+`stlab/config.hpp` includes `stlab/execution/config.hpp`. STLab owns only its release
+version/namespace and coroutine configuration; execution owns backend selection, export,
+and common feature macros. The current execution/toolkit SHA pins are unpublished local
+development dependencies, not release versions. Local CPM source overrides must use
+`:PATH` cache types on Windows.
+
 ### Preparation
 
 1. Create a build directory outside this library's source tree. In this guide, we'll use a sibling
@@ -80,7 +93,7 @@ but there are other options you may need to append in order to be successful. Am
 - `-DCMAKE_CXX_STANDARD=`[`17`|**`20`**|`23`] to build with compliance to the given C++ standard.
 - `-DBUILD_TESTING=`[`ON`, `OFF`] turn off if you intend to build, but not test, this library.
 
-STlab specific configuration options:
+STLab and execution configuration options (backend options are resolved only by execution):
 
 - `-DSTLAB_MAIN_EXECUTOR=`[`qt5`, `qt6`, `libdispatch`, `emscripten`, `portable`, `none`] to select the main executor to use. Default is platform dependent; `portable` (an stlab-owned queue serviced by `stlab::main_executor_run()`) is opt-in. Windows has no process main queue, so the default there is `none` unless Qt is found.
 - `-DSTLAB_TASK_POOL_MAXIMUM=`[`integer`] Define the maximum number threads in the task pool. Default of zero implies a pool size of std::thread::hardware_concurrency. Non-zero implies STLAB_TASK_SYSTEM=portable.
@@ -88,6 +101,10 @@ STlab specific configuration options:
 - `-DSTLAB_THREAD_SYSTEM=`[`win32`, `pthread`, `pthread-emscripten`, `pthread-apple`, `none`] to select the thread system to use. Default is platform dependent.
 - `-DSTLAB_TASK_SYSTEM=`[`portable`, `libdispatch`, `windows`, `emscripten`] to select the task system to use. Default is platform dependent; `emscripten` is the cooperative, threadless backend.
 - `-DSTLAB_EMSCRIPTEN_PTHREADS=`[**`ON`**, `OFF`] controls Emscripten pthread support. `OFF` selects `STLAB_THREAD_SYSTEM=none`, `STLAB_TASK_SYSTEM=emscripten`, and `STLAB_MAIN_EXECUTOR=emscripten`. Conflicting explicit selections and a nonzero task-pool maximum are rejected. The compiler's pthread flags must match this option.
+- `-DSTLAB_EXECUTION_SHARED=`[`ON`, `OFF`] selects a shared execution runtime independently of
+  STLab's `BUILD_SHARED_LIBS`; `STLAB_CORE_SHARED` remains a compatibility spelling.
+- `-DSTLAB_INSTALL=`[`ON`, `OFF`] controls STLab installation, independently of
+  `STLAB_EXECUTION_INSTALL`. Enable both when installing both packages from this source build.
 
 ### Emscripten cooperative execution and timers
 
@@ -98,51 +115,15 @@ and coroutine continuations to run; synchronous busy polling prevents progress.
 `await_for()` ignores its timeout and immediately returns the supplied future,
 preserving a pending result for later polling or continuation attachment.
 
-`system_timer` accepts either a duration or a supported
-`std::chrono::steady_clock::time_point` deadline. Nonpositive delays and past deadlines
-schedule asynchronously without delay. Timer scheduling and state live in `stlab-core`
-behind its versioned C ABI. Resource failures are reported as client-side
-`std::bad_alloc` or `std::system_error`; C++ exceptions do not cross the ABI.
+Timer, main-executor, and shutdown contracts and standalone tests belong to
+[stlab-execution](https://github.com/stlab/stlab-execution). STLab retains futures/await
+integration coverage, including future continuations completing before cooperative shutdown's
+main-queue exit fence. Do not exit immediately on return from threadless `pre_exit()`;
+retirement is asynchronous.
 
-Emscripten timers use `emscripten_set_timeout()` on the main runtime thread, including
-submissions from pthreads. Native backends retain their platform timer execution
-placement. `pre_exit()` cancels pending timers, destroys their captures, and waits
-for callbacks executing on other threads before draining the default executor.
-The timer and default executor share one teardown handler, registered on their first
-use. Application shutdown handlers registered afterward run before core teardown in
-the usual reverse-registration order; handlers that release running callbacks must
-use that ordering. Do not call `pre_exit()` from a native timer callback
-that shutdown would need to join. An Emscripten timer callback may call `pre_exit()`,
-but must return before final runtime shutdown. Schedule `emscripten_force_exit()` in
-a separate non-`noexcept` callback and link with `-sEXIT_RUNTIME=1`.
-
-The main executor stays available after core shutdown, including the portable main
-backend. A native shutdown task can retire producers and then enqueue an exit fence:
-
-```cpp
-stlab::main_executor([]() noexcept {
-    stlab::pre_exit();
-    stlab::main_executor([]() noexcept { std::exit(EXIT_SUCCESS); });
-});
-```
-
-The exit task follows main-queue work submitted by the retired timers and default
-executor. Producers must not synchronously wait for main-queue progress while
-`pre_exit()` occupies the main thread. This is a FIFO fence, not a transitive drain:
-earlier main tasks can still enqueue additional work behind the exit task.
-On Emscripten, the final main task schedules the non-`noexcept` force-exit callback
-described above instead of calling `std::exit()` inside the executor task.
-
-In threadless builds, `pre_exit()` initiates asynchronous retirement and returns.
-Default/high/low tasks and their continuations remain accepted and run before any
-deferred ordinary main task. Executor admission closes only after the last target
-and its captures are destroyed; the remaining pre-exit handlers then resume in
-reverse registration order. Producer main work and those handlers' main submissions
-precede the caller's deferred exit fence. Normal merged FIFO ordering is unchanged
-outside retirement, and FIFO is preserved within each shutdown stream.
-Drain work must not depend on deferred main tasks for progress. Use the main-queue
-exit fence rather than exiting directly on return from `pre_exit()`; its execution
-establishes that retirement has completed.
+The local `cmake/Platform/Emscripten-STLab.cmake` remains a minimal compatibility bootstrap:
+CMake needs its SDK/compiler setup before `project()` and CPM can fetch execution. It preserves
+the SDK-selected flags and emulator without duplicating backend detection or runtime ownership.
 
 We also suggest the installation of [Ninja](https://ninja-build.org/) and its use by adding
 `-GNinja` to your cmake command line… but ninja is not required.
@@ -180,7 +161,7 @@ Installation is optional and typically not required when using CPM. If you need 
 
 ```bash
 # Build and install to default system location
-cmake --preset=install
+cmake --preset=install -DSTLAB_INSTALL=ON -DSTLAB_EXECUTION_INSTALL=ON
 cmake --build --preset=install
 cmake --install build/install
 
@@ -189,6 +170,10 @@ cmake --install build/install --prefix /opt/mylib
 ```
 
 The `install` preset enables `CPM_USE_LOCAL_PACKAGES`, which verifies your generated Config.cmake works correctly. See the [CPM.cmake documentation](https://github.com/cpm-cmake/CPM.cmake#cpm_use_local_packages) for more about using installed packages.
+
+The installed `stlabConfig.cmake` resolves `stlab-execution` before loading `stlabTargets`.
+It exports `stlab::stlab` and the INTERFACE `stlab::stlab-core` compatibility target. STLab and
+execution have disjoint installed header sets and independent package versions.
 
 ## Testing
 

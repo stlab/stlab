@@ -8,17 +8,10 @@ target_sources( stlab INTERFACE
     concurrency/await.hpp
     concurrency/channel.hpp
     concurrency/concurrency.hpp
-    concurrency/default_executor.hpp
-    concurrency/executor_base.hpp
     concurrency/future.hpp
-    concurrency/immediate_executor.hpp
-    concurrency/main_executor.hpp
     concurrency/progress.hpp
     concurrency/ready_future.hpp
     concurrency/serial_queue.hpp
-    concurrency/set_current_thread_name.hpp
-    concurrency/system_timer.hpp
-    concurrency/task.hpp
     concurrency/traits.hpp
     concurrency/tuple_algorithm.hpp
     concurrency/utility.hpp
@@ -32,13 +25,12 @@ target_sources( stlab INTERFACE
     forest_algorithms.hpp
     functional.hpp
     memory.hpp
-    pre_exit.hpp
     scope.hpp
     utility.hpp
     version.hpp
 )
 
-stlab_generate_config_file()
+configure_file(config.hpp.in "${PROJECT_BINARY_DIR}/include/stlab/config.hpp" @ONLY)
 
 target_sources( stlab INTERFACE
   FILE_SET headers
