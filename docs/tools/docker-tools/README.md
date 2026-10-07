@@ -12,12 +12,13 @@ To build the docker image, first, update the VERSION variable below (please use 
 
 Specify the ruby version to match the latest stable - https://www.ruby-lang.org/en/downloads/
 
+<!-- [DEPENDENCY] https://www.ruby-lang.org/en/downloads/ (matches docs/.ruby-version) -->
 macOS and Linux:
 
 ```bash
 VERSION="1.0.9"
 VOLUME="stlab.libraries"
-RUBY_VERSION="3.4.4"
+RUBY_VERSION="4.0.7"
 ```
 
 Windows:
@@ -25,7 +26,7 @@ Windows:
 ```powershell
 $VERSION="1.0.9"
 $VOLUME="stlab.libraries"
-$RUBY_VERSION="3.4.4"
+$RUBY_VERSION="4.0.7"
 
 $PSDefaultParameterValues = @{'Out-File:Encoding' = 'Ascii'}
 ```
@@ -119,7 +120,7 @@ cd /mnt/host
 
 `start.sh` runs a full `build-site.sh` once, then Jekyll `--watch` plus browser-sync on `docs/_site/`. Open `http://localhost:3000` (API docs at `http://localhost:3000/doxygen/`).
 
-**Note:** `docs/doxygen/` (only `stlab_groups.hpp`) is excluded from Jekyll. API HTML is copied into `_site/doxygen/` by `build-site.sh`; `start.sh` keeps it across `jekyll --watch` rebuilds (`keep_files` + `sync-doxygen.sh` guard). After editing header Doxygen comments, run `./docs/tools/docs/build-site.sh --skip-jekyll` to refresh API HTML.
+**Note:** `docs/doxygen/` (Doxygen-only `.dox` content and layout configuration) is excluded from Jekyll. API HTML is copied into `_site/doxygen/` by `build-site.sh`; `start.sh` keeps it across `jekyll --watch` rebuilds (`keep_files` + `sync-doxygen.sh` guard). After editing header Doxygen comments, run `./docs/tools/docs/build-site.sh --skip-jekyll` to refresh API HTML.
 
 ## Tips
 

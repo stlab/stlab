@@ -8,4 +8,59 @@ Source repository: [stlab/stlab on GitHub](https://github.com/stlab/stlab).
 License: [Boost Software License 1.0](https://www.boost.org/LICENSE_1_0.txt).
 
 Module overviews are listed under the Reference topics index (`algorithm`, `concurrency`, `forest`, and related headers).
+
+Tasks, executors, timers, and process lifecycle are owned and documented by the public
+dependency stlab-execution (currently unpublished). Its own README and standalone
+Doxygen build document that API; no published execution documentation site is assumed.
+Their canonical
+include paths remain unchanged and are supplied transitively by `stlab::stlab`.
+STLab retains futures, channels, await helpers, serial queues, and general utilities.
+Independent configuration/version namespaces require rebuilding existing C++ clients;
+source spellings and the v2 C execution ABI remain preserved.
+ */
+
+/** @defgroup stlab_algorithm algorithm
+ *  @brief Headers under @c stlab/algorithm/ .
+ *
+ *  @details
+ *  Algorithms that complement the standard library, including utilities for intrusive iterator
+ *  patterns used by @ref stlab_forest.
+ */
+
+/** @defgroup stlab_concurrency concurrency
+ *  @brief Headers under @c stlab/concurrency/ .
+ *
+ *  @details
+ *  Abstractions for multi-core algorithms with less contention: **futures**, **channels**,
+ *  serial queues, and related utilities. Tasks, executors, timers, and process lifecycle APIs
+ *  belong to the public dependency stlab-execution, using their original header paths.
+ *
+ *  `stlab::future` differs from `std::future` in several ways:
+ *  - Continuations (`then`, `recover`) and combinators (`when_all`, `when_any`).
+ *  - Multiple continuations from the same future when the value type is copyable.
+ *  - Cancellation of uniquely contributing work when a `future` or `packaged_task` is destroyed
+ *    before completion.
+ *  - Custom **executors** and automatic flattening of `future<future<T>>` to `future<T>`.
+ *
+ *  Executor/backend contracts are documented by stlab-execution's own local Doxygen
+ *  build, not this package. That package and its documentation site are unpublished.
+ *
+ *  **Tooling:** building tests uses CMake and doctest. **Contributors** include Sean Parent,
+ *  Foster Brereton, Felix Petriconi, and others.
+ */
+
+/** @defgroup stlab_iterator iterator
+ *  @brief Headers under @c stlab/iterator/ .
+ *
+ *  @details
+ *  Concepts and unsafe intrusive-list iterator helpers shared by @ref stlab_algorithm_reverse and
+ *  @ref stlab_forest.
+ */
+
+/** @defgroup stlab_test test
+ *  @brief Headers under @c stlab/test/ .
+ *
+ *  @details
+ *  Utilities and **model types** for unit tests and for illustrating object lifetime, copying,
+ *  moving, and comparison behavior (see @ref stlab_test_model).
  */

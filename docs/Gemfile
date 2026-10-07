@@ -1,15 +1,23 @@
 source 'https://rubygems.org'
+# [DEPENDENCY] https://rubygems.org/gems/jekyll
 gem 'jekyll'
+# [DEPENDENCY] https://rubygems.org/gems/jekyll-redirect-from
 gem 'jekyll-redirect-from', group: [:jekyll_plugins]
+# [DEPENDENCY] https://rubygems.org/gems/jekyll-compose
 gem 'jekyll-compose', group: [:jekyll_plugins]
+# [DEPENDENCY] https://rubygems.org/gems/jekyll-remote-theme
 gem "jekyll-remote-theme", group: [:jekyll_plugins]
 
 # sass-embedded 1.80+ breaks adobe/hyde-theme SCSS (meta.load-css / map.merge); pin until theme updates
+# [DEPENDENCY] https://rubygems.org/gems/sass-embedded (intentional theme compatibility pin)
 gem "sass-embedded", "~> 1.77.8"
 
 # missing jekyll dependencies
+# [DEPENDENCY] https://rubygems.org/gems/csv
 gem 'csv'
+# [DEPENDENCY] https://rubygems.org/gems/base64
 gem 'base64'
+# [DEPENDENCY] https://rubygems.org/gems/logger
 gem 'logger'
 
 # don't submit this line to the upstream repo

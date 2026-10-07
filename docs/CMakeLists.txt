@@ -6,6 +6,7 @@ project( stlab_examples LANGUAGES C CXX )
 file( GLOB_RECURSE examples RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/libraries "libraries/*.cpp" )
 add_subdirectory( stlab )
 
+# [DEPENDENCY] https://www.boost.org/releases/ (minimum supported version, not a pin)
 find_package( Boost 1.60.0 REQUIRED )
 
 include_directories(${Boost_INCLUDE_DIRS})

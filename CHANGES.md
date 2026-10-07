@@ -1,5 +1,27 @@
 See [the release notes](https://github.com/stlab/stlab/releases/) for recent releases.
 
+## Unreleased — execution extraction
+
+- Tasks, executors, timers, thread naming, and `pre_exit` move to the independent
+  `stlab-execution` public dependency. Canonical header paths and `stlab::` names
+  remain unchanged and are supplied transitively by `stlab::stlab`.
+- STLab retains futures, channels, await/ready-future helpers, serial queues,
+  concurrency utilities, and its general-purpose APIs.
+- Legacy `stlab-core` / `stlab::stlab-core` link targets are INTERFACE compatibility
+  targets referring to the single execution runtime, not a second core binary.
+  **Rebuild all clients**: independent C++ namespaces and library filenames do
+  not preserve old binary compatibility. The v2 C runtime ABI and storage guard remain.
+- Configuration and install ownership are separate. Only STLab configures
+  coroutines; execution selects backends. `BUILD_SHARED_LIBS` controls source-built
+  library linkage on every native platform, including Windows. The former
+  `STLAB_EXECUTION_SHARED` and `STLAB_CORE_SHARED` CMake options are no longer used.
+  Installed execution targets retain their linkage regardless of client build settings;
+  client libraries do not need execution-specific linkage options.
+- The execution SHA pin is a development dependency pending release publication;
+  cpp-library uses release 5.5.0.
+  Release order is toolkit → execution → STLab, followed by verification without
+  source overrides and an actual approved execution version/minimum requirement.
+
 ## v2.1.0 - 2025 - August 27
   - See [the release notes](https://github.com/stlab/stlab/releases/tag/v2.1.0) for details.
 

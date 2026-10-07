@@ -48,6 +48,21 @@
             "inherits": "base-cpp20"
         },
         {
+            "name": "test-packages",
+            "inherits": "debug-cpp20",
+            "cacheVariables": { "STLAB_PACKAGE_TESTS": "ON", "BUILD_SHARED_LIBS": "OFF" }
+        },
+        {
+            "name": "test-packages-shared",
+            "inherits": "test-packages",
+            "cacheVariables": { "BUILD_SHARED_LIBS": "ON" }
+        },
+        {
+            "name": "test-packages-portable-shared",
+            "inherits": "test-packages-shared",
+            "cacheVariables": { "STLAB_TASK_SYSTEM": "portable" }
+        },
+        {
             "name": "debug-cpp17",
             "description": "Debug build with C++17",
             "inherits": "base-cpp17"
@@ -217,6 +232,10 @@
         }
     ],
     "buildPresets": [
+        { "name": "install", "configurePreset": "install" },
+        { "name": "test-packages", "configurePreset": "test-packages" },
+        { "name": "test-packages-shared", "configurePreset": "test-packages-shared" },
+        { "name": "test-packages-portable-shared", "configurePreset": "test-packages-portable-shared" },
         {
             "name": "debug-emscripten",
             "configurePreset": "debug-emscripten"
@@ -292,6 +311,15 @@
         }
     ],
     "testPresets": [
+        { "name": "test-packages", "configurePreset": "test-packages",
+          "filter": { "include": { "name": "^stlab.package.roundtrip$" } },
+          "output": { "outputOnFailure": true } },
+        { "name": "test-packages-shared", "configurePreset": "test-packages-shared",
+          "filter": { "include": { "name": "^stlab.package.roundtrip$" } },
+          "output": { "outputOnFailure": true } },
+        { "name": "test-packages-portable-shared", "configurePreset": "test-packages-portable-shared",
+          "filter": { "include": { "name": "^stlab.package.roundtrip$" } },
+          "output": { "outputOnFailure": true } },
         {
             "name": "debug-emscripten",
             "configurePreset": "debug-emscripten",

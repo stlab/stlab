@@ -2,7 +2,7 @@
 
 ## Repository overview
 
-STLab is a C++ library in the `stlab` namespace providing concurrency primitives: futures, channels, executors, serial queues, and related utilities. The public API lives under `include/stlab/`; the implementation is concentrated in a small number of source files under `src/`. Tests are in `test/`, documentation under `docs/`, and build configuration is driven by CMake presets in `CMakePresets.json`.
+STLab is a C++ library in the `stlab` namespace providing futures, channels, await helpers, serial queues, and general utilities. STLab-owned public headers live under `include/stlab/`, with `src/stlab.cpp` as its only compiled source. Its public dependency `stlab-execution` owns tasks, executors, timers, thread naming, and `pre_exit` under their existing include paths and source-level names. Those headers and runtime implementations live in the dependency's repository. Tests are in `test/`, documentation under `docs/`, and build configuration is driven by CMake presets in `CMakePresets.json`.
 
 This is a header-heavy library with platform-specific scheduling support. Most functionality is implemented as reusable concurrency primitives rather than application-level frameworks.
 
@@ -48,16 +48,16 @@ The library is organized around a small set of core concurrency concepts:
 - `include/stlab/concurrency/` holds the main concurrency API:
   - `future.hpp` — `stlab::future<T>` and `stlab::package()`; lazy, value-semantic futures with chaining and coroutine support.
   - `channel.hpp` — `stlab::sender<T>` / `stlab::receiver<T>` for reactive pipelines.
-  - `executor_base.hpp` / `default_executor.hpp` — executor abstractions and task dispatch.
   - `serial_queue.hpp` — serial queue built on executors.
-  - `main_executor.hpp` — main-thread executor.
-  - `task.hpp` — move-only callable wrapper.
-  - `system_timer.hpp` — timer-based scheduling.
-- Non-concurrency pieces such as `forest.hpp`, `forest_algorithms.hpp`, `copy_on_write.hpp`, and `pre_exit.hpp` are more general library utilities, but they still fit the same value-semantics and platform-aware patterns.
-- `src/` contains the implementation glue; the library is intentionally compact and centered on a few patterns rather than many unrelated subsystems.
+  - `await.hpp` — await helpers built on execution's scheduling primitives.
+- `stlab-execution` supplies `executor_base.hpp`, `default_executor.hpp`, `immediate_executor.hpp`, `main_executor.hpp`, `task.hpp`, `system_timer.hpp`, and `set_current_thread_name.hpp` under their existing `stlab/concurrency/` paths, plus `stlab/pre_exit.hpp`. Change their contracts and implementations in that repository, not this source tree.
+- STLab-owned non-concurrency pieces such as `forest.hpp`, `forest_algorithms.hpp`, and `copy_on_write.hpp` provide general library utilities.
+- `src/stlab.cpp` is the STLab library anchor; execution owns the compiled scheduling and lifecycle runtime.
 - `test/` contains component-level doctest executables such as `stlab.test.future`, `stlab.test.channel`, and `stlab.test.executor`.
 
-The big-picture design is that higher-level concurrency abstractions are built on a small set of scheduler and executor primitives, with platform differences abstracted behind those interfaces.
+Higher-level STLab abstractions are built on the execution dependency's scheduler and executor primitives. Link `stlab::stlab` to obtain both layers or `stlab::execution` for execution alone; `stlab::stlab-core` is an INTERFACE compatibility target, not another runtime. Execution owns backend selection and process-shared state; clients must use its public interfaces and versioned C ABI, not internal C++ runtime symbols.
+
+Source builds accept backend options through STLab, but execution resolves them. STLab owns coroutine configuration. Use `BUILD_SHARED_LIBS` for source-build linkage; installed execution targets retain their linkage independently of consuming libraries' settings.
 
 ## Key repository conventions
 
