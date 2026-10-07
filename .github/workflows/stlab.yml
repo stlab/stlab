@@ -15,7 +15,8 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v6
+      # [DEPENDENCY] https://github.com/actions/checkout/releases
+      - uses: actions/checkout@v7.0.1
 
       - name: Generate job matrix
         id: set-matrix
@@ -32,22 +33,25 @@ jobs:
     name: ${{ matrix.config.name }}
 
     steps:
-      - uses: actions/checkout@v6
+      # [DEPENDENCY] https://github.com/actions/checkout/releases
+      - uses: actions/checkout@v7.0.1
 
       - name: Install dependencies // Linux Emscripten
         if: ${{ startsWith(matrix.config.compiler, 'emscripten') }}
         shell: bash
+        # [DEPENDENCY] https://github.com/emscripten-core/emscripten/releases
         run: |
           git clone --depth 1 https://github.com/emscripten-core/emsdk.git $HOME/emsdk
           pushd $HOME/emsdk
-          ./emsdk install 6.0.10
-          ./emsdk activate 6.0.10
+          ./emsdk install 6.0.11
+          ./emsdk activate 6.0.11
           echo 'source "$HOME/emsdk/emsdk_env.sh"' >> $HOME/.bash_profile
           popd
 
       - name: Install dependencies // Linux Qt6
         if: ${{ matrix.config.qt == 'qt6' }}
         shell: bash
+        # [DEPENDENCY] https://packages.ubuntu.com/search?keywords=qt6-base-dev
         run: |
           sudo apt-get update
           sudo apt-get install -y qt6-base-dev
@@ -84,7 +88,8 @@ jobs:
 
       - name: Setup MSVC
         if: ${{ startsWith(matrix.config.os, 'windows') }}  
-        uses: TheMrMilchmann/setup-msvc-dev@v4
+        # [DEPENDENCY] https://github.com/TheMrMilchmann/setup-msvc-dev/releases
+        uses: TheMrMilchmann/setup-msvc-dev@v4.1.0
         with:
           arch: x64
 
@@ -115,7 +120,8 @@ jobs:
     name: macOS TSan
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v6
+      # [DEPENDENCY] https://github.com/actions/checkout/releases
+      - uses: actions/checkout@v7.0.1
 
       - name: Configure
         run: cmake --preset debug-sanitizer
@@ -144,9 +150,11 @@ jobs:
           - os: windows-latest
             preset: test-packages-portable-shared
     steps:
-      - uses: actions/checkout@v6
+      # [DEPENDENCY] https://github.com/actions/checkout/releases
+      - uses: actions/checkout@v7.0.1
       - if: ${{ startsWith(matrix.os, 'windows') }}
-        uses: TheMrMilchmann/setup-msvc-dev@v4
+        # [DEPENDENCY] https://github.com/TheMrMilchmann/setup-msvc-dev/releases
+        uses: TheMrMilchmann/setup-msvc-dev@v4.1.0
         with:
           arch: x64
       - run: cmake --preset=${{ matrix.preset }}
@@ -156,7 +164,8 @@ jobs:
     name: macOS TSan (portable)
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v6
+      # [DEPENDENCY] https://github.com/actions/checkout/releases
+      - uses: actions/checkout@v7.0.1
 
       - name: Configure
         run: cmake --preset debug-portable-sanitizer
@@ -173,12 +182,14 @@ jobs:
     name: Doxygen API docs
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      # [DEPENDENCY] https://github.com/actions/checkout/releases
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
 
       - name: Install Doxygen
-        uses: ssciwr/doxygen-install@329d88f5a303066a5bd006db7516b1925b86350e
+        # [DEPENDENCY] https://github.com/ssciwr/doxygen-install/releases (v2.0.3)
+        uses: ssciwr/doxygen-install@fa3e94d34131d3990b6b8ba939ab982964aa3758
 
       - name: Configure
         run: cmake --preset=docs
@@ -187,7 +198,8 @@ jobs:
         run: cmake --build --preset=docs
 
       - name: Upload HTML artifact
-        uses: actions/upload-artifact@v7
+        # [DEPENDENCY] https://github.com/actions/upload-artifact/releases
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: doxygen-html
           path: build/docs/html

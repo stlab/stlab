@@ -44,7 +44,7 @@ Key presets:
 
 ## Testing
 
-The test framework is **doctest** v2.5.2. Test executables are named `stlab.test.<component>`:
+The test framework is **doctest** v2.5.3. Test executables are named `stlab.test.<component>`:
 
 - `stlab.test.future` — futures/promises (includes coroutine tests on C++20)
 - `stlab.test.channel` — channels and pipelines

@@ -31,6 +31,7 @@ function(stlab_setup_docs)
     message(FATAL_ERROR "stlab_setup_docs: NAME, VERSION, and DESCRIPTION are required")
   endif()
 
+  # [DEPENDENCY] https://www.doxygen.nl/download.html (use installed version)
   find_package(Doxygen)
   if(NOT DOXYGEN_FOUND)
     message(WARNING "Doxygen not found. Documentation will not be built.")
@@ -39,7 +40,7 @@ function(stlab_setup_docs)
 
   # [DEPENDENCY] https://github.com/jothepro/doxygen-awesome-css/releases
   CPMAddPackage(
-    URI gh:jothepro/doxygen-awesome-css@2.4.2
+    URI gh:jothepro/doxygen-awesome-css@2.5.0
     DOWNLOAD_ONLY YES
   )
 

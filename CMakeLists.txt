@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.24)
 
 include(cmake/CPM.cmake)
-# Local development pins; release constraints are assigned when the dependencies are published.
+# [DEPENDENCY] https://github.com/stlab/cpp-library/releases
 CPMAddPackage(
   NAME cpp-library
   GITHUB_REPOSITORY stlab/cpp-library
-  GIT_TAG cd552af39ee4c71fe4342dfba4517c70dddba0b3)
+  GIT_TAG v5.5.0)
 include("${cpp-library_SOURCE_DIR}/cpp-library.cmake")
 cpp_library_enable_dependency_tracking()
 
@@ -33,6 +33,8 @@ if(CPM_USE_LOCAL_PACKAGES AND NOT CPM_stlab-execution_SOURCE)
     CPMRegisterPackage(stlab-execution "${stlab-execution_VERSION}")
   endif()
 endif()
+# Local development pin; release constraints are assigned when execution is published.
+# [DEPENDENCY] https://github.com/stlab/stlab-execution/releases (no release yet; retain development SHA)
 CPMAddPackage(
   NAME stlab-execution
   GITHUB_REPOSITORY stlab/stlab-execution
@@ -88,14 +90,16 @@ endif()
 add_subdirectory(include/stlab)
 add_subdirectory(src)
 
+# [DEPENDENCY] https://github.com/stlab/stlab-copy-on-write/releases
 CPMAddPackage(
   NAME stlab-copy-on-write
   GITHUB_REPOSITORY stlab/stlab-copy-on-write
-  VERSION 1.1.0
-  GIT_TAG v1.1.0)
+  VERSION 1.1.1
+  GIT_TAG v1.1.1)
 target_link_libraries(stlab PUBLIC
   $<BUILD_INTERFACE:stlab::copy-on-write>
   $<INSTALL_INTERFACE:stlab::$<1:copy-on-write>>)
+# [DEPENDENCY] https://github.com/stlab/stlab-enum-ops/releases
 CPMAddPackage(
   NAME stlab-enum-ops
   GITHUB_REPOSITORY stlab/stlab-enum-ops
@@ -109,7 +113,8 @@ message(STATUS "stlab: Disable Coroutines: ${STLAB_NO_STD_COROUTINES}")
 
 if(PROJECT_IS_TOP_LEVEL AND BUILD_TESTING)
   if(NOT CMAKE_SYSTEM_NAME STREQUAL "Emscripten" OR STLAB_EMSCRIPTEN_PTHREADS)
-    CPMAddPackage("gh:doctest/doctest@2.5.2")
+    # [DEPENDENCY] https://github.com/doctest/doctest/releases
+    CPMAddPackage("gh:doctest/doctest@2.5.3")
   endif()
   add_subdirectory(test)
 endif()
@@ -137,7 +142,7 @@ include("${cpp-library_SOURCE_DIR}/cmake/cpp-library-install.cmake")
 cpp_library_map_dependency("stlab::execution" "stlab-execution")
 # These existing release dependencies can be supplied by CPM's source cache without
 # a tracked find_package call; retain their actual package constraints for installation.
-cpp_library_map_dependency("stlab::copy-on-write" "stlab-copy-on-write 1.1.0")
+cpp_library_map_dependency("stlab::copy-on-write" "stlab-copy-on-write 1.1.1")
 cpp_library_map_dependency("stlab::enum-ops" "stlab-enum-ops 1.2.0")
 _cpp_library_setup_install(
   NAME "stlab"

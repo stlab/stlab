@@ -26,28 +26,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        # [DEPENDENCY] https://github.com/actions/checkout/releases
+        uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
       - name: Setup Ruby
-        uses: ruby/setup-ruby@v1.308.0
+        # [DEPENDENCY] https://github.com/ruby/setup-ruby/releases
+        uses: ruby/setup-ruby@v1.327.0
         with:
-          ruby-version: '3.4.4'
+          # [DEPENDENCY] https://www.ruby-lang.org/en/downloads/
+          ruby-version: '4.0.7'
           working-directory: docs
           bundler-cache: true
           cache-version: 0
       - name: Setup Pages
         id: pages
-        uses: actions/configure-pages@v6
+        # [DEPENDENCY] https://github.com/actions/configure-pages/releases
+        uses: actions/configure-pages@v6.0.0
       - name: Install Doxygen
-        uses: ssciwr/doxygen-install@329d88f5a303066a5bd006db7516b1925b86350e
+        # [DEPENDENCY] https://github.com/ssciwr/doxygen-install/releases (v2.0.3)
+        uses: ssciwr/doxygen-install@fa3e94d34131d3990b6b8ba939ab982964aa3758
       - name: Build full documentation site
         run: bash ./docs/tools/docs/build-site.sh --refresh-releases
         env:
           JEKYLL_BASEURL: ${{ steps.pages.outputs.base_path }}
           JEKYLL_ENV: production
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v5
+        # [DEPENDENCY] https://github.com/actions/upload-pages-artifact/releases
+        uses: actions/upload-pages-artifact@v5.0.0
         with:
           path: ./docs/_site
 
@@ -60,4 +66,5 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v5
+        # [DEPENDENCY] https://github.com/actions/deploy-pages/releases
+        uses: actions/deploy-pages@v5.0.1

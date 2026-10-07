@@ -17,6 +17,7 @@ twitter_username: SeanParent
 github_username: stlab
 
 ## [local-theme] To build locally, toggle these two lines
+# [DEPENDENCY] https://github.com/adobe/hyde-theme/releases
 remote_theme: adobe/hyde-theme@v3.0.0
 #theme: jekyll-theme-adobe-hyde
 
