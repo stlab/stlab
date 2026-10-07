@@ -189,13 +189,17 @@ the initial review snapshot has an identical tree, without rewritten commits.
 Both development dependency SHAs are now remotely reachable. They are not released
 versions, and no tag or release was authorized or created.
 
-The current execution development pin is
+The historical remote-fetch validation below used the execution development pin
 `261602164de790e072f7b09b07698b0148363f4d`; its review branch snapshot is
 `68419c4c42a726935cbecebc684ea7940e0e1a34`, with an identical tree.
 A fresh Windows C++20 configuration without either CPM source override fetched
 toolkit `cd552af` and execution `2616021` from their GitHub remotes; dependency,
 future, and timer integration passed 3/3. Cache and Git identities were checked.
 Expected no-release-tag/toolkit-development-version warnings remain.
+
+These SHAs record that validation checkpoint, not the current dependency selection.
+The root `CMakeLists.txt` is authoritative for the current execution pin; the
+2026-10-06 linkage update selected `b71e7fc85e4bd8312e66095cb79cdde2aba2f0ad`.
 
 Initial hosted toolkit CI passed. Execution's hosted native/portable macOS,
 both macOS TSan+UBSan variants, Qt5/Qt6, lint/docs, and package jobs passed on

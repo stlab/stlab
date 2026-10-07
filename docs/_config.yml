@@ -30,7 +30,7 @@ exclude:
   - _source
   - Doxyfile.in
   - Doxyfile.stlab
-  # Doxyfile INPUT only (stlab_groups.hpp); API HTML is merged into _site/doxygen/ by build-site.sh
+  # Doxygen-only .dox content and layout; API HTML is merged into _site/doxygen/ by build-site.sh
   - doxygen
   - build
   - boost # from building examples
