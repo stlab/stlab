@@ -5,7 +5,7 @@
 - Edit **Doxygen comments** in `include/stlab/**/*.hpp` (`@file`, `@defgroup`, `///`, etc.).
 - Build locally: `cmake --preset=docs` then `cmake --build --preset=docs` → `build/docs/html/`.
 - Doxygen config: [`docs/Doxyfile.in`](Doxyfile.in) (synced with [cpp-library](https://github.com/stlab/cpp-library) `templates/Doxyfile.in`) plus [`docs/Doxyfile.stlab`](Doxyfile.stlab) (merged at configure time by [`cmake/StlabDocs.cmake`](../cmake/StlabDocs.cmake)).
-- Doxygen-only INPUT: [`docs/doxygen/mainpage.dox`](doxygen/mainpage.dox) (`@mainpage`) and [`docs/doxygen/stlab_groups.hpp`](doxygen/stlab_groups.hpp) (directory-level `@defgroup`; not compiled).
+- Doxygen-only INPUT: [`docs/doxygen/mainpage.dox`](doxygen/mainpage.dox) (`@mainpage` and directory-level `@defgroup` definitions). Keep documentation-only content in `.dox` files so it is not presented as an includable header.
 
 STLab documents its retained futures, channels, await helpers, serial queues,
 and general utilities only. Execution contracts and canonical API groups belong

@@ -66,8 +66,8 @@ not the C++ ABI of previously built clients.
 
 `stlab/config.hpp` includes `stlab/execution/config.hpp`. STLab owns only its release
 version/namespace and coroutine configuration; execution owns backend selection, export,
-and common feature macros. The current execution/toolkit SHA pins are development
-dependencies available on public review branches, not release versions. Local CPM source
+and common feature macros. The execution SHA pin is a development dependency available
+on a public review branch, not a release version; cpp-library uses release 5.5.0. Local CPM source
 overrides must use `:PATH` cache types on Windows.
 
 **Release blocker:** approved release pins and the matching installed dependency
@@ -131,13 +131,21 @@ STLab and execution configuration options (backend options are resolved only by 
 - `-DSTLAB_THREAD_SYSTEM=`[`win32`, `pthread`, `pthread-emscripten`, `pthread-apple`, `none`] to select the thread system to use. Default is platform dependent.
 - `-DSTLAB_TASK_SYSTEM=`[`portable`, `libdispatch`, `windows`, `emscripten`] to select the task system to use. Default is platform dependent; `emscripten` is the cooperative, threadless backend.
 - `-DSTLAB_EMSCRIPTEN_PTHREADS=`[**`ON`**, `OFF`] controls Emscripten pthread support. `OFF` selects `STLAB_THREAD_SYSTEM=none`, `STLAB_TASK_SYSTEM=emscripten`, and `STLAB_MAIN_EXECUTOR=emscripten`. Conflicting explicit selections and a nonzero task-pool maximum are rejected. The compiler's pthread flags must match this option.
-- `-DSTLAB_EXECUTION_SHARED=`[`ON`, `OFF`] selects a shared execution runtime independently of
-  STLab's `BUILD_SHARED_LIBS`; `STLAB_CORE_SHARED` remains a compatibility spelling.
-  Contradictory fresh settings fail. On reconfiguration the changed spelling wins over
-  the unchanged cached counterpart, even when the latter is supplied redundantly;
-  both caches are reconciled by execution. Neither changes the parent's `BUILD_SHARED_LIBS`.
+- `-DBUILD_SHARED_LIBS=`[`ON`, **`OFF`**] selects shared or static libraries when building
+  from source, including execution on Windows. Execution derives its DLL import/export
+  configuration from its actual library type; no execution-specific linkage option is needed.
+  The former `STLAB_EXECUTION_SHARED` and `STLAB_CORE_SHARED` CMake options are no longer used.
 - `-DSTLAB_INSTALL=`[`ON`, `OFF`] controls STLab installation, independently of
   `STLAB_EXECUTION_INSTALL`. Enable both when installing both packages from this source build.
+
+An installed execution package retains the linkage selected by the developer who built it.
+Client libraries link its exported `stlab::execution` target without choosing or changing
+that linkage; a client's `BUILD_SHARED_LIBS` only controls libraries it builds from source.
+To use static STLab with shared execution, build/install execution with `BUILD_SHARED_LIBS=ON`,
+then configure STLab with `BUILD_SHARED_LIBS=OFF`, `CPM_USE_LOCAL_PACKAGES=ON`, and
+`CMAKE_PREFIX_PATH` pointing to that installation. STLab and its clients automatically receive
+execution's installed configuration and runtime dependency. Windows clients using shared
+execution must deploy `execution.dll`; scheduling and process-shared state cross its versioned C ABI.
 
 ### Emscripten cooperative execution and timers
 

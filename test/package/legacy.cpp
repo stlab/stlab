@@ -12,6 +12,9 @@
 #include <future>
 #include <utility>
 
+static_assert(STLAB_EXECUTION_SHARED() == STLAB_PACKAGE_EXPECT_EXECUTION_SHARED,
+              "Execution's installed configuration must match its library type.");
+
 /// Verifies that the legacy core link target supplies only execution APIs.
 int main() {
     std::promise<int> completion;

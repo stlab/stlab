@@ -113,21 +113,19 @@ through a pinned `CPMAddPackage`. Retain its existing unrelated dependencies.
 Use CPM local-source overrides for development; production configuration must
 not embed developer-specific paths or depend on moving branches.
 
-Preserve existing scheduler options and defaults. Introduce
-`STLAB_EXECUTION_SHARED` as the canonical execution shared-library control,
-accepting `STLAB_CORE_SHARED` as a compatibility spelling. Preserve the existing
-effective shared/static selection when the new option is not specified.
-On a fresh configuration, conflicting supplied settings fail with a diagnostic.
-On reconfiguration, the spelling changed since the last resolved configuration
-wins over an unchanged cached counterpart. This preserves single-option changes
-through either spelling. CMake cannot distinguish an unchanged cached value from
-the same value redundantly supplied again on the command line; in that case,
-the changed spelling still wins. This policy was approved during implementation
-review on 2026-10-01.
+Preserve existing scheduler options and defaults. As approved on 2026-10-06,
+use standard `BUILD_SHARED_LIBS` to select static or shared source-built libraries,
+including execution on Windows. The former `STLAB_EXECUTION_SHARED` and
+`STLAB_CORE_SHARED` CMake options are no longer used. Derive execution's generated
+DLL import/export configuration from its actual target type, not a second option.
+Respect the parent project's `BUILD_SHARED_LIBS` without changing it.
 
-Execution shared/static selection must not change the parent project's
-`BUILD_SHARED_LIBS`. Preserve Windows native and portable shared-execution
-support, exports, task-storage checks, and runtime DLL deployment.
+An installed execution target retains the linkage selected by its developer,
+independently of any consuming library's source-build setting. Test static and
+shared STLab source consumers of independently installed static and shared execution.
+Consumers require no execution-specific linkage option. Preserve Windows native
+and portable shared-execution support, exports, task-storage checks, and runtime
+DLL deployment.
 
 Preserve legacy `stlab-core` and `stlab::stlab-core` link targets in STLab's
 source-build compatibility surface. Preserve `stlab::stlab-core` for installed
@@ -148,7 +146,7 @@ Develop changes in an isolated worktree, without altering unrelated work.
 
 | Improvement | Contract |
 | --- | --- |
-| Explicit compiled target type | Allow callers to choose static/shared without changing `BUILD_SHARED_LIBS`; retain current behavior when omitted |
+| Standard compiled target type | Respect the caller's `BUILD_SHARED_LIBS`; no per-library type-selection argument is required |
 | Independent install controls | Support package-specific controls without breaking existing namespace-level options/defaults |
 | Package-scoped deferred install metadata | Nested setup calls cannot overwrite another package's name, version, paths, or validation state |
 

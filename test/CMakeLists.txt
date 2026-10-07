@@ -52,8 +52,6 @@ set_tests_properties(stlab.test.execution_dependency PROPERTIES TIMEOUT 60)
 stlab_copy_runtime_dlls(stlab.test.execution_dependency)
 option(STLAB_PACKAGE_TESTS "Verify native execution/STLab installed and source consumers" OFF)
 if(STLAB_PACKAGE_TESTS AND NOT CMAKE_CROSSCOMPILING AND NOT stlab_execution_imported)
-  get_directory_property(execution_shared DIRECTORY "${stlab_execution_source}"
-    DEFINITION STLAB_EXECUTION_SHARED)
   add_test(NAME stlab.package.roundtrip
     COMMAND ${CMAKE_COMMAND}
       "-DSTLAB_SOURCE:PATH=${PROJECT_SOURCE_DIR}"
@@ -61,7 +59,7 @@ if(STLAB_PACKAGE_TESTS AND NOT CMAKE_CROSSCOMPILING AND NOT stlab_execution_impo
       "-DTOOLKIT_SOURCE:PATH=${cpp-library_SOURCE_DIR}"
       "-DVERIFY_PARENT:PATH=${PROJECT_BINARY_DIR}/package-test"
       "-DVERIFY_ROOT:PATH=${PROJECT_BINARY_DIR}/package-test/execution-packages"
-      "-DSTLAB_EXECUTION_SHARED:BOOL=${execution_shared}"
+      "-DBUILD_SHARED_LIBS:BOOL=${BUILD_SHARED_LIBS}"
       "-DSTLAB_TASK_SYSTEM=${STLAB_TASK_SYSTEM}"
       "-DTEST_COMPILER:FILEPATH=${CMAKE_CXX_COMPILER}"
       "-DTEST_MAKE_PROGRAM:FILEPATH=${CMAKE_MAKE_PROGRAM}"
@@ -145,7 +143,8 @@ foreach(component IN ITEMS channel executor future serial_queue system_timer tup
 endforeach()
 
 # Integration coverage of futures/await with a shared portable execution runtime.
-if(WIN32 AND STLAB_CORE_SHARED AND STLAB_TASK_SYSTEM STREQUAL "portable")
+if(WIN32 AND stlab_execution_type STREQUAL "SHARED_LIBRARY" AND
+   STLAB_TASK_SYSTEM STREQUAL "portable")
   add_executable(stlab.test.portable_shared_smoke portable_shared_smoke_test.cpp main.cpp)
   target_compile_definitions(stlab.test.portable_shared_smoke PRIVATE STLAB_UNIT_TEST)
   target_link_libraries(stlab.test.portable_shared_smoke PUBLIC stlab::testing)

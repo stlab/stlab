@@ -11,6 +11,9 @@
 
 #include <utility>
 
+static_assert(STLAB_EXECUTION_SHARED() == STLAB_PACKAGE_EXPECT_EXECUTION_SHARED,
+              "Execution's installed configuration must match its library type.");
+
 /// Verifies that the STLab package supplies its execution dependency.
 int main() {
     auto value = stlab::async(stlab::default_executor, [] { return 42; });

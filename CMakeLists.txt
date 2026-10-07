@@ -38,13 +38,13 @@ endif()
 CPMAddPackage(
   NAME stlab-execution
   GITHUB_REPOSITORY stlab/stlab-execution
-  GIT_TAG 261602164de790e072f7b09b07698b0148363f4d)
+  GIT_TAG b71e7fc85e4bd8312e66095cb79cdde2aba2f0ad)
 # Backend selection belongs to execution. These resolved values are needed only by private tests.
 get_target_property(stlab_execution_imported stlab::execution IMPORTED)
+get_target_property(stlab_execution_type stlab::execution TYPE)
 if(NOT stlab_execution_imported)
   get_target_property(stlab_execution_source stlab::execution SOURCE_DIR)
-  foreach(setting IN ITEMS STLAB_THREAD_SYSTEM STLAB_TASK_SYSTEM STLAB_MAIN_EXECUTOR
-      STLAB_CORE_SHARED)
+  foreach(setting IN ITEMS STLAB_THREAD_SYSTEM STLAB_TASK_SYSTEM STLAB_MAIN_EXECUTOR)
     get_directory_property(${setting} DIRECTORY "${stlab_execution_source}" DEFINITION ${setting})
   endforeach()
 endif()

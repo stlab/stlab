@@ -1,5 +1,12 @@
 # STLab Execution Library Extraction Implementation Plan
 
+**Linkage policy update, 2026-10-06:** historical `LIBRARY_TYPE`,
+`STLAB_EXECUTION_SHARED`, and `STLAB_CORE_SHARED` option tasks below are superseded.
+Use `BUILD_SHARED_LIBS` for source builds, derive export configuration from the
+actual execution target type, and preserve installed execution linkage independently
+of clients' source-build settings. The updated extraction design and README are
+the current contract; do not reintroduce the former option-reconciliation policy.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Extract independently consumable `stlab-execution`, preserving STLab source compatibility through a public CPM dependency.

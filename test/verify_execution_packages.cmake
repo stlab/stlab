@@ -46,10 +46,16 @@ function(run)
   endif()
 endfunction()
 
+if(BUILD_SHARED_LIBS)
+  set(opposite_linkage OFF)
+else()
+  set(BUILD_SHARED_LIBS OFF)
+  set(opposite_linkage ON)
+endif()
 set(settings "-DCPM_cpp-library_SOURCE:PATH=${TOOLKIT_SOURCE}"
   "-DCPM_stlab-execution_SOURCE:PATH=${EXECUTION_SOURCE}" -DBUILD_TESTING=OFF)
 set(execution_settings)
-foreach(setting STLAB_EXECUTION_SHARED STLAB_TASK_SYSTEM TEST_COMPILER TEST_MAKE_PROGRAM)
+foreach(setting BUILD_SHARED_LIBS STLAB_TASK_SYSTEM TEST_COMPILER TEST_MAKE_PROGRAM)
   if(DEFINED ${setting} AND NOT "${${setting}}" STREQUAL "")
     list(APPEND execution_settings "-D${setting}=${${setting}}")
     if(setting STREQUAL "TEST_COMPILER")
@@ -108,6 +114,8 @@ endfunction()
 function(consume name prefix execution_prefix)
   run("${CMAKE_COMMAND}" -S "${STLAB_SOURCE}/test/package" -B "${root}/${name}" -G Ninja
     "-DCMAKE_PREFIX_PATH=${prefix}" "-DEXECUTION_PREFIX:PATH=${execution_prefix}"
+    "-DEXPECT_EXECUTION_SHARED:BOOL=${BUILD_SHARED_LIBS}"
+    "-DBUILD_SHARED_LIBS:BOOL=${BUILD_SHARED_LIBS}"
     -DCMAKE_CXX_STANDARD=20 -DCMAKE_BUILD_TYPE=Release ${ARGN})
   run("${CMAKE_COMMAND}" --build "${root}/${name}" --parallel 8)
   run("${ctest}" --test-dir "${root}/${name}" --output-on-failure)
@@ -179,9 +187,11 @@ foreach(case combined stlab-only execution-only)
     run("${CMAKE_COMMAND}" --install "${independent}/library" --prefix "${prefix}")
     check_package("${prefix}" stlab "${stlab_version}")
     check_package("${prefix}" stlab-execution 1.0.0)
-    consume(independent-combined-consumer "${prefix}" "${prefix}")
+    consume(independent-combined-consumer "${prefix}" "${prefix}"
+      "-DBUILD_SHARED_LIBS:BOOL=${opposite_linkage}")
   elseif(case STREQUAL "stlab-only")
-    consume(stlab-only-consumer "${prefix}" "${execution_prefix}")
+    consume(stlab-only-consumer "${prefix}" "${execution_prefix}"
+      "-DBUILD_SHARED_LIBS:BOOL=${opposite_linkage}")
   else()
     run("${CMAKE_COMMAND}" -S "${EXECUTION_SOURCE}/test/package" -B "${root}/execution-only-consumer"
       -G Ninja "-DCMAKE_PREFIX_PATH:PATH=${prefix}" -DCMAKE_CXX_STANDARD=20
@@ -214,12 +224,15 @@ endforeach()
 file(WRITE "${root}/header-ownership.txt"
   "STLab: ${stlab_canonical}\nExecution: ${execution_canonical}\nIntersection: empty\n")
 
-# This invocation intentionally has no execution source override.
-consume(source-consumer "${root}/combined/prefix" "${root}/combined/prefix"
-  "-DSTLAB_PACKAGE_SOURCE:PATH=${STLAB_SOURCE}"
-  "-DCPM_cpp-library_SOURCE:PATH=${TOOLKIT_SOURCE}" -DCPM_USE_LOCAL_PACKAGES=ON)
+# Source STLab follows the client's linkage choice without rebuilding imported execution.
+foreach(linkage IN ITEMS OFF ON)
+  consume(source-consumer-${linkage} "${root}/combined/prefix" "${root}/combined/prefix"
+    "-DSTLAB_PACKAGE_SOURCE:PATH=${STLAB_SOURCE}"
+    "-DCPM_cpp-library_SOURCE:PATH=${TOOLKIT_SOURCE}" -DCPM_USE_LOCAL_PACKAGES=ON
+    "-DBUILD_SHARED_LIBS:BOOL=${linkage}")
+endforeach()
 
-if(WIN32 AND STLAB_EXECUTION_SHARED)
+if(WIN32 AND BUILD_SHARED_LIBS)
   find_program(dumpbin NAMES dumpbin REQUIRED)
   foreach(binary
       "${independent}/consumer-17/consumer.exe"
@@ -228,7 +241,8 @@ if(WIN32 AND STLAB_EXECUTION_SHARED)
       "${root}/independent-combined-consumer/consumer.exe" "${root}/independent-combined-consumer/legacy.exe"
       "${root}/stlab-only-consumer/consumer.exe" "${root}/stlab-only-consumer/legacy.exe"
       "${root}/execution-only-consumer/consumer.exe"
-      "${root}/source-consumer/consumer.exe" "${root}/source-consumer/legacy.exe")
+      "${root}/source-consumer-OFF/consumer.exe" "${root}/source-consumer-OFF/legacy.exe"
+      "${root}/source-consumer-ON/consumer.exe" "${root}/source-consumer-ON/legacy.exe")
     execute_process(COMMAND "${dumpbin}" /imports "${binary}" RESULT_VARIABLE result
       OUTPUT_VARIABLE imports ERROR_VARIABLE error)
     file(APPEND "${root}/dll-imports.txt" "${binary}\n${imports}\n${error}\n")

@@ -60,7 +60,7 @@ ctest --preset=debug-cpp20 -R future
 
 ## Documentation
 
-Doxygen comments in `include/stlab/**/*.hpp` are the authoritative API docs. Group definitions live in `docs/doxygen/stlab_groups.hpp` (not compiled). The main page is `docs/doxygen/mainpage.dox`.
+Doxygen comments in `include/stlab/**/*.hpp` are the authoritative API docs. The main page and directory-level group definitions live in `docs/doxygen/mainpage.dox`. Use `.dox` files for documentation-only content, not headers that Doxygen presents as includable files.
 
 ```bash
 # Build API reference locally → build/docs/html/

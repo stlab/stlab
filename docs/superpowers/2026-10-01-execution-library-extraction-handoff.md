@@ -2,6 +2,14 @@
 
 Local validation spans 2026-10-01/02; the filename retains the approved plan date.
 
+**Linkage policy update, 2026-10-06:** the shared-option and alias-reconciliation
+decisions recorded below are historical and superseded. `BUILD_SHARED_LIBS` is
+the only source-build linkage selection; execution derives its export configuration
+from the actual target type. Imported execution targets retain their installed
+linkage regardless of client settings. STLab CI and package consumers now exercise
+the standard selection and independent installed-runtime combinations. See the
+updated extraction design and root README for the current contract.
+
 ## Delivery boundary and actual commits
 
 All seven local implementation tasks were accepted by the controller. Final

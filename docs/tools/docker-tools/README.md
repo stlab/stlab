@@ -120,7 +120,7 @@ cd /mnt/host
 
 `start.sh` runs a full `build-site.sh` once, then Jekyll `--watch` plus browser-sync on `docs/_site/`. Open `http://localhost:3000` (API docs at `http://localhost:3000/doxygen/`).
 
-**Note:** `docs/doxygen/` (only `stlab_groups.hpp`) is excluded from Jekyll. API HTML is copied into `_site/doxygen/` by `build-site.sh`; `start.sh` keeps it across `jekyll --watch` rebuilds (`keep_files` + `sync-doxygen.sh` guard). After editing header Doxygen comments, run `./docs/tools/docs/build-site.sh --skip-jekyll` to refresh API HTML.
+**Note:** `docs/doxygen/` (Doxygen-only `.dox` content and layout configuration) is excluded from Jekyll. API HTML is copied into `_site/doxygen/` by `build-site.sh`; `start.sh` keeps it across `jekyll --watch` rebuilds (`keep_files` + `sync-doxygen.sh` guard). After editing header Doxygen comments, run `./docs/tools/docs/build-site.sh --skip-jekyll` to refresh API HTML.
 
 ## Tips
 

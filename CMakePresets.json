@@ -50,12 +50,12 @@
         {
             "name": "test-packages",
             "inherits": "debug-cpp20",
-            "cacheVariables": { "STLAB_PACKAGE_TESTS": "ON", "STLAB_EXECUTION_SHARED": "OFF" }
+            "cacheVariables": { "STLAB_PACKAGE_TESTS": "ON", "BUILD_SHARED_LIBS": "OFF" }
         },
         {
             "name": "test-packages-shared",
             "inherits": "test-packages",
-            "cacheVariables": { "STLAB_EXECUTION_SHARED": "ON" }
+            "cacheVariables": { "BUILD_SHARED_LIBS": "ON" }
         },
         {
             "name": "test-packages-portable-shared",
