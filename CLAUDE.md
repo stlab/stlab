@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-STLab is a C++ library (Boost Software License 1.0) providing concurrency primitives — futures, channels, executors, and serial queues — in the `stlab` namespace. The library supports C++17/20/23 and targets Linux (GCC, Clang), macOS (Apple Clang), Windows (MSVC), and WebAssembly (Emscripten).
+STLab is a C++ library (Boost Software License 1.0) providing futures, channels, await helpers, serial queues, and general utilities in the `stlab` namespace. Its public dependency `stlab-execution` provides tasks, executors, timers, thread naming, and `pre_exit` under their existing include paths and source-level names. The library supports C++17/20/23 and targets Linux (GCC, Clang), macOS (Apple Clang), Windows (MSVC), and WebAssembly (Emscripten).
 
-Public headers live in `include/stlab/`. There are two `.cpp` implementation files in `src/`. Everything else is tests, documentation, or build infrastructure.
+STLab-owned public headers live in `include/stlab/`; `src/stlab.cpp` is its only compiled source. Execution-owned headers and runtime implementations live in the `stlab-execution` repository, not this source tree. Everything else is tests, documentation, or build infrastructure.
 
 ## Build Commands
 
@@ -75,7 +75,7 @@ For the full Jekyll + Doxygen site (requires Ruby, Bundler, CMake, Ninja, Doxyge
 
 ## Platform/Scheduler Configuration
 
-The library auto-detects the platform's threading and task systems. You can override with CMake variables:
+The `stlab-execution` dependency auto-detects the platform's threading and task systems. Source builds through STLab accept the following CMake variables; backend selection is owned by execution, while STLab owns coroutine configuration:
 
 - `STLAB_THREAD_SYSTEM` — `win32`, `pthread`, `pthread-apple`, `none`
 - `STLAB_TASK_SYSTEM` — `libdispatch` (Apple GCD), `portable`, `windows`
@@ -84,6 +84,10 @@ The library auto-detects the platform's threading and task systems. You can over
 - `STLAB_EMSCRIPTEN_PTHREADS=OFF` — disable Emscripten pthread compiler/linker flags for targeted non-pthread WebAssembly builds
 
 The `portable` task system is the cross-platform fallback that works on all platforms including Emscripten.
+
+Use `BUILD_SHARED_LIBS` to select static or shared source-built libraries. Installed execution
+targets keep their linkage independently of a client's setting; no execution-specific linkage
+option is required.
 
 ## Code Style
 
@@ -125,29 +129,43 @@ references, views, iterators, existing small-buffer-optimized types, or static p
 they express the contract clearly. In particular, preserve the allocation-free and ABI-boundary
 requirements of the Windows DLL-safe executor design.
 
-All communication with process-shared library state must cross a versioned C ABI; shared-library
+The task pool, timers, main executor, `pre_exit`, and their ABI implementation are owned by
+`stlab-execution`; changes to those implementations belong in that repository. STLab consumes
+the public `stlab::execution` target, directly or through `stlab::stlab`.
+
+All communication with execution's process-shared library state must cross a versioned C ABI; shared-library
 clients must not reference internal C++ implementation symbols. CI must cover each supported
-Windows shared-core task-system configuration, including the native and portable task systems.
+Windows shared-execution task-system configuration, including the native and portable task systems.
 Except for `system_timer.hpp`, public concurrency headers must not branch on `STLAB_TASK_SYSTEM`,
 `STLAB_CORE_SHARED`, or `_WIN32`; those choices belong in compiled implementation files behind the
 versioned C ABI.
 
 ## Architecture
 
-The concurrency subsystem (`include/stlab/concurrency/`) is the core of the library:
+STLab retains these concurrency APIs in `include/stlab/concurrency/`:
 
 - **`future.hpp`** — `stlab::future<T>` and `stlab::package()`. Futures are lazy/value-semantic, not `std::future`. Supports `.then()`, `.recover()`, `.detach()`, and C++20 coroutines (`co_await`).
 - **`channel.hpp`** — `stlab::sender<T>` / `stlab::receiver<T>` for reactive pipelines. Multiple process stages can be composed.
-- **`executor_base.hpp`** / **`default_executor.hpp`** — Executors are `stlab::executor_t` (a type-erased callable). The default executor dispatches to the platform task pool.
 - **`serial_queue.hpp`** — A serial dispatch queue built on executors.
+- **`await.hpp`** — Await helpers built on execution's scheduling primitives.
+
+The public `stlab-execution` dependency supplies the following APIs under their existing
+`stlab/concurrency/` include paths. Their contracts and implementations are maintained in
+that repository, not here:
+
+- **`executor_base.hpp`** / **`default_executor.hpp`** — Executor abstractions and platform task dispatch.
 - **`main_executor.hpp`** — Executor for the application's main queue, behind the `stlab_v2_main_executor_*` C ABI; `main_executor_run()` services it and never returns.
 - **`task.hpp`** — `stlab::task<Sig>` — a move-only type-erased callable (like `std::function` but non-copyable).
 - **`system_timer.hpp`** — Timer-based future scheduling.
+- **`immediate_executor.hpp`** / **`set_current_thread_name.hpp`** — Immediate execution and thread naming.
 
-Non-concurrency headers:
+Execution also owns **`stlab/pre_exit.hpp`**, which registers process cleanup and shuts down
+the runtime. Link `stlab::stlab` for both layers or `stlab::execution` for execution alone;
+the legacy `stlab::stlab-core` target is an INTERFACE compatibility target, not another runtime.
+
+STLab-owned non-concurrency headers:
 - **`forest.hpp`** / **`forest_algorithms.hpp`** — A node-based tree container with cursor-based traversal.
 - **`copy_on_write.hpp`** (via `stlab-copy-on-write` dependency) — Value-semantic CoW wrapper.
-- **`pre_exit.hpp`** — Register cleanup functions to run before `std::exit()`. Must be called before exiting to avoid races with the task pool.
 
 ## Development Process
 
