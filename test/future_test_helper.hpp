@@ -74,6 +74,12 @@ private:
     size_t _id = no; // only used for debugging purpose
 };
 
+// An executor that destroys every task without invoking it, as an executor might once it has
+// stopped accepting work.
+struct dropping_executor {
+    void operator()(stlab::task<void() noexcept>) const {}
+};
+
 template <std::size_t I>
 auto make_executor() -> stlab::executor_t {
     return [_executor = custom_scheduler<I>{}](stlab::task<void() noexcept> f) mutable {

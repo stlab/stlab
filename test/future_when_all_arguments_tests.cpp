@@ -318,3 +318,25 @@ TEST_CASE_FIXTURE(test_fixture<std::string>,
     REQUIRE(custom_scheduler<0>::usage_counter() >= 4);
     REQUIRE(custom_scheduler<1>::usage_counter() >= 1);
 }
+
+TEST_CASE("future_when_all_args_fails_when_executor_drops_its_tasks") {
+    SUBCASE("arguments become ready after the join") {
+        auto [p0, f0] = package<int()>(immediate_executor, [] { return 1; });
+        auto [p1, f1] = package<int()>(immediate_executor, [] { return 2; });
+        auto sut = when_all(dropping_executor{}, [](int x, int y) { return x + y; }, f0, f1);
+        p0();
+        p1();
+
+        REQUIRE(sut.is_ready());
+        check_failure<future_error>(sut, "broken promise");
+    }
+    SUBCASE("arguments are ready before the join") {
+        auto sut = when_all(
+            dropping_executor{}, [](int x, int y) { return x + y; },
+            make_ready_future<int>(1, immediate_executor),
+            make_ready_future<int>(2, immediate_executor));
+
+        REQUIRE(sut.is_ready());
+        check_failure<future_error>(sut, "broken promise");
+    }
+}

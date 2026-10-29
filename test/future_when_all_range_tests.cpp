@@ -663,3 +663,29 @@ TEST_CASE_FIXTURE(
     check_failure<test_exception>(sut, "failure");
     REQUIRE(r == 0u);
 }
+
+TEST_CASE("future_when_all_range_fails_when_executor_drops_its_tasks") {
+    SUBCASE("inputs become ready after the join") {
+        auto [p0, f0] = package<int()>(immediate_executor, [] { return 1; });
+        auto [p1, f1] = package<int()>(immediate_executor, [] { return 2; });
+        std::vector<future<int>> futures{f0, f1};
+        auto sut = when_all(
+            dropping_executor{}, [](const std::vector<int>& v) { return v.size(); },
+            std::make_pair(futures.begin(), futures.end()));
+        p0();
+        p1();
+
+        REQUIRE(sut.is_ready());
+        check_failure<future_error>(sut, "broken promise");
+    }
+    SUBCASE("inputs are ready before the join") {
+        std::vector<future<int>> futures{make_ready_future<int>(1, immediate_executor),
+                                         make_ready_future<int>(2, immediate_executor)};
+        auto sut = when_all(
+            dropping_executor{}, [](const std::vector<int>& v) { return v.size(); },
+            std::make_pair(futures.begin(), futures.end()));
+
+        REQUIRE(sut.is_ready());
+        check_failure<future_error>(sut, "broken promise");
+    }
+}

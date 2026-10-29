@@ -15,6 +15,7 @@
 #include <optional>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include <doctest/doctest.h>
 
@@ -220,4 +221,30 @@ TEST_CASE("future_when_any_range_move_only") {
     REQUIRE(!result.is_ready());
     default_executor(std::move(p0));
     REQUIRE((std::pair{move_only(0), std::size_t{0}} == await(std::move(result))));
+}
+
+TEST_CASE("future_when_any_range_fails_when_executor_drops_its_tasks") {
+    SUBCASE("inputs become ready after the join") {
+        auto [p0, f0] = package<int()>(immediate_executor, [] { return 1; });
+        auto [p1, f1] = package<int()>(immediate_executor, [] { return 2; });
+        std::vector<future<int>> futures{f0, f1};
+        auto sut = when_any(
+            dropping_executor{}, [](int x, std::size_t) { return x; },
+            std::make_pair(futures.begin(), futures.end()));
+        p0();
+        p1();
+
+        REQUIRE(sut.is_ready());
+        check_failure<future_error>(sut, "broken promise");
+    }
+    SUBCASE("inputs are ready before the join") {
+        std::vector<future<int>> futures{make_ready_future<int>(1, immediate_executor),
+                                         make_ready_future<int>(2, immediate_executor)};
+        auto sut = when_any(
+            dropping_executor{}, [](int x, std::size_t) { return x; },
+            std::make_pair(futures.begin(), futures.end()));
+
+        REQUIRE(sut.is_ready());
+        check_failure<future_error>(sut, "broken promise");
+    }
 }

@@ -1523,7 +1523,7 @@ auto apply_when_any_arg(F& f, P& p) {
 
 template <std::size_t i, class E, class P, class T>
 void attach_when_arg_(E&& executor, std::shared_ptr<P>& shared, T a) {
-    auto holds =
+    auto notified =
         std::move(a).recover(std::forward<E>(executor), [_w = std::weak_ptr<P>(shared)](auto&& x) {
             auto p = _w.lock();
             if (!p) return;
@@ -1534,6 +1534,15 @@ void attach_when_arg_(E&& executor, std::shared_ptr<P>& shared, T a) {
                 p->template done<i>(std::move(x));
             }
         });
+    // If the executor destroys the notification without invoking it, report the resulting
+    // broken_promise as this argument's failure so that the join still completes.
+    auto holds = std::move(notified).recover(immediate_executor,
+                                             [_w = std::weak_ptr<P>(shared)](const auto& x) {
+                                                 if (auto ex = x.exception()) {
+                                                     if (auto p = _w.lock())
+                                                         p->failure(std::move(ex));
+                                                 }
+                                             });
     std::unique_lock<std::mutex> lock{shared->_guard};
     shared->_holds[i] = std::move(holds);
 }
@@ -1828,7 +1837,7 @@ struct common_context : CR {
 
 template <class C, class E, class T>
 void attach_tasks(size_t index, E&& executor, const std::shared_ptr<C>& context, T&& a) {
-    auto hold = std::forward<T>(a).recover(
+    auto notified = std::forward<T>(a).recover(
         std::forward<E>(executor), [_context = make_weak_ptr(context), _i = index](auto&& x) {
             auto p = _context.lock();
             if (!p) return;
@@ -1836,6 +1845,14 @@ void attach_tasks(size_t index, E&& executor, const std::shared_ptr<C>& context,
                 p->failure(std::move(ex), _i);
             } else {
                 p->done(std::forward<decltype(x)>(x), _i);
+            }
+        });
+    // If the executor destroys the notification without invoking it, report the resulting
+    // broken_promise as this input's failure so that the join still completes.
+    auto hold = std::move(notified).recover(
+        immediate_executor, [_context = make_weak_ptr(context), _i = index](const auto& x) {
+            if (auto ex = x.exception()) {
+                if (auto p = _context.lock()) p->failure(std::move(ex), _i);
             }
         });
 
