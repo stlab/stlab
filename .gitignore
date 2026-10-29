@@ -50,4 +50,5 @@ stlab/config.hpp
 /.cache
 compile_commands.json
 .claude/worktrees/
+.worktrees/
 .tokensave/
