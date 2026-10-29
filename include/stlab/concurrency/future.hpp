@@ -1367,213 +1367,174 @@ struct assign_ready_future<future<void>> {
     }
 };
 
-template <class F, class Args>
-struct when_all_shared {
-    // decay
-    Args _args;
-    std::mutex _guard;
-    std::array<future<void>, std::tuple_size_v<Args>> _holds;
-    std::size_t _remaining{std::tuple_size_v<Args>};
-    std::exception_ptr _exception;
+/// Visits tuple inputs in order, passing each future and its constant index.
+/// - Complexity: linear in the number of inputs.
+template <class... Ts, class F, std::size_t... I>
+void for_each_when_input_(std::tuple<Ts...>& inputs, F&& f, std::index_sequence<I...>) {
+    (f(std::get<I>(inputs), std::integral_constant<std::size_t, I>{}), ...);
+}
+
+/// Visits tuple inputs in order, passing each future and its constant index.
+/// - Complexity: linear in the number of inputs.
+template <class... Ts, class F>
+void for_each_when_input(std::tuple<Ts...>& inputs, F&& f) {
+    for_each_when_input_(inputs, std::forward<F>(f), std::index_sequence_for<Ts...>{});
+}
+
+/// Visits range inputs in order, passing each future and its index.
+/// - Complexity: linear in the number of inputs.
+template <class T, class F>
+void for_each_when_input(std::vector<future<T>>& inputs, F&& f) {
+    std::size_t index = 0;
+    // Visit each owned future without copying its shared state.
+    for (auto& input : inputs)
+        f(input, index++);
+}
+
+/// Owns join inputs until cancellation or a single terminal decision.
+/// Registration prevents dispatch and input release until every observer is attached.
+/// - Complexity: linear storage in the number of inputs.
+template <class Inputs, bool Any>
+struct when_shared {
+    Inputs _inputs;
+    executor_t _executor;
     packaged_task<> _f;
-
-    // require f is sink.
-    template <std::size_t index, class FF>
-    auto done(FF&& f) -> std::enable_if_t<!std::is_lvalue_reference_v<FF>> {
-        auto run{false};
-        {
-            std::unique_lock<std::mutex> lock{_guard};
-            if (!_exception) {
-                assign_ready_future<FF>::assign(std::get<index>(_args), std::move(f));
-                if (--_remaining == 0) run = true;
-            }
-        }
-        if (run) _f();
-    }
-
-    void failure(const std::exception_ptr& error) {
-        auto run{false};
-        {
-            std::unique_lock<std::mutex> lock{_guard};
-            if (!_exception) {
-                for (auto& h : _holds)
-                    h.reset();
-                _exception = error;
-                run = true;
-            }
-        }
-        if (run) _f();
-    }
-};
-
-template <size_t S, class R>
-struct when_any_shared {
-    using result_type = R;
-    // decay
-    std::optional<R> _arg;
     std::mutex _guard;
-    std::array<future<void>, S> _holds;
-    std::size_t _remaining{S};
+    std::size_t _remaining;
+    std::size_t _index{0};
     std::exception_ptr _exception;
-    std::size_t _index = std::numeric_limits<std::size_t>::max();
-    packaged_task<> _f;
+    bool _registering{true};
+    bool _decided{false};
 
-    void failure(const std::exception_ptr& error) {
-        auto run{false};
-        {
-            std::unique_lock<std::mutex> lock{_guard};
-            if (--_remaining == 0) {
-                _exception = error;
-                run = true;
-            }
-        }
-        if (run) _f();
-    }
+    /// Takes ownership of `inputs` and the executor for the final task.
+    /// - Complexity: at most linear in the number of inputs.
+    when_shared(Inputs inputs, executor_t executor, std::size_t count) :
+        _inputs(std::move(inputs)), _executor(std::move(executor)), _remaining(count) {}
 
-    template <size_t index, class FF>
-    void done(FF&& f) {
-        auto run{false};
-        {
-            std::unique_lock<std::mutex> lock{_guard};
-            if (_index == std::numeric_limits<std::size_t>::max()) {
-                assert(f.is_ready());
-                _arg = std::forward<FF>(f).get_ready();
-                _index = index;
-                run = true;
-            }
-        }
-        if (run) _f();
-    }
-
-    template <class F>
-    auto apply(F& f) {
-        return f(std::move(*_arg), _index);
-    }
-};
-
-template <size_t S>
-struct when_any_shared<S, void> {
-    using result_type = void;
-    // decay
-    std::mutex _guard;
-    std::array<future<void>, S> _holds;
-    std::size_t _remaining{S};
-    std::exception_ptr _exception;
-    std::size_t _index = std::numeric_limits<std::size_t>::max();
-    packaged_task<> _f;
-
-    void failure(const std::exception_ptr& error) {
-        auto run{false};
-        std::unique_lock<std::mutex> lock{_guard};
-        {
-            if (--_remaining == 0) {
-                _exception = error;
-                run = true;
-            }
-        }
-        if (run) _f();
-    }
-
-    template <size_t index, class FF>
-    void done(FF&&) {
-        auto run{false};
-        {
-            std::unique_lock<std::mutex> lock{_guard};
-            if (_index == std::numeric_limits<std::size_t>::max()) {
-                _index = index;
-                run = true;
-            }
-        }
-        if (run) _f();
-    }
-
-    template <class F>
-    auto apply(F& f) {
-        return f(_index);
-    }
-};
-
-inline void rethrow_if_false(bool x, const std::exception_ptr& p) {
-    if (!x) std::rethrow_exception(p);
-}
-
-template <class F, class Args, class P, std::size_t... I>
-auto apply_when_all_args_(F& f, Args& args, P& p, std::index_sequence<I...>) {
-    (void)std::initializer_list<int>{
-        (rethrow_if_false(static_cast<bool>(std::get<I>(args)), p->_exception), 0)...};
-    return apply_optional_indexed<
-        index_sequence_transform_t<std::make_index_sequence<std::tuple_size_v<Args>>,
-                                   remove_placeholder<Args>::template function>>(f, args);
-}
-
-template <class F, class P>
-auto apply_when_all_args(F& f, P& p) {
-    return apply_when_all_args_(f, p->_args, p,
-                                std::make_index_sequence<std::tuple_size_v<decltype(p->_args)>>());
-}
-
-template <class F, class P>
-auto apply_when_any_arg(F& f, P& p) {
-    if (p->_exception) {
-        std::rethrow_exception(p->_exception);
-    }
-
-    return p->apply(f);
-}
-
-template <std::size_t i, class E, class P, class T>
-void attach_when_arg_(E&& executor, std::shared_ptr<P>& shared, T a) {
-    auto holds =
-        std::move(a).recover(std::forward<E>(executor), [_w = std::weak_ptr<P>(shared)](auto&& x) {
-            auto p = _w.lock();
-            if (!p) return;
-
-            if (auto ex = x.exception()) {
-                p->failure(std::move(ex));
-            } else {
-                p->template done<i>(std::move(x));
-            }
+    /// Releases unneeded inputs and submits a selected final task outside the decision lock.
+    /// - Complexity: linear in the number of inputs.
+    void dispatch(packaged_task<> ready) {
+        if (ready.canceled()) return;
+        for_each_when_input(_inputs, [&](auto& input, std::size_t index) {
+            if (_exception || (Any && index != _index)) input.reset();
         });
-    std::unique_lock<std::mutex> lock{shared->_guard};
-    shared->_holds[i] = std::move(holds);
+        _executor(std::move(ready));
+    }
+
+    /// Records a ready input; a terminal decision never changes.
+    /// - Precondition: `input` is the owned input at `index` and is ready.
+    /// - Complexity: linear in the number of inputs when dispatching, otherwise constant.
+    template <class T>
+    void done(const future<T>& input, std::size_t index) {
+        packaged_task<> ready;
+        {
+            std::unique_lock<std::mutex> lock{_guard};
+            if (_decided) return;
+            auto error = input.exception();
+            if constexpr (Any) {
+                if (!error || --_remaining == 0) {
+                    _index = index;
+                    _exception = std::move(error);
+                    _decided = true;
+                }
+            } else {
+                if (error || --_remaining == 0) {
+                    _exception = std::move(error);
+                    _decided = true;
+                }
+            }
+            if (_decided && !_registering) ready = std::move(_f);
+        }
+        dispatch(std::move(ready));
+    }
+
+    /// Ends registration and dispatches any decision made by an already-ready input.
+    /// - Complexity: linear in the number of inputs when dispatching, otherwise constant.
+    void finish_registration() {
+        packaged_task<> ready;
+        {
+            std::unique_lock<std::mutex> lock{_guard};
+            _registering = false;
+            if (_decided) ready = std::move(_f);
+        }
+        dispatch(std::move(ready));
+    }
+};
+
+/// Attaches non-owning immediate observers, then permits final dispatch.
+/// - Complexity: linear in the number of inputs.
+template <class P>
+void attach_when_inputs(const std::shared_ptr<P>& shared) {
+    for_each_when_input(shared->_inputs, [&](auto& input, std::size_t index) {
+        input.on_completion([weak = std::weak_ptr<P>(shared), source = &input, index]() noexcept {
+            if (auto p = weak.lock()) p->done(*source, index);
+        });
+    });
+    shared->finish_registration();
 }
 
-template <class E, class P, class... Ts, std::size_t... I>
-void attach_when_args_(std::index_sequence<I...>,
-                       const E& executor,
-                       std::shared_ptr<P>& p,
-                       Ts... a) {
-    (void)std::initializer_list<int>{(attach_when_arg_<I>(executor, p, std::move(a)), 0)...};
+/// Extracts all ready tuple values and invokes `f`, omitting void inputs.
+/// - Precondition: every input completed successfully.
+/// - Complexity: linear in the number of inputs, excluding `f` and value operations.
+template <class F, class... Ts>
+auto apply_when_all_args(F& f, std::tuple<future<Ts>...>& inputs) {
+    using args_t = optional_placeholder_tuple<Ts...>;
+    args_t args;
+    for_each_when_input(inputs, [&](auto& input, auto index) {
+        assign_ready_future<std::decay_t<decltype(input)>>::assign(
+            std::get<decltype(index)::value>(args), std::move(input));
+    });
+    return apply_optional_indexed<index_sequence_transform_t<
+        std::index_sequence_for<Ts...>, remove_placeholder<args_t>::template function>>(f, args);
 }
 
-template <class E, class P, class... Ts>
-void attach_when_args(E&& executor, std::shared_ptr<P>& p, Ts... a) {
-    attach_when_args_(std::make_index_sequence<sizeof...(Ts)>(), std::forward<E>(executor), p,
-                      std::move(a)...);
+/// Extracts the selected ready tuple value and invokes `f` with its index.
+/// - Precondition: the selected input completed successfully.
+/// - Complexity: linear in the number of inputs, excluding `f` and value operations.
+template <class T, class F, class P>
+auto apply_when_any_arg(F& f, P& shared) {
+    if constexpr (std::is_void_v<T>) {
+        return f(shared->_index);
+    } else {
+        std::optional<T> arg;
+        for_each_when_input(shared->_inputs, [&](auto& input, std::size_t index) {
+            if (index == shared->_index) arg.emplace(std::move(input).get_ready());
+        });
+        return f(std::move(*arg), shared->_index);
+    }
 }
 
 } // namespace detail
 
 /**************************************************************************************************/
 
-/// Returns a future that completes when all input futures are ready; `f` receives their values.
+/// Returns a future for `f` scheduled on `executor` with all input values.
 ///
 /// @details
-/// If any input completes with an exception, that error ends the combined operation (remaining work
-/// is canceled per the implementation). A variadic empty pack is not supported; use the
-/// iterator-range overload if you need the empty case.
+/// The first input failure ends the join without invoking `f`. The join releases its interest in
+/// inputs no longer needed. Destroying the submitted task without invoking it completes the result
+/// with `future_error_codes::broken_promise`. Value extraction also runs on `executor`.
+/// A variadic empty pack is not supported; use the iterator-range overload for the empty case.
+/// - Complexity: linear time and storage in the number of inputs, excluding user operations.
+///
+/// # Examples
+/// `when_all(executor, [](int a, int b) { return a + b; }, first, second)` joins two integer
+/// futures.
 template <class E, class F, class... Ts>
 auto when_all(const E& executor, F f, future<Ts>... args) {
     using vt_t = voidless_tuple<Ts...>;
-    using opt_t = optional_placeholder_tuple<Ts...>;
     using result_t = decltype(apply_ignore_placeholders(std::declval<F>(), std::declval<vt_t>()));
 
-    auto shared = std::make_shared<detail::when_all_shared<F, opt_t>>();
-    auto p = package<result_t()>(
-        executor, [_f = std::move(f), _p = shared] { return detail::apply_when_all_args(_f, _p); });
+    using inputs_t = std::tuple<future<Ts>...>;
+    auto shared = std::make_shared<detail::when_shared<inputs_t, false>>(
+        inputs_t{std::move(args)...}, executor, sizeof...(Ts));
+    auto p = package<result_t()>(executor, [_f = std::move(f), _p = shared]() mutable {
+        if (_p->_exception) std::rethrow_exception(_p->_exception);
+        return detail::apply_when_all_args(_f, _p->_inputs);
+    });
     shared->_f = std::move(p.first);
 
-    detail::attach_when_args(executor, shared, std::move(args)...);
+    detail::attach_when_inputs(shared);
 
     return std::move(p.second);
 }
@@ -1583,17 +1544,22 @@ auto when_all(const E& executor, F f, future<Ts>... args) {
 /// Helper to implement when_any for result type T.
 template <class T>
 struct make_when_any {
+    /// Joins inputs and schedules `f` with the first successful value and index.
+    /// - Complexity: linear time and storage in the number of inputs.
     template <class E, class F, class... Ts>
     static auto make(const E& executor, F f, future<T> arg, future<Ts>... args) {
         using result_t = detail::result_t<F, T, size_t>;
 
-        auto shared = std::make_shared<detail::when_any_shared<sizeof...(Ts) + 1, T>>();
+        using inputs_t = std::tuple<future<T>, future<Ts>...>;
+        auto shared = std::make_shared<detail::when_shared<inputs_t, true>>(
+            inputs_t{std::move(arg), std::move(args)...}, executor, sizeof...(Ts) + 1);
         auto p = package<result_t()>(executor, [_f = std::move(f), _p = shared]() mutable {
-            return detail::apply_when_any_arg(_f, _p);
+            if (_p->_exception) std::rethrow_exception(_p->_exception);
+            return detail::apply_when_any_arg<T>(_f, _p);
         });
         shared->_f = std::move(p.first);
 
-        detail::attach_when_args(executor, shared, std::move(arg), std::move(args)...);
+        detail::attach_when_inputs(shared);
 
         return std::move(p.second);
     }
@@ -1604,17 +1570,22 @@ struct make_when_any {
 /// Helper to implement when_any for void results.
 template <>
 struct make_when_any<void> {
+    /// Joins inputs and schedules `f` with the first successful index.
+    /// - Complexity: linear time and storage in the number of inputs.
     template <class E, class F, class... Ts>
     static auto make(E&& executor, F&& f, future<Ts>... args) {
         using result_t = detail::result_t<F, size_t>;
 
-        auto shared = std::make_shared<detail::when_any_shared<sizeof...(Ts), void>>();
+        using inputs_t = std::tuple<future<Ts>...>;
+        auto shared = std::make_shared<detail::when_shared<inputs_t, true>>(
+            inputs_t{std::move(args)...}, executor, sizeof...(Ts));
         auto p = package<result_t()>(executor, [_f = std::forward<F>(f), _p = shared]() mutable {
-            return detail::apply_when_any_arg(_f, _p);
+            if (_p->_exception) std::rethrow_exception(_p->_exception);
+            return detail::apply_when_any_arg<void>(_f, _p);
         });
         shared->_f = std::move(p.first);
 
-        detail::attach_when_args(std::forward<E>(executor), shared, std::move(args)...);
+        detail::attach_when_inputs(shared);
 
         return std::move(p.second);
     }
@@ -1625,11 +1596,19 @@ struct make_when_any<void> {
 /// Returns a future for `f` invoked with the first successful input's value and its `std::size_t`
 /// index. For void inputs, `f` receives only the index.
 /// If every input fails, propagates the last failure without invoking `f`.
+/// Selection occurs when inputs complete; value extraction and `f` run on `executor`.
+/// Destroying the submitted task without invoking it completes the result with
+/// `future_error_codes::broken_promise`.
 ///
 /// @par Details
 /// For non-void inputs, every value type must be convertible to the first parameter of `f`.
 /// An empty variadic pack is not supported—use the iterator-range overload with an empty range
 /// if needed.
+/// - Complexity: linear time and storage in the number of inputs, excluding user operations.
+///
+/// # Examples
+/// `when_any(executor, [](int value, std::size_t) { return value; }, std::move(a), std::move(b))`
+/// returns the first successful integer result.
 template <class E, class F, class T, class... Ts>
 auto when_any(E&& executor, F&& f, future<T>&& arg, future<Ts>&&... args) {
     return make_when_any<T>::make(std::forward<E>(executor), std::forward<F>(f), std::move(arg),
@@ -1639,252 +1618,47 @@ auto when_any(E&& executor, F&& f, future<T>&& arg, future<Ts>&&... args) {
 /**************************************************************************************************/
 
 namespace detail {
-template <class T>
-struct value_storer {
-    template <class C, class F>
-    static void store(C& context, F&& f, std::size_t index) {
-        context._results = std::forward<F>(f).get_ready();
-        context._index = index;
-    }
-};
-
-template <class T>
-struct value_storer<std::vector<T>> {
-    template <class C, class F>
-    static void store(C& context, F&& f, std::size_t index) {
-        context._results[index] = std::forward<F>(f).get_ready();
-    }
-};
-
-template <bool Indexed, class R>
-struct result_creator;
-
-template <>
-struct result_creator<true, void> {
-    template <class C>
-    static auto go(C& context) {
-        return context._f(context._index);
-    }
-};
-
-template <>
-struct result_creator<false, void> {
-    template <class C>
-    static auto go(C& context) {
-        return context._f();
-    }
-};
-
-template <class R>
-struct result_creator<true, R> {
-    template <class C>
-    static auto go(C& context) {
-        return context._f(std::move(context._results), context._index);
-    }
-};
-
-template <class R>
-struct result_creator<false, R> {
-    template <class C>
-    static auto go(C& context) {
-        return context._f(std::move(context._results));
-    }
-};
-
-template <class F, bool Indexed, class R>
-struct context_result {
-    using result_type = R;
-
-    R _results;
-    std::exception_ptr _exception;
-    std::size_t _index{0};
-    F _f;
-
-    context_result(F f, std::size_t s) : _f(std::move(f)) { init(_results, s); }
-
-    template <class T>
-    void init(std::vector<T>& v, std::size_t s) {
-        v.resize(s);
-    }
-
-    template <class T>
-    void init(T&, std::size_t) {}
-
-    template <class FF>
-    void apply(FF&& f, std::size_t index) {
-        value_storer<R>::store(*this, std::forward<FF>(f), index);
-    }
-
-    void apply(const std::exception_ptr& error, std::size_t) { _exception = error; }
-
-    auto operator()() { return result_creator<Indexed, R>::go(*this); }
-};
-
-template <class F, bool Indexed>
-struct context_result<F, Indexed, void> {
-    std::exception_ptr _exception;
-    std::size_t _index{0};
-    F _f;
-
-    context_result(F f, std::size_t) : _f(std::move(f)) {}
-
-    template <class FF>
-    void apply(FF&&, std::size_t index) {
-        _index = index;
-    }
-
-    void apply(const std::exception_ptr& error, std::size_t) { _exception = error; }
-
-    auto operator()() { return result_creator<Indexed, void>::go(*this); }
-};
-
-/**************************************************************************************************/
-
-/*
- * This specialization is used for cases when only one ready future is enough to move forward.
- * In case of when_any, the first successful future triggers the continuation. All others are
- * cancelled. In case of when_all, after the first error, this future cannot be fulfilled
- * anymore and so we cancel the all the others.
- */
-struct single_trigger {
-    template <class C, class F>
-    static auto go(C& context, F&& f, size_t index) -> bool {
-        auto run{false};
-        {
-            std::unique_lock<std::mutex> lock{context._guard};
-            if (!context._single_event) {
-                for (auto i = 0u; i < context._holds.size(); ++i) {
-                    if (i != index) context._holds[i].reset();
-                }
-                context._single_event = true;
-                context.apply(std::forward<F>(f), index);
-                run = true;
-            }
-        }
-        return run;
-    }
-};
-
-/*
- * This specialization is used for cases when all futures must be fulfilled before the
- * continuation is triggered. In case of when_any it means, that the error case handling is
- * started, because all futures failed. In case of when_all it means, that after all futures
- * were fulfilled, the continuation is started.
- */
-struct all_trigger {
-    template <class C, class F>
-    static auto go(C& context, F&& f, size_t index) -> bool {
-        auto run{false};
-        {
-            std::unique_lock<std::mutex> lock{context._guard};
-            context.apply(std::forward<F>(f), index);
-            if (--context._remaining == 0) run = true;
-        }
-        return run;
-    }
-
-    template <class C>
-    static auto go(C& context, const std::exception_ptr& error, size_t index) -> bool {
-        auto run{false};
-        {
-            std::unique_lock<std::mutex> lock{context._guard};
-            if (--context._remaining == 0) {
-                context.apply(error, index);
-                run = true;
-            }
-        }
-        return run;
-    }
-};
-
-template <class CR, class F, class ResultCollector, class FailureCollector>
-struct common_context : CR {
-    std::mutex _guard;
-    std::size_t _remaining;
-    bool _single_event{false};
-    std::vector<future<void>> _holds;
-    packaged_task<> _f;
-
-    common_context(F f, size_t s) : CR(std::move(f), s), _remaining(s), _holds(_remaining) {}
-
-    auto execute() {
-        if (this->_exception) {
-            std::rethrow_exception(this->_exception);
-        }
-        return CR::operator()();
-    }
-
-    void failure(const std::exception_ptr& error, size_t index) {
-        if (FailureCollector::go(*this, error, index)) _f();
-    }
-
-    template <class FF>
-    void done(FF&& f, size_t index) {
-        if (ResultCollector::go(*this, std::forward<FF>(f), index)) _f();
-    }
-};
-
-/**************************************************************************************************/
-
-template <class C, class E, class T>
-void attach_tasks(size_t index, E&& executor, const std::shared_ptr<C>& context, T&& a) {
-    auto hold = std::forward<T>(a).recover(
-        std::forward<E>(executor), [_context = make_weak_ptr(context), _i = index](auto&& x) {
-            auto p = _context.lock();
-            if (!p) return;
-            if (auto ex = x.exception()) {
-                p->failure(std::move(ex), _i);
+/// Joins a nonempty range, retaining inputs until the final task extracts their values.
+/// - Precondition: `[first, last)` is a nonempty multipass range of valid futures.
+/// - Complexity: linear time and storage in the number of inputs, excluding user operations.
+template <bool Any, class R, class E, class F, class I>
+auto create_range_of_futures(const E& executor, F&& f, I first, I last) {
+    using future_t = typename std::iterator_traits<I>::value_type;
+    using value_t = typename future_t::result_type;
+    std::vector<future_t> inputs;
+    inputs.reserve(std::distance(first, last));
+    std::transform(first, last, std::back_inserter(inputs), [](auto&& input) -> future_t {
+        if constexpr (std::is_copy_constructible_v<future_t>)
+            return std::forward<decltype(input)>(input);
+        else
+            return std::move(input);
+    });
+    auto count = inputs.size();
+    auto shared =
+        std::make_shared<when_shared<decltype(inputs), Any>>(std::move(inputs), executor, count);
+    auto p = package<R()>(executor, [_f = std::forward<F>(f), _p = shared]() mutable -> R {
+        if (_p->_exception) std::rethrow_exception(_p->_exception);
+        if constexpr (Any) {
+            if constexpr (std::is_void_v<value_t>)
+                return _f(_p->_index);
+            else
+                return _f(std::move(_p->_inputs[_p->_index]).get_ready(), _p->_index);
+        } else {
+            if constexpr (std::is_void_v<value_t>) {
+                return _f();
             } else {
-                p->done(std::forward<decltype(x)>(x), _i);
+                std::vector<value_t> values;
+                values.reserve(_p->_inputs.size());
+                std::transform(_p->_inputs.begin(), _p->_inputs.end(), std::back_inserter(values),
+                               [](auto& input) { return std::move(input).get_ready(); });
+                return _f(std::move(values));
             }
-        });
-
-    std::unique_lock<std::mutex> guard(context->_guard);
-    context->_holds[index] = std::move(hold);
+        }
+    });
+    shared->_f = std::move(p.first);
+    attach_when_inputs(shared);
+    return std::move(p.second);
 }
-
-template <class R, class T, class C, class Enabled = void>
-struct create_range_of_futures;
-
-template <class R, class T, class C>
-struct create_range_of_futures<R, T, C, enable_if_copyable<T>> {
-    template <class E, class F, class I>
-    static auto do_it(const E& executor, F&& f, I first, I last) {
-        assert(first != last);
-
-        auto context = std::make_shared<C>(std::forward<F>(f), std::distance(first, last));
-        auto p = package<R()>(executor, [_c = context]() mutable { return _c->execute(); });
-
-        context->_f = std::move(p.first);
-
-        size_t index(0);
-        for (; first != last; ++first) {
-            attach_tasks(index++, executor, context, *first);
-        }
-
-        return std::move(p.second);
-    }
-};
-
-template <class R, class T, class C>
-struct create_range_of_futures<R, T, C, enable_if_not_copyable<T>> {
-    template <class E, class F, class I>
-    static auto do_it(const E& executor, F&& f, I first, I last) {
-        assert(first != last);
-
-        auto context = std::make_shared<C>(std::forward<F>(f), std::distance(first, last));
-        auto p = package<R()>(executor, [_c = context] { return _c->execute(); });
-
-        context->_f = std::move(p.first);
-
-        size_t index(0);
-        for (; first != last; ++first) {
-            attach_tasks(index++, executor, context, std::move(*first));
-        }
-
-        return std::move(p.second);
-    }
-};
 
 /**************************************************************************************************/
 
@@ -1892,31 +1666,37 @@ struct create_range_of_futures<R, T, C, enable_if_not_copyable<T>> {
 
 /**************************************************************************************************/
 
-/// Returns a future that completes when all futures in `[range.first, range.second)` are ready; `f`
-/// receives their values.
+/// Returns a future for `f` scheduled on `executor` with the input range's values in input order.
 ///
 /// @details
 /// If `range` is empty, the continuation is still scheduled on `executor` with an empty result
 /// collection (no futures to wait on). For a non-empty range, elements that are move-only are moved
 /// out of the iterators while attaching continuations.
+/// The first input failure ends the join without invoking `f`. Destroying the submitted task
+/// without invoking it completes the result with `future_error_codes::broken_promise`. Value
+/// extraction also runs on `executor`.
+/// - Complexity: linear time and storage in the number of inputs, excluding user operations.
+///
+/// # Examples
+/// `when_all(executor, [](std::vector<int> values) { return values; }, std::pair{first, last})`
+/// collects an iterator range of integer futures.
 template <class E, class F, class I>
 auto when_all(const E& executor, F f, std::pair<I, I> range) {
     using param_t = typename std::iterator_traits<I>::value_type::result_type;
     using result_t = typename detail::result_of_when_all_t<F, param_t>::result_type;
-    using context_result_t =
-        std::conditional_t<std::is_same_v<void, param_t>, void, std::vector<param_t>>;
-    using context_t = detail::common_context<detail::context_result<F, false, context_result_t>, F,
-                                             detail::all_trigger, detail::single_trigger>;
-
     if (range.first == range.second) {
-        auto p = package<result_t()>(
-            executor, detail::context_result<F, false, context_result_t>(std::move(f), 0));
+        auto p = package<result_t()>(executor, [_f = std::move(f)]() mutable -> result_t {
+            if constexpr (std::is_void_v<param_t>)
+                return _f();
+            else
+                return _f(std::vector<param_t>{});
+        });
         executor(std::move(p.first));
         return std::move(p.second);
     }
 
-    return detail::create_range_of_futures<result_t, param_t, context_t>::do_it(
-        executor, std::move(f), range.first, range.second);
+    return detail::create_range_of_futures<false, result_t>(executor, std::move(f), range.first,
+                                                            range.second);
 }
 
 /**************************************************************************************************/
@@ -1924,24 +1704,28 @@ auto when_all(const E& executor, F f, std::pair<I, I> range) {
 /// Returns a future for `f` invoked with the first successful input's value and its `std::size_t`
 /// index in `[range.first, range.second)`. For void inputs, `f` receives only the index.
 /// If every input fails, propagates the last failure without invoking `f`.
+/// Selection occurs when inputs complete; value extraction and `f` run on `executor`.
+/// Destroying the submitted task without invoking it completes the result with
+/// `future_error_codes::broken_promise`.
 ///
 /// @details
 /// If `range` is empty, returns an already-failed future via `future_with_broken_promise` (there is
 /// no candidate to complete first).
+/// - Complexity: linear time and storage in the number of inputs, excluding user operations.
+///
+/// # Examples
+/// `when_any(executor, [](int value, std::size_t) { return value; }, std::pair{first, last})`
+/// selects a successful integer future from an iterator range.
 template <class E, class F, class I>
 auto when_any(const E& executor, F&& f, std::pair<I, I> range) {
     using param_t = typename std::iterator_traits<I>::value_type::result_type;
     using result_t = std::decay_t<typename detail::result_of_when_any_t<F, param_t>::result_type>;
-    using context_result_t = std::conditional_t<std::is_same_v<void, param_t>, void, param_t>;
-    using context_t = detail::common_context<detail::context_result<F, true, context_result_t>, F,
-                                             detail::single_trigger, detail::all_trigger>;
-
     if (range.first == range.second) {
         return future_with_broken_promise<std::decay_t<result_t>>(executor);
     }
 
-    return detail::create_range_of_futures<result_t, param_t, context_t>::do_it(
-        std::move(executor), std::forward<F>(f), range.first, range.second);
+    return detail::create_range_of_futures<true, result_t>(std::move(executor), std::forward<F>(f),
+                                                           range.first, range.second);
 }
 
 /**************************************************************************************************/

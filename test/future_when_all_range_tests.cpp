@@ -10,12 +10,15 @@
 #include <atomic>
 #include <chrono> // IWYU pragma: keep
 #include <cstddef>
+#include <cstdint>
+#include <exception>
 #include <iterator>
 #include <memory>
 #include <numeric>
 #include <optional>
 #include <string>
 #include <thread>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -27,6 +30,7 @@
 #include <stlab/concurrency/immediate_executor.hpp>
 #include <stlab/concurrency/ready_future.hpp>
 #include <stlab/concurrency/serial_queue.hpp>
+#include <stlab/concurrency/task.hpp>
 #include <stlab/test/model.hpp>
 #include <stlab/utility.hpp>
 
@@ -34,6 +38,270 @@
 
 using namespace stlab;
 using namespace future_test_helper;
+
+namespace {
+
+/// Selects a public future-join overload.
+enum class join_form : std::uint8_t { all_arguments, any_arguments, all_range, any_range };
+
+/// Joins two consumed inputs using the selected overload and callable.
+template <class E, class T, class F>
+auto join_for_test(join_form form, E executor, future<T> a, future<T> b, F f) {
+    if (form == join_form::all_arguments)
+        return when_all(executor, std::move(f), std::move(a), std::move(b));
+    if (form == join_form::any_arguments)
+        return when_any(executor, std::move(f), std::move(a), std::move(b));
+    std::array inputs{std::move(a), std::move(b)};
+    auto range =
+        std::pair{std::make_move_iterator(inputs.begin()), std::make_move_iterator(inputs.end())};
+    if (form == join_form::all_range) return when_all(executor, std::move(f), range);
+    return when_any(executor, std::move(f), range);
+}
+
+/// A copyable value whose copies report a requested extraction failure.
+struct throwing_join_value {
+    bool* _throw;
+
+    /// Borrows the flag controlling copy failure.
+    explicit throwing_join_value(bool& should_throw) : _throw(&should_throw) {}
+
+    /// Copies the value, reporting a requested failure.
+    throwing_join_value(const throwing_join_value& x) : _throw(x._throw) {
+        if (*_throw) throw test_exception("join extraction");
+    }
+
+    /// Transfers the value.
+    throwing_join_value(throwing_join_value&&) noexcept = default;
+    /// Copies the value's flag.
+    auto operator=(const throwing_join_value&) -> throwing_join_value& = default;
+    /// Transfers the value's flag.
+    auto operator=(throwing_join_value&&) noexcept -> throwing_join_value& = default;
+};
+
+} // namespace
+
+TEST_CASE_TEMPLATE(
+    "future_join_discarded_task_breaks_promise", T, int, void, std::unique_ptr<int>) {
+    bool deferred = false;
+    SUBCASE("discard immediately") {}
+    SUBCASE("discard after submission") { deferred = true; }
+
+    for (auto form : {join_form::all_arguments, join_form::any_arguments, join_form::all_range,
+                      join_form::any_range}) {
+        CAPTURE(static_cast<int>(form));
+        std::vector<task<void() noexcept>> queue;
+        auto executor = [&](task<void() noexcept> work) {
+            if (deferred) queue.push_back(std::move(work));
+        };
+        auto produce = []() -> T {
+            if constexpr (std::is_same_v<T, int>) return 7;
+            if constexpr (std::is_same_v<T, std::unique_ptr<int>>) return std::make_unique<int>(7);
+        };
+        auto [p0, f0] = package<T()>(immediate_executor, produce);
+        auto [p1, f1] = package<T()>(immediate_executor, produce);
+        bool called = false;
+        auto result = join_for_test(form, executor, std::move(f0), std::move(f1), [&](auto&&...) {
+            called = true;
+            return 42;
+        });
+        p0();
+        p1();
+        if (deferred) REQUIRE_FALSE(result.is_ready());
+        queue.clear();
+        CHECK_FALSE(called);
+        CHECK(result.is_ready());
+        if (!result.is_ready()) continue;
+        REQUIRE(result.exception());
+        try {
+            std::rethrow_exception(result.exception());
+        } catch (const future_error& error) {
+            CHECK(error.code() == future_error_codes::broken_promise);
+        }
+    }
+}
+
+TEST_CASE_TEMPLATE("future_join_abandoned_inputs_report_broken_promise", T, int, void) {
+    for (auto form : {join_form::all_arguments, join_form::any_arguments, join_form::all_range,
+                      join_form::any_range}) {
+        CAPTURE(static_cast<int>(form));
+        auto produce = []() -> T {
+            if constexpr (!std::is_void_v<T>) return 7;
+        };
+        auto [p0, f0] = package<T()>(immediate_executor, produce);
+        auto [p1, f1] = package<T()>(immediate_executor, produce);
+        auto result = join_for_test(form, immediate_executor, std::move(f0), std::move(f1),
+                                    [](auto&&...) { return 42; });
+        p0 = {};
+        p1 = {};
+        REQUIRE(result.is_ready());
+        REQUIRE(result.exception());
+        try {
+            std::rethrow_exception(result.exception());
+        } catch (const future_error& error) {
+            CHECK(error.code() == future_error_codes::broken_promise);
+        }
+    }
+}
+
+TEST_CASE("future_join_failures_preserve_all_and_any_selection_rules") {
+    bool all_fail = false;
+    SUBCASE("a later success wins") {}
+    SUBCASE("all fail with the last error") { all_fail = true; }
+    for (auto form : {join_form::all_arguments, join_form::any_arguments, join_form::all_range,
+                      join_form::any_range}) {
+        CAPTURE(static_cast<int>(form));
+        const bool any = form == join_form::any_arguments || form == join_form::any_range;
+        auto [p0, f0] = package<int()>(immediate_executor, [] { return 7; });
+        auto [p1, f1] = package<int()>(immediate_executor, [] { return 8; });
+        auto result = join_for_test(form, immediate_executor, std::move(f0), std::move(f1),
+                                    [](auto&&...) { return 42; });
+        const auto first = std::make_exception_ptr(test_exception("first"));
+        p0.set_exception(first);
+        if (any) {
+            REQUIRE_FALSE(result.is_ready());
+            if (!all_fail) {
+                p1();
+                REQUIRE(result.is_ready());
+                CHECK(result.get_ready() == 42);
+            } else {
+                const auto last = std::make_exception_ptr(test_exception("last"));
+                p1.set_exception(last);
+                REQUIRE(result.is_ready());
+                check_failure<test_exception>(result, "last");
+            }
+        } else {
+            REQUIRE(result.is_ready());
+            check_failure<test_exception>(result, "first");
+            CHECK(p1.canceled());
+        }
+    }
+}
+
+TEST_CASE("future_join_cancellation_releases_only_its_own_input_interest") {
+    for (auto form : {join_form::all_arguments, join_form::any_arguments, join_form::all_range,
+                      join_form::any_range}) {
+        CAPTURE(static_cast<int>(form));
+        auto [p0, f0] = package<int()>(immediate_executor, [] { return 7; });
+        auto [p1, f1] = package<int()>(immediate_executor, [] { return 8; });
+        auto retained = f0;
+        auto result = join_for_test(form, immediate_executor, std::move(f0), std::move(f1),
+                                    [](auto&&...) { return 42; });
+        result.reset();
+        CHECK_FALSE(p0.canceled());
+        CHECK(p1.canceled());
+        p0();
+        CHECK(retained.get_ready() == 7);
+    }
+}
+
+TEST_CASE("future_join_extraction_failure_completes_the_aggregate") {
+    for (auto form : {join_form::all_arguments, join_form::any_arguments, join_form::all_range,
+                      join_form::any_range}) {
+        CAPTURE(static_cast<int>(form));
+        bool should_throw = false;
+        auto produce = [&] { return throwing_join_value(should_throw); };
+        auto [p0, f0] = package<throwing_join_value()>(immediate_executor, produce);
+        auto [p1, f1] = package<throwing_join_value()>(immediate_executor, produce);
+        std::vector<task<void() noexcept>> queue;
+        auto result = join_for_test(
+            form, [&](task<void() noexcept> work) { queue.push_back(std::move(work)); }, f0,
+            std::move(f1), [](auto&&...) { return 42; });
+        p0();
+        p1();
+        should_throw = true;
+        REQUIRE(queue.size() == 1);
+        queue.back()();
+        REQUIRE(result.is_ready());
+        check_failure<test_exception>(result, "join extraction");
+    }
+}
+
+TEST_CASE("future_join_any_selection_precedes_final_executor_dispatch") {
+    bool range = false;
+    SUBCASE("arguments") {}
+    SUBCASE("range") { range = true; }
+    auto [p0, f0] = package<int()>(immediate_executor, [] { return 7; });
+    auto [p1, f1] = package<int()>(immediate_executor, [] { return 8; });
+    std::vector<task<void() noexcept>> queue;
+    auto executor = [&](task<void() noexcept> work) { queue.push_back(std::move(work)); };
+    auto result = [&, first = std::move(f0), second = std::move(f1)]() mutable {
+        if (!range) return when_any(executor, when_any_result, std::move(first), std::move(second));
+        std::array inputs{std::move(first), std::move(second)};
+        return when_any(executor, when_any_result, std::pair{inputs.begin(), inputs.end()});
+    }();
+    p1();
+    p0();
+    REQUIRE_FALSE(result.is_ready());
+    REQUIRE(queue.size() == 1);
+    queue.back()();
+    REQUIRE(result.is_ready());
+    CHECK((result.get_ready() == std::pair{8, std::size_t{1}}));
+}
+
+TEST_CASE("future_join_concurrent_completion_during_registration") {
+    for (auto form : {join_form::all_arguments, join_form::any_arguments, join_form::all_range,
+                      join_form::any_range}) {
+        CAPTURE(static_cast<int>(form));
+        for (int repeat = 0; repeat != 32; ++repeat) {
+            auto [p0, f0] = package<int()>(immediate_executor, [] { return 7; });
+            auto [p1, f1] = package<int()>(immediate_executor, [] { return 8; });
+            std::thread a([p = std::move(p0)]() mutable { p(); });
+            std::thread b([p = std::move(p1)]() mutable { p(); });
+            auto result = join_for_test(form, immediate_executor, std::move(f0), std::move(f1),
+                                        [](auto&&...) { return 42; });
+            a.join();
+            b.join();
+            REQUIRE(result.is_ready());
+            CHECK(result.get_ready() == 42);
+        }
+    }
+}
+
+TEST_CASE("future_join_ready_inputs_submit_user_work_without_running_inline") {
+    for (auto form : {join_form::all_arguments, join_form::any_arguments, join_form::all_range,
+                      join_form::any_range}) {
+        CAPTURE(static_cast<int>(form));
+        std::vector<task<void() noexcept>> queue;
+        bool executing = false;
+        auto result = join_for_test(
+            form, [&](task<void() noexcept> work) { queue.push_back(std::move(work)); },
+            make_ready_future<int>(7, immediate_executor),
+            make_ready_future<int>(8, immediate_executor),
+            [&](auto&&...) {
+                CHECK(executing);
+                return 42;
+            });
+        REQUIRE_FALSE(result.is_ready());
+        REQUIRE(queue.size() == 1);
+        executing = true;
+        auto work = std::move(queue.back());
+        queue.pop_back();
+        work();
+        REQUIRE(result.is_ready());
+        CHECK(result.get_ready() == 42);
+    }
+}
+
+TEST_CASE("future_join_cancellation_before_queued_dispatch_does_not_invoke_user_work") {
+    for (auto form : {join_form::all_arguments, join_form::any_arguments, join_form::all_range,
+                      join_form::any_range}) {
+        CAPTURE(static_cast<int>(form));
+        std::vector<task<void() noexcept>> queue;
+        bool called = false;
+        auto result = join_for_test(
+            form, [&](task<void() noexcept> work) { queue.push_back(std::move(work)); },
+            make_ready_future<int>(7, immediate_executor),
+            make_ready_future<int>(8, immediate_executor),
+            [&](auto&&...) {
+                called = true;
+                return 42;
+            });
+        REQUIRE(queue.size() == 1);
+        result.reset();
+        queue.back()();
+        CHECK_FALSE(called);
+    }
+}
 
 TEST_CASE("future_when_all_range_consumed_ready_copyable_values_are_not_copied") {
     annotate_counters counters;
