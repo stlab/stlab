@@ -222,6 +222,22 @@
       [
         "continuations",
         0.5
+      ],
+      [
+        "broken-promise",
+        1.0
+      ],
+      [
+        "ownership",
+        1.0
+      ],
+      [
+        "when_all",
+        1.0
+      ],
+      [
+        "when_any",
+        1.0
       ]
     ],
     "csp": [
@@ -1346,6 +1362,22 @@
       [
         "packaged_task",
         0.5
+      ],
+      [
+        "when_all",
+        1.0
+      ],
+      [
+        "ownership",
+        1.0
+      ],
+      [
+        "when_any",
+        1.0
+      ],
+      [
+        "broken-promise",
+        1.0
       ]
     ],
     "architecture overview": [
@@ -1989,7 +2021,7 @@
       ],
       [
         "execution abi boundary",
-        0.5
+        1.0
       ],
       [
         "concurrency",
@@ -1997,7 +2029,7 @@
       ],
       [
         "executor separation",
-        0.5
+        1.0
       ],
       [
         "channel",
@@ -2037,7 +2069,7 @@
       ],
       [
         "execution library boundary",
-        0.5
+        1.0
       ]
     ],
     "blocking": [
@@ -3113,6 +3145,94 @@
         "future continuations",
         1.0
       ]
+    ],
+    "ownership": [
+      [
+        "broken-promise",
+        1.0
+      ],
+      [
+        "future",
+        1.0
+      ],
+      [
+        "when_all",
+        1.0
+      ],
+      [
+        "when_any",
+        1.0
+      ],
+      [
+        "concurrency",
+        1.0
+      ]
+    ],
+    "when_any": [
+      [
+        "broken-promise",
+        1.0
+      ],
+      [
+        "concurrency",
+        1.0
+      ],
+      [
+        "ownership",
+        1.0
+      ],
+      [
+        "future",
+        1.0
+      ],
+      [
+        "when_all",
+        1.0
+      ]
+    ],
+    "when_all": [
+      [
+        "concurrency",
+        1.0
+      ],
+      [
+        "when_any",
+        1.0
+      ],
+      [
+        "ownership",
+        1.0
+      ],
+      [
+        "broken-promise",
+        1.0
+      ],
+      [
+        "future",
+        1.0
+      ]
+    ],
+    "broken-promise": [
+      [
+        "future",
+        1.0
+      ],
+      [
+        "when_all",
+        1.0
+      ],
+      [
+        "when_any",
+        1.0
+      ],
+      [
+        "concurrency",
+        1.0
+      ],
+      [
+        "ownership",
+        1.0
+      ]
     ]
   },
   "provenance": {
@@ -3205,7 +3325,8 @@
     ],
     "future|concurrency": [
       "knowledge\\architecture-overview.md",
-      "knowledge\\future-and-package-model.md"
+      "knowledge\\future-and-package-model.md",
+      "knowledge/future-join-ownership-and-completion-invariants.md"
     ],
     "ctest presets|ctest": [
       "procedures\\cmake-presets-and-testing-layout.md"
@@ -4395,7 +4516,8 @@
     ],
     "concurrency|future": [
       "knowledge\\architecture-overview.md",
-      "knowledge\\future-and-package-model.md"
+      "knowledge\\future-and-package-model.md",
+      "knowledge/future-join-ownership-and-completion-invariants.md"
     ],
     "executor|serial queue execution": [
       "knowledge\\serial-queue-execution.md"
@@ -5345,8 +5467,92 @@
     ],
     "csp|channel": [
       "knowledge\\channel-and-reactive-pipelines.md"
+    ],
+    "ownership|when_all": [
+      "knowledge/future-join-ownership-and-completion-invariants.md"
+    ],
+    "future|broken-promise": [
+      "knowledge/future-join-ownership-and-completion-invariants.md"
+    ],
+    "future|when_any": [
+      "knowledge/future-join-ownership-and-completion-invariants.md"
+    ],
+    "future|when_all": [
+      "knowledge/future-join-ownership-and-completion-invariants.md"
+    ],
+    "broken-promise|future": [
+      "knowledge/future-join-ownership-and-completion-invariants.md"
+    ],
+    "when_all|ownership": [
+      "knowledge/future-join-ownership-and-completion-invariants.md"
+    ],
+    "ownership|future": [
+      "knowledge/future-join-ownership-and-completion-invariants.md"
+    ],
+    "when_any|future": [
+      "knowledge/future-join-ownership-and-completion-invariants.md"
+    ],
+    "concurrency|ownership": [
+      "knowledge/future-join-ownership-and-completion-invariants.md"
+    ],
+    "concurrency|when_any": [
+      "knowledge/future-join-ownership-and-completion-invariants.md"
+    ],
+    "ownership|concurrency": [
+      "knowledge/future-join-ownership-and-completion-invariants.md"
+    ],
+    "broken-promise|concurrency": [
+      "knowledge/future-join-ownership-and-completion-invariants.md"
+    ],
+    "when_any|concurrency": [
+      "knowledge/future-join-ownership-and-completion-invariants.md"
+    ],
+    "future|ownership": [
+      "knowledge/future-join-ownership-and-completion-invariants.md"
+    ],
+    "when_all|future": [
+      "knowledge/future-join-ownership-and-completion-invariants.md"
+    ],
+    "ownership|when_any": [
+      "knowledge/future-join-ownership-and-completion-invariants.md"
+    ],
+    "broken-promise|ownership": [
+      "knowledge/future-join-ownership-and-completion-invariants.md"
+    ],
+    "concurrency|when_all": [
+      "knowledge/future-join-ownership-and-completion-invariants.md"
+    ],
+    "when_all|broken-promise": [
+      "knowledge/future-join-ownership-and-completion-invariants.md"
+    ],
+    "ownership|broken-promise": [
+      "knowledge/future-join-ownership-and-completion-invariants.md"
+    ],
+    "concurrency|broken-promise": [
+      "knowledge/future-join-ownership-and-completion-invariants.md"
+    ],
+    "broken-promise|when_all": [
+      "knowledge/future-join-ownership-and-completion-invariants.md"
+    ],
+    "when_any|when_all": [
+      "knowledge/future-join-ownership-and-completion-invariants.md"
+    ],
+    "when_all|when_any": [
+      "knowledge/future-join-ownership-and-completion-invariants.md"
+    ],
+    "when_any|ownership": [
+      "knowledge/future-join-ownership-and-completion-invariants.md"
+    ],
+    "when_all|concurrency": [
+      "knowledge/future-join-ownership-and-completion-invariants.md"
+    ],
+    "broken-promise|when_any": [
+      "knowledge/future-join-ownership-and-completion-invariants.md"
+    ],
+    "when_any|broken-promise": [
+      "knowledge/future-join-ownership-and-completion-invariants.md"
     ]
   },
-  "entries_processed": 8,
-  "built_at": "2026-10-14T21:53:18.528720800+00:00"
+  "entries_processed": 9,
+  "built_at": "2026-10-29T22:35:37.856073300+00:00"
 }
