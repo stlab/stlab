@@ -102,6 +102,7 @@ Linting via `.clang-tidy` checks `cert-*`, `performance-*`, `modernize-*`, and `
 ## Git and Worktree Workflow
 
 - Perform changes in an isolated git worktree; do not commit directly to `main`.
+- Store git worktrees under `.claude/worktrees/`.
 - Before opening a PR, run the relevant build, test, sanitizer, and lint checks documented
   above. Read the output and resolve warnings, not only errors.
 - For multi-phase work, maintain a dated handoff document under `docs/superpowers/` describing
