@@ -122,6 +122,7 @@ function(consume name prefix execution_prefix)
   run("${CMAKE_COMMAND}" -S "${STLAB_SOURCE}/test/package" -B "${root}/${name}" -G Ninja
     "-DCMAKE_PREFIX_PATH=${prefix}" "-DEXECUTION_PREFIX:PATH=${execution_prefix}"
     "-DSTLAB_CPM_FILE:FILEPATH=${STLAB_SOURCE}/cmake/CPM.cmake"
+    "-DSTLAB_PACKAGE_VERSION=${stlab_version}"
     "-DEXPECT_EXECUTION_SHARED:BOOL=${BUILD_SHARED_LIBS}"
     "-DBUILD_SHARED_LIBS:BOOL=${BUILD_SHARED_LIBS}"
     -DCMAKE_CXX_STANDARD=20 -DCMAKE_BUILD_TYPE=Release ${ARGN})
