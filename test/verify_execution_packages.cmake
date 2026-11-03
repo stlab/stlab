@@ -121,6 +121,7 @@ check_package("${execution_prefix}" stlab-execution 1.0.2)
 function(consume name prefix execution_prefix)
   run("${CMAKE_COMMAND}" -S "${STLAB_SOURCE}/test/package" -B "${root}/${name}" -G Ninja
     "-DCMAKE_PREFIX_PATH=${prefix}" "-DEXECUTION_PREFIX:PATH=${execution_prefix}"
+    "-DSTLAB_CPM_FILE:FILEPATH=${STLAB_SOURCE}/cmake/CPM.cmake"
     "-DEXPECT_EXECUTION_SHARED:BOOL=${BUILD_SHARED_LIBS}"
     "-DBUILD_SHARED_LIBS:BOOL=${BUILD_SHARED_LIBS}"
     -DCMAKE_CXX_STANDARD=20 -DCMAKE_BUILD_TYPE=Release ${ARGN})
@@ -145,6 +146,19 @@ foreach(case combined stlab-only execution-only)
     "-DSTLAB_INSTALL=${stlab_install}" "-DSTLAB_EXECUTION_INSTALL=${execution_install}")
   run("${CMAKE_COMMAND}" --build "${binary}" --parallel 8)
   run("${CMAKE_COMMAND}" --install "${binary}" --prefix "${prefix}")
+  file(GLOB_RECURSE dependency_configs "${prefix}/*stlab-executionConfig.cmake"
+    "${prefix}/*stlab-copy-on-writeConfig.cmake" "${prefix}/*stlab-enum-opsConfig.cmake")
+  if(dependency_configs OR EXISTS "${prefix}/include/stlab/concurrency/task.hpp")
+    message(FATAL_ERROR "STLab's install must not install excluded dependencies: ${dependency_configs}")
+  endif()
+  if(stlab_install)
+    foreach(dependency stlab-copy-on-write stlab-enum-ops)
+      run("${CMAKE_COMMAND}" --install "${binary}/_deps/${dependency}-build" --prefix "${prefix}")
+    endforeach()
+  endif()
+  if(execution_install)
+    run("${CMAKE_COMMAND}" --install "${binary}/_deps/stlab-execution-build" --prefix "${prefix}")
+  endif()
   file(READ "${binary}/include/stlab/config.hpp" stlab_config)
   foreach(component MAJOR MINOR PATCH)
     string(REGEX MATCH "STLAB_VERSION_${component}\\(\\) ([0-9]+)" matched "${stlab_config}")
@@ -196,6 +210,8 @@ foreach(case combined stlab-only execution-only)
     check_package("${prefix}" stlab-execution 1.0.2)
     consume(independent-combined-consumer "${prefix}" "${prefix}"
       "-DBUILD_SHARED_LIBS:BOOL=${opposite_linkage}")
+    consume(installed-shorthand-consumer "${prefix}" "${prefix}"
+      -DSTLAB_PACKAGE_CPM=ON "-DBUILD_SHARED_LIBS:BOOL=${opposite_linkage}")
   elseif(case STREQUAL "stlab-only")
     consume(stlab-only-consumer "${prefix}" "${execution_prefix}"
       "-DBUILD_SHARED_LIBS:BOOL=${opposite_linkage}")
@@ -239,6 +255,13 @@ foreach(linkage IN ITEMS OFF ON)
     "-DBUILD_SHARED_LIBS:BOOL=${linkage}")
 endforeach()
 
+consume(source-dependencies-consumer "" ""
+  "-DSTLAB_PACKAGE_SOURCE:PATH=${STLAB_SOURCE}" -DSTLAB_PACKAGE_SOURCE_DEPS=ON
+  "-DCPM_cpp-library_SOURCE:PATH=${TOOLKIT_SOURCE}"
+  "-DCPM_stlab-execution_SOURCE:PATH=${EXECUTION_SOURCE}"
+  "-DSTLAB_TASK_SYSTEM=${STLAB_TASK_SYSTEM}"
+  "-DCPM_SOURCE_CACHE:PATH=${STLAB_SOURCE}/.cache/cpm")
+
 if(WIN32 AND BUILD_SHARED_LIBS)
   find_program(dumpbin NAMES dumpbin REQUIRED)
   foreach(binary
@@ -246,6 +269,8 @@ if(WIN32 AND BUILD_SHARED_LIBS)
       "${independent}/consumer-20/consumer.exe"
       "${root}/combined-consumer/consumer.exe" "${root}/combined-consumer/legacy.exe"
       "${root}/independent-combined-consumer/consumer.exe" "${root}/independent-combined-consumer/legacy.exe"
+      "${root}/installed-shorthand-consumer/consumer.exe" "${root}/installed-shorthand-consumer/legacy.exe"
+      "${root}/source-dependencies-consumer/consumer.exe" "${root}/source-dependencies-consumer/legacy.exe"
       "${root}/stlab-only-consumer/consumer.exe" "${root}/stlab-only-consumer/legacy.exe"
       "${root}/execution-only-consumer/consumer.exe"
       "${root}/source-consumer-OFF/consumer.exe" "${root}/source-consumer-OFF/legacy.exe"
