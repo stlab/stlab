@@ -66,11 +66,10 @@ not the C++ ABI of previously built clients.
 
 `stlab/config.hpp` includes `stlab/execution/config.hpp`. STLab owns only its release
 version/namespace and coroutine configuration; execution owns backend selection, export,
-and common feature macros. STLab uses stlab-execution 1.0.1 and cpp-library 5.6.0. Local CPM source
-overrides must use `:PATH` cache types on Windows.
+and common feature macros. Local CPM source overrides must use `:PATH` cache types
+on Windows.
 
-Installed consumers require stlab-execution 1.0.1 or later. To develop against local
-dependency checkouts, use generic developer overrides:
+To develop against local dependency checkouts, use generic developer overrides:
 
 ```powershell
 cmake --preset=debug-cpp20 -DCPM_cpp-library_SOURCE:PATH=<toolkit-checkout> -DCPM_stlab-execution_SOURCE:PATH=<execution-checkout>

@@ -28,7 +28,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 # Keep installed execution targets visible to parent source consumers.
 if(CPM_USE_LOCAL_PACKAGES AND NOT CPM_stlab-execution_SOURCE)
-  find_package(stlab-execution 1.0.1 QUIET CONFIG GLOBAL)
+  find_package(stlab-execution 1.0.2 QUIET CONFIG GLOBAL)
   if(stlab-execution_FOUND)
     CPMRegisterPackage(stlab-execution "${stlab-execution_VERSION}")
   endif()
@@ -37,8 +37,8 @@ endif()
 CPMAddPackage(
   NAME stlab-execution
   GITHUB_REPOSITORY stlab/stlab-execution
-  VERSION 1.0.1
-  GIT_TAG v1.0.1)
+  VERSION 1.0.2
+  GIT_TAG v1.0.2)
 # Backend selection belongs to execution. These resolved values are needed only by private tests.
 get_target_property(stlab_execution_imported stlab::execution IMPORTED)
 get_target_property(stlab_execution_type stlab::execution TYPE)
@@ -139,7 +139,7 @@ if(PROJECT_IS_TOP_LEVEL AND BUILD_DOCS)
 endif()
 
 include("${cpp-library_SOURCE_DIR}/cmake/cpp-library-install.cmake")
-cpp_library_map_dependency("stlab::execution" "stlab-execution 1.0.1")
+cpp_library_map_dependency("stlab::execution" "stlab-execution 1.0.2")
 # These existing release dependencies can be supplied by CPM's source cache without
 # a tracked find_package call; retain their actual package constraints for installation.
 cpp_library_map_dependency("stlab::copy-on-write" "stlab-copy-on-write 1.1.1")

@@ -89,7 +89,7 @@ function(check_package prefix package expected_version)
     message(FATAL_ERROR "Incorrect ${package} version: expected ${expected_version}\n${version}")
   endif()
   if(package STREQUAL "stlab")
-    string(FIND "${config}" "find_dependency(stlab-execution 1.0.1)" dependency)
+    string(FIND "${config}" "find_dependency(stlab-execution 1.0.2)" dependency)
     string(FIND "${config}" "stlabTargets.cmake" targets)
     if(dependency LESS 0 OR targets LESS dependency)
       message(FATAL_ERROR "STLab must find execution before loading its targets.")
@@ -112,10 +112,10 @@ endfunction()
 
 # Execution's standalone verification uses 1.0.0; STLab requires a newer package.
 run("${CMAKE_COMMAND}" --preset=install -S "${EXECUTION_SOURCE}"
-  -B "${independent}/library" "-DCPP_LIBRARY_VERSION=1.0.1")
+  -B "${independent}/library" "-DCPP_LIBRARY_VERSION=1.0.2")
 run("${CMAKE_COMMAND}" --build "${independent}/library" --parallel 8)
 run("${CMAKE_COMMAND}" --install "${independent}/library" --prefix "${execution_prefix}")
-check_package("${execution_prefix}" stlab-execution 1.0.1)
+check_package("${execution_prefix}" stlab-execution 1.0.2)
 
 # Builds/runs installed or source STLab consumers without execution source include paths.
 function(consume name prefix execution_prefix)
@@ -193,7 +193,7 @@ foreach(case combined stlab-only execution-only)
     # Install independently versioned execution into that same prefix as well.
     run("${CMAKE_COMMAND}" --install "${independent}/library" --prefix "${prefix}")
     check_package("${prefix}" stlab "${stlab_version}")
-    check_package("${prefix}" stlab-execution 1.0.1)
+    check_package("${prefix}" stlab-execution 1.0.2)
     consume(independent-combined-consumer "${prefix}" "${prefix}"
       "-DBUILD_SHARED_LIBS:BOOL=${opposite_linkage}")
   elseif(case STREQUAL "stlab-only")
