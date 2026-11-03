@@ -23,7 +23,8 @@ include(CMakeDependentOption)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 # [DEPENDENCY] https://github.com/stlab/stlab-execution/releases
-CPMAddPackage("gh:stlab/stlab-execution@1.0.2")
+set(STLAB_EXECUTION_VERSION 1.0.2)
+CPMAddPackage("gh:stlab/stlab-execution@${STLAB_EXECUTION_VERSION}")
 # Backend selection belongs to execution. These resolved values are needed only by private tests.
 get_target_property(stlab_execution_imported stlab::execution IMPORTED)
 get_target_property(stlab_execution_type stlab::execution TYPE)
@@ -116,7 +117,7 @@ if(PROJECT_IS_TOP_LEVEL AND BUILD_DOCS)
 endif()
 
 include("${cpp-library_SOURCE_DIR}/cmake/cpp-library-install.cmake")
-cpp_library_map_dependency("stlab::execution" "stlab-execution 1.0.2")
+cpp_library_map_dependency("stlab::execution" "stlab-execution ${STLAB_EXECUTION_VERSION}")
 # These existing release dependencies can be supplied by CPM's source cache without
 # a tracked find_package call; retain their actual package constraints for installation.
 cpp_library_map_dependency("stlab::copy-on-write" "stlab-copy-on-write 1.1.1")

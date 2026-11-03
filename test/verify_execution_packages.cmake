@@ -1,7 +1,8 @@
 # Distributed under the Boost Software License, Version 1.0.
 # Repeatable native package matrix; library children always use their install presets.
 cmake_minimum_required(VERSION 3.24)
-foreach(required STLAB_SOURCE EXECUTION_SOURCE TOOLKIT_SOURCE VERIFY_PARENT VERIFY_ROOT)
+foreach(required STLAB_SOURCE EXECUTION_SOURCE STLAB_EXECUTION_VERSION TOOLKIT_SOURCE
+    VERIFY_PARENT VERIFY_ROOT)
   if(NOT DEFINED ${required} OR "${${required}}" STREQUAL "")
     message(FATAL_ERROR "Required path: ${required}")
   endif()
@@ -89,7 +90,7 @@ function(check_package prefix package expected_version)
     message(FATAL_ERROR "Incorrect ${package} version: expected ${expected_version}\n${version}")
   endif()
   if(package STREQUAL "stlab")
-    string(FIND "${config}" "find_dependency(stlab-execution 1.0.2)" dependency)
+    string(FIND "${config}" "find_dependency(stlab-execution ${STLAB_EXECUTION_VERSION})" dependency)
     string(FIND "${config}" "stlabTargets.cmake" targets)
     if(dependency LESS 0 OR targets LESS dependency)
       message(FATAL_ERROR "STLab must find execution before loading its targets.")
@@ -112,10 +113,10 @@ endfunction()
 
 # Execution's standalone verification uses 1.0.0; STLab requires a newer package.
 run("${CMAKE_COMMAND}" --preset=install -S "${EXECUTION_SOURCE}"
-  -B "${independent}/library" "-DCPP_LIBRARY_VERSION=1.0.2")
+  -B "${independent}/library" "-DCPP_LIBRARY_VERSION=${STLAB_EXECUTION_VERSION}")
 run("${CMAKE_COMMAND}" --build "${independent}/library" --parallel 8)
 run("${CMAKE_COMMAND}" --install "${independent}/library" --prefix "${execution_prefix}")
-check_package("${execution_prefix}" stlab-execution 1.0.2)
+check_package("${execution_prefix}" stlab-execution "${STLAB_EXECUTION_VERSION}")
 
 # Builds/runs installed or source STLab consumers without execution source include paths.
 function(consume name prefix execution_prefix)
@@ -208,7 +209,7 @@ foreach(case combined stlab-only execution-only)
     # Install independently versioned execution into that same prefix as well.
     run("${CMAKE_COMMAND}" --install "${independent}/library" --prefix "${prefix}")
     check_package("${prefix}" stlab "${stlab_version}")
-    check_package("${prefix}" stlab-execution 1.0.2)
+    check_package("${prefix}" stlab-execution "${STLAB_EXECUTION_VERSION}")
     consume(independent-combined-consumer "${prefix}" "${prefix}"
       "-DBUILD_SHARED_LIBS:BOOL=${opposite_linkage}")
     consume(installed-shorthand-consumer "${prefix}" "${prefix}"
