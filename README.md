@@ -66,11 +66,10 @@ not the C++ ABI of previously built clients.
 
 `stlab/config.hpp` includes `stlab/execution/config.hpp`. STLab owns only its release
 version/namespace and coroutine configuration; execution owns backend selection, export,
-and common feature macros. STLab uses stlab-execution 1.0.1 and cpp-library 5.6.0. Local CPM source
-overrides must use `:PATH` cache types on Windows.
+and common feature macros. Local CPM source overrides must use `:PATH` cache types
+on Windows.
 
-Installed consumers require stlab-execution 1.0.1 or later. To develop against local
-dependency checkouts, use generic developer overrides:
+To develop against local dependency checkouts, use generic developer overrides:
 
 ```powershell
 cmake --preset=debug-cpp20 -DCPM_cpp-library_SOURCE:PATH=<toolkit-checkout> -DCPM_stlab-execution_SOURCE:PATH=<execution-checkout>
@@ -85,8 +84,10 @@ find_package(stlab CONFIG REQUIRED)
 target_link_libraries(app PRIVATE stlab::stlab)
 ```
 
-Set `CMAKE_PREFIX_PATH` to the prefix containing both packages, or supply an
-independently installed execution prefix. Execution's README and local Doxygen
+Set `CMAKE_PREFIX_PATH` to the installation prefixes for STLab and its dependencies.
+You can use a shared prefix or separate prefixes. With `CPM_USE_LOCAL_PACKAGES=ON`,
+CPM shorthand declarations also try installed packages before fetching sources.
+Execution's README and local Doxygen
 build contain the lower-level contracts. The repository is public, but there is no
 published execution documentation site yet.
 
@@ -131,8 +132,8 @@ STLab and execution configuration options (backend options are resolved only by 
   from source, including execution on Windows. Execution derives its DLL import/export
   configuration from its actual library type; no execution-specific linkage option is needed.
   The former `STLAB_EXECUTION_SHARED` and `STLAB_CORE_SHARED` CMake options are no longer used.
-- `-DSTLAB_INSTALL=`[`ON`, `OFF`] controls STLab installation, independently of
-  `STLAB_EXECUTION_INSTALL`. Enable both when installing both packages from this source build.
+- `-DSTLAB_INSTALL=`[`ON`, `OFF`] controls installation of STLab itself, not its
+  dependencies. Install dependency packages separately.
 
 An installed execution package retains the linkage selected by the developer who built it.
 Client libraries link its exported `stlab::execution` target without choosing or changing
@@ -194,23 +195,39 @@ cmake --build .
 
 #### Installation (optional)
 
-Installation is optional and typically not required when using CPM. If you need to install the library (e.g., for system-wide deployment or use with a package manager):
+Installation is optional when using CPM. To provide STLab as an installed CMake
+package, first install its prerequisites through a package manager or their own
+installation procedures:
+
+- [stlab-execution](https://github.com/stlab/stlab-execution)
+- [stlab-copy-on-write](https://github.com/stlab/stlab-copy-on-write)
+- [stlab-enum-ops](https://github.com/stlab/stlab-enum-ops)
+
+Then configure, build, and install STLab:
 
 ```bash
-# Build and install to default system location
-cmake --preset=install -DSTLAB_INSTALL=ON -DSTLAB_EXECUTION_INSTALL=ON
+cmake --preset=install -DSTLAB_INSTALL=ON \
+  "-DCMAKE_PREFIX_PATH=DEPENDENCY_PREFIX"
 cmake --build --preset=install
-cmake --install build/install
-
-# Install to custom prefix
-cmake --install build/install --prefix /opt/mylib
+cmake --install build/install --prefix INSTALL_PREFIX
 ```
 
-The `install` preset enables `CPM_USE_LOCAL_PACKAGES`, which verifies your generated Config.cmake works correctly. See the [CPM.cmake documentation](https://github.com/cpm-cmake/CPM.cmake#cpm_use_local_packages) for more about using installed packages.
+Replace `DEPENDENCY_PREFIX` with the prerequisites' installation prefix, or a
+semicolon-separated list of prefixes. Replace `INSTALL_PREFIX` with your desired
+STLab installation directory. Omit `--prefix INSTALL_PREFIX` to use CMake's
+configured installation prefix.
 
-The installed `stlabConfig.cmake` resolves `stlab-execution` before loading `stlabTargets`.
+The `install` preset enables `CPM_USE_LOCAL_PACKAGES`: CPM tries installed
+dependencies before fetching sources. Fetching a dependency does not install it.
+STLab respects CPM shorthand's `EXCLUDE_FROM_ALL` and does not install dependencies
+as part of its own installation.
+
+The installed `stlabConfig.cmake` finds its prerequisites before loading `stlabTargets`.
 It exports `stlab::stlab` and the INTERFACE `stlab::stlab-core` compatibility target. STLab and
 execution have disjoint installed header sets and independent package versions.
+To verify the installation, configure and build your consumer using
+`find_package(stlab CONFIG REQUIRED)` with `CMAKE_PREFIX_PATH` containing both the
+STLab and prerequisite installation prefixes.
 
 ## Testing
 

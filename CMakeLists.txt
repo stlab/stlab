@@ -2,11 +2,7 @@ cmake_minimum_required(VERSION 3.24)
 
 include(cmake/CPM.cmake)
 # [DEPENDENCY] https://github.com/stlab/cpp-library/releases
-CPMAddPackage(
-  NAME cpp-library
-  GITHUB_REPOSITORY stlab/cpp-library
-  VERSION 5.6.0
-  GIT_TAG v5.6.0)
+CPMAddPackage("gh:stlab/cpp-library@5.6.0")
 include("${cpp-library_SOURCE_DIR}/cpp-library.cmake")
 cpp_library_enable_dependency_tracking()
 
@@ -26,19 +22,9 @@ include(GNUInstallDirs)
 include(CMakeDependentOption)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
-# Keep installed execution targets visible to parent source consumers.
-if(CPM_USE_LOCAL_PACKAGES AND NOT CPM_stlab-execution_SOURCE)
-  find_package(stlab-execution 1.0.1 QUIET CONFIG GLOBAL)
-  if(stlab-execution_FOUND)
-    CPMRegisterPackage(stlab-execution "${stlab-execution_VERSION}")
-  endif()
-endif()
 # [DEPENDENCY] https://github.com/stlab/stlab-execution/releases
-CPMAddPackage(
-  NAME stlab-execution
-  GITHUB_REPOSITORY stlab/stlab-execution
-  VERSION 1.0.1
-  GIT_TAG v1.0.1)
+set(STLAB_EXECUTION_VERSION 1.0.2)
+CPMAddPackage("gh:stlab/stlab-execution@${STLAB_EXECUTION_VERSION}")
 # Backend selection belongs to execution. These resolved values are needed only by private tests.
 get_target_property(stlab_execution_imported stlab::execution IMPORTED)
 get_target_property(stlab_execution_type stlab::execution TYPE)
@@ -91,20 +77,12 @@ add_subdirectory(include/stlab)
 add_subdirectory(src)
 
 # [DEPENDENCY] https://github.com/stlab/stlab-copy-on-write/releases
-CPMAddPackage(
-  NAME stlab-copy-on-write
-  GITHUB_REPOSITORY stlab/stlab-copy-on-write
-  VERSION 1.1.1
-  GIT_TAG v1.1.1)
+CPMAddPackage("gh:stlab/stlab-copy-on-write@1.1.1")
 target_link_libraries(stlab PUBLIC
   $<BUILD_INTERFACE:stlab::copy-on-write>
   $<INSTALL_INTERFACE:stlab::$<1:copy-on-write>>)
 # [DEPENDENCY] https://github.com/stlab/stlab-enum-ops/releases
-CPMAddPackage(
-  NAME stlab-enum-ops
-  GITHUB_REPOSITORY stlab/stlab-enum-ops
-  VERSION 1.2.0
-  GIT_TAG v1.2.0)
+CPMAddPackage("gh:stlab/stlab-enum-ops@1.2.0")
 target_link_libraries(stlab PUBLIC
   $<BUILD_INTERFACE:stlab::enum-ops>
   $<INSTALL_INTERFACE:stlab::$<1:enum-ops>>)
@@ -139,7 +117,7 @@ if(PROJECT_IS_TOP_LEVEL AND BUILD_DOCS)
 endif()
 
 include("${cpp-library_SOURCE_DIR}/cmake/cpp-library-install.cmake")
-cpp_library_map_dependency("stlab::execution" "stlab-execution 1.0.1")
+cpp_library_map_dependency("stlab::execution" "stlab-execution ${STLAB_EXECUTION_VERSION}")
 # These existing release dependencies can be supplied by CPM's source cache without
 # a tracked find_package call; retain their actual package constraints for installation.
 cpp_library_map_dependency("stlab::copy-on-write" "stlab-copy-on-write 1.1.1")
