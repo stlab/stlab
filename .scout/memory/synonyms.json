@@ -1,2522 +1,44 @@
 {
   "forward": {
-    "package": [
-      [
-        "future",
-        1.0
-      ],
-      [
-        "future continuations",
-        1.0
-      ],
-      [
-        "lazy future",
-        1.0
-      ],
-      [
-        "packaged_task",
-        1.0
-      ],
-      [
-        "concurrency",
-        1.0
-      ],
-      [
-        "future and package model",
-        1.0
-      ],
-      [
-        "stlab::future",
-        1.0
-      ],
-      [
-        "continuations",
-        1.0
-      ],
-      [
-        "cancellation",
-        1.0
-      ]
-    ],
-    "task-dispatch": [
-      [
-        "serial-queue",
-        1.0
-      ],
-      [
-        "executor",
-        1.0
-      ],
-      [
-        "serialization",
-        1.0
-      ],
-      [
-        "serial executor",
-        1.0
-      ],
-      [
-        "task serialization",
-        1.0
-      ],
-      [
-        "serial dispatch",
-        1.0
-      ],
-      [
-        "concurrency",
-        1.0
-      ],
-      [
-        "stlab::serial_queue_t",
-        1.0
-      ],
-      [
-        "serial queue execution",
-        1.0
-      ]
-    ],
-    "forest container and fullorder traversal": [
-      [
-        "forest",
-        1.0
-      ],
-      [
-        "iterator",
-        1.0
-      ],
-      [
-        "stlab::forest",
-        1.0
-      ],
-      [
-        "fullorder iterator",
-        1.0
-      ],
-      [
-        "tree of sequences",
-        1.0
-      ],
-      [
-        "fullorder",
-        1.0
-      ],
-      [
-        "ordered forest",
-        1.0
-      ],
-      [
-        "tree",
-        1.0
-      ],
-      [
-        "container",
-        1.0
-      ]
-    ],
-    "concurrency": [
-      [
-        "future",
-        1.0
-      ],
-      [
-        "channel",
-        0.5
-      ],
-      [
-        "stlab-execution",
-        0.5
-      ],
-      [
-        "task serialization",
-        0.5
-      ],
-      [
-        "forest",
-        0.5
-      ],
-      [
-        "task-dispatch",
-        0.5
-      ],
-      [
-        "lazy future",
-        0.5
-      ],
-      [
-        "future and package model",
-        0.5
-      ],
-      [
-        "serial-queue",
-        0.5
-      ],
-      [
-        "architecture overview",
-        0.5
-      ],
-      [
-        "future continuations",
-        0.5
-      ],
-      [
-        "executor",
-        0.5
-      ],
-      [
-        "cancellation",
-        0.5
-      ],
-      [
-        "stlab::serial_queue_t",
-        0.5
-      ],
-      [
-        "packaged_task",
-        0.5
-      ],
-      [
-        "stlab",
-        0.5
-      ],
-      [
-        "architecture",
-        0.5
-      ],
+    "stlab architecture": [
       [
         "stlab-execution boundary",
-        0.5
-      ],
-      [
-        "stlab::future",
-        0.5
-      ],
-      [
-        "serialization",
-        0.5
-      ],
-      [
-        "serial queue execution",
-        0.5
-      ],
-      [
-        "package",
-        0.5
+        1.0
       ],
       [
         "stlab concurrency architecture",
-        0.5
-      ],
-      [
-        "serial executor",
-        0.5
-      ],
-      [
-        "stlab architecture",
-        0.5
-      ],
-      [
-        "serial dispatch",
-        0.5
-      ],
-      [
-        "continuations",
-        0.5
-      ]
-    ],
-    "csp": [
-      [
-        "receiver",
-        1.0
-      ],
-      [
-        "stlab::channel",
-        1.0
-      ],
-      [
-        "pipeline",
-        1.0
-      ],
-      [
-        "csp channels",
-        1.0
-      ],
-      [
-        "channel and reactive pipelines",
-        1.0
-      ],
-      [
-        "stlab::receiver",
-        1.0
-      ],
-      [
-        "channel",
-        1.0
-      ],
-      [
-        "reactive",
-        1.0
-      ],
-      [
-        "stlab::sender",
-        1.0
-      ],
-      [
-        "sender",
-        1.0
-      ]
-    ],
-    "cmake presets": [
-      [
-        "cmake presets and testing layout",
-        1.0
-      ],
-      [
-        "doctest",
-        1.0
-      ],
-      [
-        "testing",
-        1.0
-      ],
-      [
-        "doctest test executables",
-        1.0
-      ],
-      [
-        "ctest presets",
-        1.0
-      ],
-      [
-        "cmake",
-        1.0
-      ],
-      [
-        "debug-cpp20",
-        1.0
-      ],
-      [
-        "ctest",
-        1.0
-      ],
-      [
-        "presets",
-        1.0
-      ],
-      [
-        "ninja",
-        1.0
-      ]
-    ],
-    "continuations": [
-      [
-        "packaged_task",
-        1.0
-      ],
-      [
-        "lazy future",
-        1.0
-      ],
-      [
-        "cancellation",
-        1.0
-      ],
-      [
-        "future",
-        1.0
-      ],
-      [
-        "stlab::future",
-        1.0
-      ],
-      [
-        "package",
-        1.0
-      ],
-      [
-        "concurrency",
-        1.0
-      ],
-      [
-        "future and package model",
-        1.0
-      ],
-      [
-        "future continuations",
-        1.0
-      ]
-    ],
-    "future continuations": [
-      [
-        "continuations",
-        1.0
-      ],
-      [
-        "future and package model",
-        1.0
-      ],
-      [
-        "package",
-        1.0
-      ],
-      [
-        "cancellation",
-        1.0
-      ],
-      [
-        "concurrency",
-        1.0
-      ],
-      [
-        "packaged_task",
-        1.0
-      ],
-      [
-        "stlab::future",
-        1.0
-      ],
-      [
-        "future",
-        1.0
-      ],
-      [
-        "lazy future",
-        1.0
-      ]
-    ],
-    "stlab::receiver": [
-      [
-        "receiver",
-        1.0
-      ],
-      [
-        "csp channels",
-        1.0
-      ],
-      [
-        "stlab::sender",
-        1.0
-      ],
-      [
-        "pipeline",
-        1.0
-      ],
-      [
-        "channel",
-        1.0
-      ],
-      [
-        "csp",
-        1.0
-      ],
-      [
-        "channel and reactive pipelines",
-        1.0
-      ],
-      [
-        "sender",
-        1.0
-      ],
-      [
-        "reactive",
-        1.0
-      ],
-      [
-        "stlab::channel",
-        1.0
-      ]
-    ],
-    "await synchronization and invoke_waiting": [
-      [
-        "future",
-        1.0
-      ],
-      [
-        "future blocking",
-        1.0
-      ],
-      [
-        "invoke_waiting",
-        1.0
-      ],
-      [
-        "synchronous future wait",
-        1.0
-      ],
-      [
-        "blocking",
-        1.0
-      ],
-      [
-        "stlab::await",
-        1.0
-      ],
-      [
-        "synchronization",
-        1.0
-      ],
-      [
-        "invoke-waiting",
-        1.0
-      ],
-      [
-        "await",
-        1.0
-      ]
-    ],
-    "stlab::serial_queue_t": [
-      [
-        "serial queue execution",
-        1.0
-      ],
-      [
-        "concurrency",
-        1.0
-      ],
-      [
-        "task-dispatch",
-        1.0
-      ],
-      [
-        "serial dispatch",
-        1.0
-      ],
-      [
-        "serial executor",
-        1.0
-      ],
-      [
-        "serialization",
-        1.0
-      ],
-      [
-        "executor",
-        1.0
-      ],
-      [
-        "serial-queue",
-        1.0
-      ],
-      [
-        "task serialization",
-        1.0
-      ]
-    ],
-    "cmake": [
-      [
-        "cmake presets and testing layout",
-        1.0
-      ],
-      [
-        "cmake presets",
-        1.0
-      ],
-      [
-        "doctest",
-        1.0
-      ],
-      [
-        "debug-cpp20",
-        1.0
-      ],
-      [
-        "ninja",
-        1.0
-      ],
-      [
-        "testing",
-        1.0
-      ],
-      [
-        "ctest",
-        1.0
-      ],
-      [
-        "ctest presets",
-        1.0
-      ],
-      [
-        "doctest test executables",
-        1.0
-      ],
-      [
-        "presets",
-        1.0
-      ]
-    ],
-    "await": [
-      [
-        "blocking",
-        1.0
-      ],
-      [
-        "synchronous future wait",
-        1.0
-      ],
-      [
-        "stlab::await",
-        1.0
-      ],
-      [
-        "future",
-        1.0
-      ],
-      [
-        "invoke-waiting",
-        1.0
-      ],
-      [
-        "future blocking",
-        1.0
-      ],
-      [
-        "synchronization",
-        1.0
-      ],
-      [
-        "invoke_waiting",
-        1.0
-      ],
-      [
-        "await synchronization and invoke_waiting",
-        1.0
-      ]
-    ],
-    "invoke-waiting": [
-      [
-        "future",
-        1.0
-      ],
-      [
-        "future blocking",
-        1.0
-      ],
-      [
-        "await",
-        1.0
-      ],
-      [
-        "synchronous future wait",
-        1.0
-      ],
-      [
-        "stlab::await",
-        1.0
-      ],
-      [
-        "blocking",
-        1.0
-      ],
-      [
-        "invoke_waiting",
-        1.0
-      ],
-      [
-        "synchronization",
-        1.0
-      ],
-      [
-        "await synchronization and invoke_waiting",
-        1.0
-      ]
-    ],
-    "executors": [
-      [
-        "executor separation",
-        1.0
-      ],
-      [
-        "execution library boundary",
-        1.0
-      ],
-      [
-        "boundary",
-        1.0
-      ],
-      [
-        "execution abi boundary",
-        1.0
-      ],
-      [
-        "architecture",
-        1.0
-      ],
-      [
-        "stlab-execution",
         1.0
       ],
       [
-        "abi",
+        "architecture overview",
         1.0
       ]
     ],
     "serial dispatch": [
       [
-        "concurrency",
-        1.0
-      ],
-      [
-        "serial-queue",
-        1.0
-      ],
-      [
-        "stlab::serial_queue_t",
-        1.0
-      ],
-      [
-        "task serialization",
-        1.0
-      ],
-      [
-        "serialization",
-        1.0
-      ],
-      [
-        "serial queue execution",
-        1.0
-      ],
-      [
-        "serial executor",
-        1.0
-      ],
-      [
-        "task-dispatch",
-        1.0
-      ],
-      [
-        "executor",
-        1.0
-      ]
-    ],
-    "presets": [
-      [
-        "doctest test executables",
-        1.0
-      ],
-      [
-        "cmake",
-        1.0
-      ],
-      [
-        "cmake presets",
-        1.0
-      ],
-      [
-        "ctest presets",
-        1.0
-      ],
-      [
-        "debug-cpp20",
-        1.0
-      ],
-      [
-        "ctest",
-        1.0
-      ],
-      [
-        "doctest",
-        1.0
-      ],
-      [
-        "cmake presets and testing layout",
-        1.0
-      ],
-      [
-        "ninja",
-        1.0
-      ],
-      [
-        "testing",
-        1.0
-      ]
-    ],
-    "stlab concurrency architecture": [
-      [
-        "channel",
-        1.0
-      ],
-      [
-        "architecture",
-        1.0
-      ],
-      [
-        "stlab architecture",
-        1.0
-      ],
-      [
-        "concurrency",
-        1.0
-      ],
-      [
-        "stlab-execution",
-        1.0
-      ],
-      [
-        "stlab-execution boundary",
-        1.0
-      ],
-      [
-        "architecture overview",
-        1.0
-      ],
-      [
-        "future",
-        1.0
-      ],
-      [
-        "forest",
-        1.0
-      ],
-      [
-        "stlab",
-        1.0
-      ]
-    ],
-    "stlab": [
-      [
-        "concurrency",
-        1.0
-      ],
-      [
-        "stlab concurrency architecture",
-        1.0
-      ],
-      [
-        "forest",
-        1.0
-      ],
-      [
-        "channel",
-        1.0
-      ],
-      [
-        "stlab architecture",
-        1.0
-      ],
-      [
-        "future",
-        1.0
-      ],
-      [
-        "architecture",
-        1.0
-      ],
-      [
-        "stlab-execution",
-        1.0
-      ],
-      [
-        "stlab-execution boundary",
-        1.0
-      ],
-      [
-        "architecture overview",
-        1.0
-      ]
-    ],
-    "serial executor": [
-      [
-        "task-dispatch",
-        1.0
-      ],
-      [
-        "serial-queue",
-        1.0
-      ],
-      [
-        "stlab::serial_queue_t",
-        1.0
-      ],
-      [
-        "serial dispatch",
-        1.0
-      ],
-      [
-        "task serialization",
-        1.0
-      ],
-      [
-        "serialization",
-        1.0
-      ],
-      [
-        "concurrency",
-        1.0
-      ],
-      [
-        "executor",
-        1.0
-      ],
-      [
-        "serial queue execution",
-        1.0
-      ]
-    ],
-    "stlab-execution boundary": [
-      [
-        "future",
-        1.0
-      ],
-      [
-        "architecture overview",
-        1.0
-      ],
-      [
-        "channel",
-        1.0
-      ],
-      [
-        "forest",
-        1.0
-      ],
-      [
-        "architecture",
-        1.0
-      ],
-      [
-        "concurrency",
-        1.0
-      ],
-      [
-        "stlab architecture",
-        1.0
-      ],
-      [
-        "stlab",
-        1.0
-      ],
-      [
-        "stlab concurrency architecture",
-        1.0
-      ],
-      [
-        "stlab-execution",
-        1.0
-      ]
-    ],
-    "executor": [
-      [
-        "serial-queue",
-        1.0
-      ],
-      [
-        "serial executor",
-        1.0
-      ],
-      [
-        "task-dispatch",
-        1.0
-      ],
-      [
-        "concurrency",
-        1.0
-      ],
-      [
-        "serial queue execution",
-        1.0
-      ],
-      [
-        "serial dispatch",
-        1.0
-      ],
-      [
-        "serialization",
-        1.0
-      ],
-      [
-        "stlab::serial_queue_t",
-        1.0
-      ],
-      [
-        "task serialization",
-        1.0
-      ]
-    ],
-    "tree": [
-      [
-        "ordered forest",
-        1.0
-      ],
-      [
-        "tree of sequences",
-        1.0
-      ],
-      [
-        "stlab::forest",
-        1.0
-      ],
-      [
-        "fullorder",
-        1.0
-      ],
-      [
-        "forest container and fullorder traversal",
-        1.0
-      ],
-      [
-        "fullorder iterator",
-        1.0
-      ],
-      [
-        "container",
-        1.0
-      ],
-      [
-        "iterator",
-        1.0
-      ],
-      [
-        "forest",
-        1.0
-      ]
-    ],
-    "architecture": [
-      [
-        "stlab-execution",
-        1.0
-      ],
-      [
-        "forest",
-        0.5
-      ],
-      [
-        "stlab-execution boundary",
-        0.5
-      ],
-      [
-        "execution library boundary",
-        0.5
-      ],
-      [
-        "future",
-        0.5
-      ],
-      [
-        "channel",
-        0.5
-      ],
-      [
-        "architecture overview",
-        0.5
-      ],
-      [
-        "abi",
-        0.5
-      ],
-      [
-        "stlab",
-        0.5
-      ],
-      [
-        "executor separation",
-        0.5
-      ],
-      [
-        "concurrency",
-        0.5
-      ],
-      [
-        "executors",
-        0.5
-      ],
-      [
-        "execution abi boundary",
-        0.5
-      ],
-      [
-        "stlab concurrency architecture",
-        0.5
-      ],
-      [
-        "stlab architecture",
-        0.5
-      ],
-      [
-        "boundary",
-        0.5
-      ]
-    ],
-    "pipeline": [
-      [
-        "stlab::receiver",
-        1.0
-      ],
-      [
-        "stlab::sender",
-        1.0
-      ],
-      [
-        "csp",
-        1.0
-      ],
-      [
-        "csp channels",
-        1.0
-      ],
-      [
-        "channel",
-        1.0
-      ],
-      [
-        "reactive",
-        1.0
-      ],
-      [
-        "stlab::channel",
-        1.0
-      ],
-      [
-        "sender",
-        1.0
-      ],
-      [
-        "channel and reactive pipelines",
-        1.0
-      ],
-      [
-        "receiver",
-        1.0
-      ]
-    ],
-    "fullorder": [
-      [
-        "container",
-        1.0
-      ],
-      [
-        "fullorder iterator",
-        1.0
-      ],
-      [
-        "tree of sequences",
-        1.0
-      ],
-      [
-        "stlab::forest",
-        1.0
-      ],
-      [
-        "ordered forest",
-        1.0
-      ],
-      [
-        "forest",
-        1.0
-      ],
-      [
-        "forest container and fullorder traversal",
-        1.0
-      ],
-      [
-        "iterator",
-        1.0
-      ],
-      [
-        "tree",
-        1.0
-      ]
-    ],
-    "task serialization": [
-      [
-        "concurrency",
-        1.0
-      ],
-      [
-        "task-dispatch",
-        1.0
-      ],
-      [
-        "serial-queue",
-        1.0
-      ],
-      [
-        "executor",
-        1.0
-      ],
-      [
-        "stlab::serial_queue_t",
-        1.0
-      ],
-      [
-        "serialization",
-        1.0
-      ],
-      [
-        "serial queue execution",
-        1.0
-      ],
-      [
-        "serial executor",
-        1.0
-      ],
-      [
-        "serial dispatch",
-        1.0
-      ]
-    ],
-    "cmake presets and testing layout": [
-      [
-        "ctest presets",
-        1.0
-      ],
-      [
-        "doctest test executables",
-        1.0
-      ],
-      [
-        "ctest",
-        1.0
-      ],
-      [
-        "debug-cpp20",
-        1.0
-      ],
-      [
-        "ninja",
-        1.0
-      ],
-      [
-        "cmake presets",
-        1.0
-      ],
-      [
-        "cmake",
-        1.0
-      ],
-      [
-        "presets",
-        1.0
-      ],
-      [
-        "doctest",
-        1.0
-      ],
-      [
-        "testing",
-        1.0
-      ]
-    ],
-    "stlab architecture": [
-      [
-        "architecture overview",
-        1.0
-      ],
-      [
-        "channel",
-        1.0
-      ],
-      [
-        "stlab-execution",
-        1.0
-      ],
-      [
-        "forest",
-        1.0
-      ],
-      [
-        "stlab-execution boundary",
-        1.0
-      ],
-      [
-        "concurrency",
-        1.0
-      ],
-      [
-        "architecture",
-        1.0
-      ],
-      [
-        "future",
-        1.0
-      ],
-      [
-        "stlab",
-        1.0
-      ],
-      [
-        "stlab concurrency architecture",
-        1.0
-      ]
-    ],
-    "future": [
-      [
-        "concurrency",
-        1.0
-      ],
-      [
-        "cancellation",
-        0.5
-      ],
-      [
-        "stlab-execution boundary",
-        0.5
-      ],
-      [
-        "stlab",
-        0.5
-      ],
-      [
-        "stlab::await",
-        0.5
-      ],
-      [
-        "stlab-execution",
-        0.5
-      ],
-      [
-        "await synchronization and invoke_waiting",
-        0.5
-      ],
-      [
-        "blocking",
-        0.5
-      ],
-      [
-        "synchronous future wait",
-        0.5
-      ],
-      [
-        "continuations",
-        0.5
-      ],
-      [
-        "architecture",
-        0.5
-      ],
-      [
-        "future continuations",
-        0.5
-      ],
-      [
-        "invoke-waiting",
-        0.5
-      ],
-      [
-        "await",
-        0.5
-      ],
-      [
-        "future and package model",
-        0.5
-      ],
-      [
-        "stlab::future",
-        0.5
-      ],
-      [
-        "lazy future",
-        0.5
-      ],
-      [
-        "synchronization",
-        0.5
-      ],
-      [
-        "invoke_waiting",
-        0.5
-      ],
-      [
-        "channel",
-        0.5
-      ],
-      [
-        "future blocking",
-        0.5
-      ],
-      [
-        "forest",
-        0.5
-      ],
-      [
-        "stlab architecture",
-        0.5
-      ],
-      [
-        "architecture overview",
-        0.5
-      ],
-      [
-        "stlab concurrency architecture",
-        0.5
-      ],
-      [
-        "package",
-        0.5
-      ],
-      [
-        "packaged_task",
-        0.5
-      ]
-    ],
-    "architecture overview": [
-      [
-        "stlab architecture",
-        1.0
-      ],
-      [
-        "future",
-        1.0
-      ],
-      [
-        "stlab-execution boundary",
-        1.0
-      ],
-      [
-        "architecture",
-        1.0
-      ],
-      [
-        "stlab",
-        1.0
-      ],
-      [
-        "concurrency",
-        1.0
-      ],
-      [
-        "forest",
-        1.0
-      ],
-      [
-        "stlab-execution",
-        1.0
-      ],
-      [
-        "stlab concurrency architecture",
-        1.0
-      ],
-      [
-        "channel",
-        1.0
-      ]
-    ],
-    "receiver": [
-      [
-        "stlab::channel",
-        1.0
-      ],
-      [
-        "reactive",
-        1.0
-      ],
-      [
-        "pipeline",
-        1.0
-      ],
-      [
-        "channel and reactive pipelines",
-        1.0
-      ],
-      [
-        "stlab::receiver",
-        1.0
-      ],
-      [
-        "sender",
-        1.0
-      ],
-      [
-        "stlab::sender",
-        1.0
-      ],
-      [
-        "channel",
-        1.0
-      ],
-      [
-        "csp channels",
-        1.0
-      ],
-      [
-        "csp",
-        1.0
-      ]
-    ],
-    "abi": [
-      [
-        "executor separation",
-        1.0
-      ],
-      [
-        "execution library boundary",
-        1.0
-      ],
-      [
-        "architecture",
-        1.0
-      ],
-      [
-        "execution abi boundary",
-        1.0
-      ],
-      [
-        "boundary",
-        1.0
-      ],
-      [
-        "executors",
-        1.0
-      ],
-      [
-        "stlab-execution",
-        1.0
-      ]
-    ],
-    "invoke_waiting": [
-      [
-        "stlab::await",
-        1.0
-      ],
-      [
-        "synchronization",
-        1.0
-      ],
-      [
-        "future blocking",
-        1.0
-      ],
-      [
-        "future",
-        1.0
-      ],
-      [
-        "await synchronization and invoke_waiting",
-        1.0
-      ],
-      [
-        "invoke-waiting",
-        1.0
-      ],
-      [
-        "synchronous future wait",
-        1.0
-      ],
-      [
-        "await",
-        1.0
-      ],
-      [
-        "blocking",
-        1.0
-      ]
-    ],
-    "ctest presets": [
-      [
-        "doctest test executables",
-        1.0
-      ],
-      [
-        "debug-cpp20",
-        1.0
-      ],
-      [
-        "doctest",
-        1.0
-      ],
-      [
-        "presets",
-        1.0
-      ],
-      [
-        "ninja",
-        1.0
-      ],
-      [
-        "testing",
-        1.0
-      ],
-      [
-        "cmake presets",
-        1.0
-      ],
-      [
-        "cmake presets and testing layout",
-        1.0
-      ],
-      [
-        "ctest",
-        1.0
-      ],
-      [
-        "cmake",
-        1.0
-      ]
-    ],
-    "reactive": [
-      [
-        "pipeline",
-        1.0
-      ],
-      [
-        "sender",
-        1.0
-      ],
-      [
-        "channel and reactive pipelines",
-        1.0
-      ],
-      [
-        "channel",
-        1.0
-      ],
-      [
-        "stlab::channel",
-        1.0
-      ],
-      [
-        "stlab::sender",
-        1.0
-      ],
-      [
-        "receiver",
-        1.0
-      ],
-      [
-        "stlab::receiver",
-        1.0
-      ],
-      [
-        "csp channels",
-        1.0
-      ],
-      [
-        "csp",
-        1.0
-      ]
-    ],
-    "future blocking": [
-      [
-        "synchronization",
-        1.0
-      ],
-      [
-        "blocking",
-        1.0
-      ],
-      [
-        "invoke_waiting",
-        1.0
-      ],
-      [
-        "stlab::await",
-        1.0
-      ],
-      [
-        "future",
-        1.0
-      ],
-      [
-        "await",
-        1.0
-      ],
-      [
-        "await synchronization and invoke_waiting",
-        1.0
-      ],
-      [
-        "synchronous future wait",
-        1.0
-      ],
-      [
-        "invoke-waiting",
-        1.0
-      ]
-    ],
-    "debug-cpp20": [
-      [
-        "presets",
-        1.0
-      ],
-      [
-        "doctest test executables",
-        1.0
-      ],
-      [
-        "cmake presets",
-        1.0
-      ],
-      [
-        "testing",
-        1.0
-      ],
-      [
-        "cmake",
-        1.0
-      ],
-      [
-        "ctest",
-        1.0
-      ],
-      [
-        "ninja",
-        1.0
-      ],
-      [
-        "ctest presets",
-        1.0
-      ],
-      [
-        "cmake presets and testing layout",
-        1.0
-      ],
-      [
-        "doctest",
-        1.0
-      ]
-    ],
-    "serialization": [
-      [
-        "concurrency",
-        1.0
-      ],
-      [
-        "serial dispatch",
-        1.0
-      ],
-      [
-        "serial-queue",
-        1.0
-      ],
-      [
-        "task-dispatch",
-        1.0
-      ],
-      [
-        "task serialization",
-        1.0
-      ],
-      [
-        "serial queue execution",
-        1.0
-      ],
-      [
-        "executor",
-        1.0
-      ],
-      [
         "serial executor",
         1.0
       ],
       [
         "stlab::serial_queue_t",
         1.0
-      ]
-    ],
-    "executor separation": [
-      [
-        "stlab-execution",
-        1.0
-      ],
-      [
-        "architecture",
-        1.0
-      ],
-      [
-        "execution library boundary",
-        1.0
-      ],
-      [
-        "boundary",
-        1.0
-      ],
-      [
-        "executors",
-        1.0
-      ],
-      [
-        "execution abi boundary",
-        1.0
-      ],
-      [
-        "abi",
-        1.0
-      ]
-    ],
-    "iterator": [
-      [
-        "container",
-        1.0
-      ],
-      [
-        "forest container and fullorder traversal",
-        1.0
-      ],
-      [
-        "fullorder iterator",
-        1.0
-      ],
-      [
-        "stlab::forest",
-        1.0
-      ],
-      [
-        "ordered forest",
-        1.0
-      ],
-      [
-        "tree of sequences",
-        1.0
-      ],
-      [
-        "forest",
-        1.0
-      ],
-      [
-        "tree",
-        1.0
-      ],
-      [
-        "fullorder",
-        1.0
-      ]
-    ],
-    "stlab::sender": [
-      [
-        "channel and reactive pipelines",
-        1.0
-      ],
-      [
-        "stlab::receiver",
-        1.0
-      ],
-      [
-        "sender",
-        1.0
-      ],
-      [
-        "reactive",
-        1.0
-      ],
-      [
-        "csp",
-        1.0
-      ],
-      [
-        "channel",
-        1.0
-      ],
-      [
-        "receiver",
-        1.0
-      ],
-      [
-        "csp channels",
-        1.0
-      ],
-      [
-        "stlab::channel",
-        1.0
-      ],
-      [
-        "pipeline",
-        1.0
-      ]
-    ],
-    "channel": [
-      [
-        "reactive",
-        1.0
-      ],
-      [
-        "stlab::channel",
-        1.0
-      ],
-      [
-        "csp",
-        1.0
-      ],
-      [
-        "forest",
-        1.0
-      ],
-      [
-        "stlab-execution boundary",
-        1.0
-      ],
-      [
-        "stlab-execution",
-        1.0
-      ],
-      [
-        "stlab::receiver",
-        1.0
-      ],
-      [
-        "stlab::sender",
-        1.0
-      ],
-      [
-        "pipeline",
-        1.0
-      ],
-      [
-        "csp channels",
-        1.0
-      ],
-      [
-        "sender",
-        1.0
-      ],
-      [
-        "receiver",
-        1.0
-      ],
-      [
-        "stlab concurrency architecture",
-        1.0
-      ],
-      [
-        "architecture",
-        1.0
-      ],
-      [
-        "future",
-        1.0
-      ],
-      [
-        "stlab",
-        1.0
-      ],
-      [
-        "concurrency",
-        1.0
-      ],
-      [
-        "channel and reactive pipelines",
-        1.0
-      ],
-      [
-        "stlab architecture",
-        1.0
-      ],
-      [
-        "architecture overview",
-        1.0
-      ]
-    ],
-    "container": [
-      [
-        "fullorder iterator",
-        1.0
-      ],
-      [
-        "stlab::forest",
-        1.0
-      ],
-      [
-        "forest container and fullorder traversal",
-        1.0
-      ],
-      [
-        "tree",
-        1.0
-      ],
-      [
-        "forest",
-        1.0
-      ],
-      [
-        "tree of sequences",
-        1.0
-      ],
-      [
-        "iterator",
-        1.0
-      ],
-      [
-        "ordered forest",
-        1.0
-      ],
-      [
-        "fullorder",
-        1.0
-      ]
-    ],
-    "ninja": [
-      [
-        "cmake presets",
-        1.0
-      ],
-      [
-        "ctest",
-        1.0
-      ],
-      [
-        "ctest presets",
-        1.0
-      ],
-      [
-        "cmake",
-        1.0
-      ],
-      [
-        "presets",
-        1.0
-      ],
-      [
-        "doctest",
-        1.0
-      ],
-      [
-        "debug-cpp20",
-        1.0
-      ],
-      [
-        "testing",
-        1.0
-      ],
-      [
-        "cmake presets and testing layout",
-        1.0
-      ],
-      [
-        "doctest test executables",
-        1.0
-      ]
-    ],
-    "stlab-execution": [
-      [
-        "architecture",
-        1.0
-      ],
-      [
-        "stlab",
-        0.5
-      ],
-      [
-        "executors",
-        0.5
-      ],
-      [
-        "execution abi boundary",
-        0.5
-      ],
-      [
-        "concurrency",
-        0.5
-      ],
-      [
-        "executor separation",
-        0.5
-      ],
-      [
-        "channel",
-        0.5
-      ],
-      [
-        "abi",
-        0.5
-      ],
-      [
-        "future",
-        0.5
-      ],
-      [
-        "stlab concurrency architecture",
-        0.5
-      ],
-      [
-        "forest",
-        0.5
-      ],
-      [
-        "boundary",
-        0.5
-      ],
-      [
-        "stlab-execution boundary",
-        0.5
-      ],
-      [
-        "architecture overview",
-        0.5
-      ],
-      [
-        "stlab architecture",
-        0.5
-      ],
-      [
-        "execution library boundary",
-        0.5
-      ]
-    ],
-    "blocking": [
-      [
-        "await",
-        1.0
-      ],
-      [
-        "invoke_waiting",
-        1.0
-      ],
-      [
-        "synchronization",
-        1.0
-      ],
-      [
-        "invoke-waiting",
-        1.0
-      ],
-      [
-        "stlab::await",
-        1.0
-      ],
-      [
-        "await synchronization and invoke_waiting",
-        1.0
-      ],
-      [
-        "synchronous future wait",
-        1.0
-      ],
-      [
-        "future",
-        1.0
-      ],
-      [
-        "future blocking",
-        1.0
-      ]
-    ],
-    "serial-queue": [
-      [
-        "task serialization",
-        1.0
-      ],
-      [
-        "serial dispatch",
-        1.0
       ],
       [
         "serial queue execution",
         1.0
       ],
       [
-        "serialization",
-        1.0
-      ],
-      [
-        "task-dispatch",
-        1.0
-      ],
-      [
-        "serial executor",
-        1.0
-      ],
-      [
-        "executor",
-        1.0
-      ],
-      [
-        "stlab::serial_queue_t",
-        1.0
-      ],
-      [
-        "concurrency",
-        1.0
-      ]
-    ],
-    "stlab::future": [
-      [
-        "concurrency",
-        1.0
-      ],
-      [
-        "future continuations",
-        1.0
-      ],
-      [
-        "packaged_task",
-        1.0
-      ],
-      [
-        "future",
-        1.0
-      ],
-      [
-        "lazy future",
-        1.0
-      ],
-      [
-        "future and package model",
-        1.0
-      ],
-      [
-        "cancellation",
-        1.0
-      ],
-      [
-        "package",
-        1.0
-      ],
-      [
-        "continuations",
-        1.0
-      ]
-    ],
-    "tree of sequences": [
-      [
-        "tree",
-        1.0
-      ],
-      [
-        "forest container and fullorder traversal",
-        1.0
-      ],
-      [
-        "ordered forest",
-        1.0
-      ],
-      [
-        "container",
-        1.0
-      ],
-      [
-        "fullorder",
-        1.0
-      ],
-      [
-        "iterator",
-        1.0
-      ],
-      [
-        "fullorder iterator",
-        1.0
-      ],
-      [
-        "forest",
-        1.0
-      ],
-      [
-        "stlab::forest",
-        1.0
-      ]
-    ],
-    "execution library boundary": [
-      [
-        "boundary",
-        1.0
-      ],
-      [
-        "architecture",
-        1.0
-      ],
-      [
-        "abi",
-        1.0
-      ],
-      [
-        "execution abi boundary",
-        1.0
-      ],
-      [
-        "executors",
-        1.0
-      ],
-      [
-        "executor separation",
-        1.0
-      ],
-      [
-        "stlab-execution",
-        1.0
-      ]
-    ],
-    "cancellation": [
-      [
-        "future continuations",
-        1.0
-      ],
-      [
-        "continuations",
-        1.0
-      ],
-      [
-        "lazy future",
-        1.0
-      ],
-      [
-        "stlab::future",
-        1.0
-      ],
-      [
-        "future and package model",
-        1.0
-      ],
-      [
-        "packaged_task",
-        1.0
-      ],
-      [
-        "concurrency",
-        1.0
-      ],
-      [
-        "future",
-        1.0
-      ],
-      [
-        "package",
-        1.0
-      ]
-    ],
-    "fullorder iterator": [
-      [
-        "tree of sequences",
-        1.0
-      ],
-      [
-        "iterator",
-        1.0
-      ],
-      [
-        "ordered forest",
-        1.0
-      ],
-      [
-        "forest container and fullorder traversal",
-        1.0
-      ],
-      [
-        "fullorder",
-        1.0
-      ],
-      [
-        "forest",
-        1.0
-      ],
-      [
-        "stlab::forest",
-        1.0
-      ],
-      [
-        "container",
-        1.0
-      ],
-      [
-        "tree",
-        1.0
-      ]
-    ],
-    "lazy future": [
-      [
-        "concurrency",
-        1.0
-      ],
-      [
-        "stlab::future",
-        1.0
-      ],
-      [
-        "future",
-        1.0
-      ],
-      [
-        "package",
-        1.0
-      ],
-      [
-        "continuations",
-        1.0
-      ],
-      [
-        "future continuations",
-        1.0
-      ],
-      [
-        "cancellation",
-        1.0
-      ],
-      [
-        "packaged_task",
-        1.0
-      ],
-      [
-        "future and package model",
-        1.0
-      ]
-    ],
-    "doctest test executables": [
-      [
-        "cmake presets",
-        1.0
-      ],
-      [
-        "debug-cpp20",
-        1.0
-      ],
-      [
-        "ctest",
-        1.0
-      ],
-      [
-        "doctest",
-        1.0
-      ],
-      [
-        "cmake presets and testing layout",
-        1.0
-      ],
-      [
-        "presets",
-        1.0
-      ],
-      [
-        "cmake",
-        1.0
-      ],
-      [
-        "ninja",
-        1.0
-      ],
-      [
-        "testing",
-        1.0
-      ],
-      [
-        "ctest presets",
-        1.0
-      ]
-    ],
-    "testing": [
-      [
-        "ctest",
-        1.0
-      ],
-      [
-        "debug-cpp20",
-        1.0
-      ],
-      [
-        "cmake presets and testing layout",
-        1.0
-      ],
-      [
-        "doctest",
-        1.0
-      ],
-      [
-        "presets",
-        1.0
-      ],
-      [
-        "cmake presets",
-        1.0
-      ],
-      [
-        "ninja",
-        1.0
-      ],
-      [
-        "cmake",
-        1.0
-      ],
-      [
-        "doctest test executables",
-        1.0
-      ],
-      [
-        "ctest presets",
-        1.0
-      ]
-    ],
-    "forest": [
-      [
-        "architecture overview",
-        1.0
-      ],
-      [
-        "fullorder iterator",
-        1.0
-      ],
-      [
-        "tree of sequences",
-        1.0
-      ],
-      [
-        "stlab-execution",
-        1.0
-      ],
-      [
-        "container",
-        1.0
-      ],
-      [
-        "stlab::forest",
-        1.0
-      ],
-      [
-        "concurrency",
-        1.0
-      ],
-      [
-        "ordered forest",
-        1.0
-      ],
-      [
-        "fullorder",
-        1.0
-      ],
-      [
-        "architecture",
-        1.0
-      ],
-      [
-        "stlab architecture",
-        1.0
-      ],
-      [
-        "future",
-        1.0
-      ],
-      [
-        "iterator",
-        1.0
-      ],
-      [
-        "tree",
-        1.0
-      ],
-      [
-        "channel",
-        1.0
-      ],
-      [
-        "stlab",
-        1.0
-      ],
-      [
-        "stlab concurrency architecture",
-        1.0
-      ],
-      [
-        "stlab-execution boundary",
-        1.0
-      ],
-      [
-        "forest container and fullorder traversal",
+        "task serialization",
         1.0
       ]
     ],
     "csp channels": [
       [
-        "receiver",
-        1.0
-      ],
-      [
-        "sender",
-        1.0
-      ],
-      [
-        "csp",
+        "channel and reactive pipelines",
         1.0
       ],
       [
         "stlab::sender",
-        1.0
-      ],
-      [
-        "channel",
         1.0
       ],
       [
@@ -2526,119 +48,15 @@
       [
         "stlab::receiver",
         1.0
-      ],
-      [
-        "reactive",
-        1.0
-      ],
-      [
-        "pipeline",
-        1.0
-      ],
-      [
-        "channel and reactive pipelines",
-        1.0
       ]
     ],
-    "ordered forest": [
+    "stlab-execution": [
       [
-        "forest container and fullorder traversal",
-        1.0
-      ],
-      [
-        "fullorder",
-        1.0
-      ],
-      [
-        "forest",
-        1.0
-      ],
-      [
-        "iterator",
-        1.0
-      ],
-      [
-        "stlab::forest",
-        1.0
-      ],
-      [
-        "container",
-        1.0
-      ],
-      [
-        "tree",
-        1.0
-      ],
-      [
-        "fullorder iterator",
-        1.0
-      ],
-      [
-        "tree of sequences",
-        1.0
-      ]
-    ],
-    "synchronization": [
-      [
-        "invoke_waiting",
-        1.0
-      ],
-      [
-        "await",
-        1.0
-      ],
-      [
-        "future blocking",
-        1.0
-      ],
-      [
-        "invoke-waiting",
-        1.0
-      ],
-      [
-        "synchronous future wait",
-        1.0
-      ],
-      [
-        "stlab::await",
-        1.0
-      ],
-      [
-        "blocking",
-        1.0
-      ],
-      [
-        "future",
-        1.0
-      ],
-      [
-        "await synchronization and invoke_waiting",
-        1.0
-      ]
-    ],
-    "boundary": [
-      [
-        "stlab-execution",
-        1.0
-      ],
-      [
-        "abi",
-        1.0
-      ],
-      [
-        "executors",
-        1.0
-      ],
-      [
-        "architecture",
+        "execution library boundary",
         1.0
       ],
       [
         "executor separation",
-        1.0
-      ],
-      [
-        "execution library boundary",
         1.0
       ],
       [
@@ -2646,113 +64,9 @@
         1.0
       ]
     ],
-    "ctest": [
+    "stlab::sender": [
       [
-        "cmake presets",
-        1.0
-      ],
-      [
-        "ninja",
-        1.0
-      ],
-      [
-        "ctest presets",
-        1.0
-      ],
-      [
-        "debug-cpp20",
-        1.0
-      ],
-      [
-        "cmake",
-        1.0
-      ],
-      [
-        "testing",
-        1.0
-      ],
-      [
-        "doctest test executables",
-        1.0
-      ],
-      [
-        "doctest",
-        1.0
-      ],
-      [
-        "presets",
-        1.0
-      ],
-      [
-        "cmake presets and testing layout",
-        1.0
-      ]
-    ],
-    "synchronous future wait": [
-      [
-        "future blocking",
-        1.0
-      ],
-      [
-        "invoke-waiting",
-        1.0
-      ],
-      [
-        "synchronization",
-        1.0
-      ],
-      [
-        "blocking",
-        1.0
-      ],
-      [
-        "await",
-        1.0
-      ],
-      [
-        "stlab::await",
-        1.0
-      ],
-      [
-        "future",
-        1.0
-      ],
-      [
-        "await synchronization and invoke_waiting",
-        1.0
-      ],
-      [
-        "invoke_waiting",
-        1.0
-      ]
-    ],
-    "sender": [
-      [
-        "reactive",
-        1.0
-      ],
-      [
-        "stlab::sender",
-        1.0
-      ],
-      [
-        "csp",
-        1.0
-      ],
-      [
-        "channel",
-        1.0
-      ],
-      [
-        "stlab::channel",
-        1.0
-      ],
-      [
-        "pipeline",
-        1.0
-      ],
-      [
-        "receiver",
+        "csp channels",
         1.0
       ],
       [
@@ -2764,169 +78,17 @@
         1.0
       ],
       [
-        "csp channels",
-        1.0
-      ]
-    ],
-    "execution abi boundary": [
-      [
-        "boundary",
-        1.0
-      ],
-      [
-        "executors",
-        1.0
-      ],
-      [
-        "stlab-execution",
-        1.0
-      ],
-      [
-        "abi",
-        1.0
-      ],
-      [
-        "execution library boundary",
-        1.0
-      ],
-      [
-        "architecture",
-        1.0
-      ],
-      [
-        "executor separation",
-        1.0
-      ]
-    ],
-    "stlab::forest": [
-      [
-        "forest container and fullorder traversal",
-        1.0
-      ],
-      [
-        "forest",
-        1.0
-      ],
-      [
-        "tree of sequences",
-        1.0
-      ],
-      [
-        "iterator",
-        1.0
-      ],
-      [
-        "tree",
-        1.0
-      ],
-      [
-        "ordered forest",
-        1.0
-      ],
-      [
-        "fullorder iterator",
-        1.0
-      ],
-      [
-        "fullorder",
-        1.0
-      ],
-      [
-        "container",
-        1.0
-      ]
-    ],
-    "serial queue execution": [
-      [
-        "concurrency",
-        1.0
-      ],
-      [
-        "serial dispatch",
-        1.0
-      ],
-      [
-        "serial-queue",
-        1.0
-      ],
-      [
-        "task serialization",
-        1.0
-      ],
-      [
-        "stlab::serial_queue_t",
-        1.0
-      ],
-      [
-        "task-dispatch",
-        1.0
-      ],
-      [
-        "executor",
-        1.0
-      ],
-      [
-        "serialization",
-        1.0
-      ],
-      [
-        "serial executor",
-        1.0
-      ]
-    ],
-    "channel and reactive pipelines": [
-      [
-        "csp channels",
-        1.0
-      ],
-      [
-        "stlab::sender",
-        1.0
-      ],
-      [
-        "csp",
-        1.0
-      ],
-      [
-        "stlab::receiver",
-        1.0
-      ],
-      [
-        "channel",
-        1.0
-      ],
-      [
         "stlab::channel",
         1.0
-      ],
-      [
-        "pipeline",
-        1.0
-      ],
-      [
-        "reactive",
-        1.0
-      ],
-      [
-        "receiver",
-        1.0
-      ],
-      [
-        "sender",
-        1.0
       ]
     ],
-    "doctest": [
+    "installation": [
       [
-        "cmake presets",
+        "extraction",
         1.0
       ],
       [
-        "cmake presets and testing layout",
-        1.0
-      ],
-      [
-        "ctest",
+        "cpm",
         1.0
       ],
       [
@@ -2934,57 +96,17 @@
         1.0
       ],
       [
-        "ctest presets",
-        1.0
-      ],
-      [
-        "ninja",
-        1.0
-      ],
-      [
-        "doctest test executables",
-        1.0
-      ],
-      [
-        "presets",
-        1.0
-      ],
-      [
-        "debug-cpp20",
-        1.0
-      ],
-      [
-        "testing",
+        "dependencies",
         1.0
       ]
     ],
-    "stlab::await": [
-      [
-        "synchronization",
-        1.0
-      ],
-      [
-        "invoke-waiting",
-        1.0
-      ],
-      [
-        "await",
-        1.0
-      ],
+    "future blocking": [
       [
         "synchronous future wait",
         1.0
       ],
       [
-        "blocking",
-        1.0
-      ],
-      [
-        "future",
-        1.0
-      ],
-      [
-        "await synchronization and invoke_waiting",
+        "stlab::await",
         1.0
       ],
       [
@@ -2992,13 +114,185 @@
         1.0
       ],
       [
-        "future blocking",
+        "await synchronization and invoke_waiting",
         1.0
       ]
     ],
-    "future and package model": [
+    "tree of sequences": [
       [
-        "concurrency",
+        "stlab::forest",
+        1.0
+      ],
+      [
+        "forest container and fullorder traversal",
+        1.0
+      ],
+      [
+        "fullorder iterator",
+        1.0
+      ],
+      [
+        "ordered forest",
+        1.0
+      ]
+    ],
+    "serial executor": [
+      [
+        "serial dispatch",
+        1.0
+      ],
+      [
+        "stlab::serial_queue_t",
+        1.0
+      ],
+      [
+        "serial queue execution",
+        1.0
+      ],
+      [
+        "task serialization",
+        1.0
+      ]
+    ],
+    "stlab::forest": [
+      [
+        "fullorder iterator",
+        1.0
+      ],
+      [
+        "forest container and fullorder traversal",
+        1.0
+      ],
+      [
+        "tree of sequences",
+        1.0
+      ],
+      [
+        "ordered forest",
+        1.0
+      ]
+    ],
+    "stlab-execution boundary": [
+      [
+        "architecture overview",
+        1.0
+      ],
+      [
+        "stlab architecture",
+        1.0
+      ],
+      [
+        "stlab concurrency architecture",
+        1.0
+      ]
+    ],
+    "architecture overview": [
+      [
+        "stlab-execution boundary",
+        1.0
+      ],
+      [
+        "stlab architecture",
+        1.0
+      ],
+      [
+        "stlab concurrency architecture",
+        1.0
+      ]
+    ],
+    "execution abi boundary": [
+      [
+        "execution library boundary",
+        1.0
+      ],
+      [
+        "stlab-execution",
+        1.0
+      ],
+      [
+        "executor separation",
+        1.0
+      ]
+    ],
+    "stlab::await": [
+      [
+        "invoke_waiting",
+        1.0
+      ],
+      [
+        "synchronous future wait",
+        1.0
+      ],
+      [
+        "future blocking",
+        1.0
+      ],
+      [
+        "await synchronization and invoke_waiting",
+        1.0
+      ]
+    ],
+    "invoke_waiting": [
+      [
+        "future blocking",
+        1.0
+      ],
+      [
+        "await synchronization and invoke_waiting",
+        1.0
+      ],
+      [
+        "stlab::await",
+        1.0
+      ],
+      [
+        "synchronous future wait",
+        1.0
+      ]
+    ],
+    "forest container and fullorder traversal": [
+      [
+        "tree of sequences",
+        1.0
+      ],
+      [
+        "ordered forest",
+        1.0
+      ],
+      [
+        "stlab::forest",
+        1.0
+      ],
+      [
+        "fullorder iterator",
+        1.0
+      ]
+    ],
+    "dependencies": [
+      [
+        "cmake",
+        1.0
+      ],
+      [
+        "extraction",
+        1.0
+      ],
+      [
+        "cpm",
+        1.0
+      ],
+      [
+        "installation",
+        1.0
+      ]
+    ],
+    "future continuations": [
+      [
+        "packaged_task",
+        1.0
+      ],
+      [
+        "stlab::future",
         1.0
       ],
       [
@@ -3006,7 +300,85 @@
         1.0
       ],
       [
-        "continuations",
+        "future and package model",
+        1.0
+      ]
+    ],
+    "cmake": [
+      [
+        "extraction",
+        1.0
+      ],
+      [
+        "dependencies",
+        1.0
+      ],
+      [
+        "installation",
+        1.0
+      ],
+      [
+        "cpm",
+        1.0
+      ]
+    ],
+    "extraction": [
+      [
+        "cmake",
+        1.0
+      ],
+      [
+        "dependencies",
+        1.0
+      ],
+      [
+        "installation",
+        1.0
+      ],
+      [
+        "cpm",
+        1.0
+      ]
+    ],
+    "synchronous future wait": [
+      [
+        "stlab::await",
+        1.0
+      ],
+      [
+        "invoke_waiting",
+        1.0
+      ],
+      [
+        "await synchronization and invoke_waiting",
+        1.0
+      ],
+      [
+        "future blocking",
+        1.0
+      ]
+    ],
+    "await synchronization and invoke_waiting": [
+      [
+        "future blocking",
+        1.0
+      ],
+      [
+        "synchronous future wait",
+        1.0
+      ],
+      [
+        "stlab::await",
+        1.0
+      ],
+      [
+        "invoke_waiting",
+        1.0
+      ]
+    ],
+    "lazy future": [
+      [
+        "future and package model",
         1.0
       ],
       [
@@ -3020,21 +392,231 @@
       [
         "packaged_task",
         1.0
-      ],
+      ]
+    ],
+    "stlab concurrency architecture": [
       [
-        "cancellation",
+        "stlab architecture",
         1.0
       ],
       [
-        "future",
+        "stlab-execution boundary",
         1.0
       ],
       [
-        "package",
+        "architecture overview",
+        1.0
+      ]
+    ],
+    "cpm": [
+      [
+        "dependencies",
+        1.0
+      ],
+      [
+        "installation",
+        1.0
+      ],
+      [
+        "extraction",
+        1.0
+      ],
+      [
+        "cmake",
+        1.0
+      ]
+    ],
+    "packaged_task": [
+      [
+        "lazy future",
+        1.0
+      ],
+      [
+        "future and package model",
+        1.0
+      ],
+      [
+        "future continuations",
+        1.0
+      ],
+      [
+        "stlab::future",
         1.0
       ]
     ],
     "stlab::channel": [
+      [
+        "stlab::sender",
+        1.0
+      ],
+      [
+        "csp channels",
+        1.0
+      ],
+      [
+        "channel and reactive pipelines",
+        1.0
+      ],
+      [
+        "stlab::receiver",
+        1.0
+      ]
+    ],
+    "execution library boundary": [
+      [
+        "executor separation",
+        1.0
+      ],
+      [
+        "execution abi boundary",
+        1.0
+      ],
+      [
+        "stlab-execution",
+        1.0
+      ]
+    ],
+    "stlab::future": [
+      [
+        "packaged_task",
+        1.0
+      ],
+      [
+        "lazy future",
+        1.0
+      ],
+      [
+        "future continuations",
+        1.0
+      ],
+      [
+        "future and package model",
+        1.0
+      ]
+    ],
+    "stlab::receiver": [
+      [
+        "channel and reactive pipelines",
+        1.0
+      ],
+      [
+        "stlab::channel",
+        1.0
+      ],
+      [
+        "stlab::sender",
+        1.0
+      ],
+      [
+        "csp channels",
+        1.0
+      ]
+    ],
+    "stlab::serial_queue_t": [
+      [
+        "serial executor",
+        1.0
+      ],
+      [
+        "task serialization",
+        1.0
+      ],
+      [
+        "serial queue execution",
+        1.0
+      ],
+      [
+        "serial dispatch",
+        1.0
+      ]
+    ],
+    "fullorder iterator": [
+      [
+        "ordered forest",
+        1.0
+      ],
+      [
+        "stlab::forest",
+        1.0
+      ],
+      [
+        "forest container and fullorder traversal",
+        1.0
+      ],
+      [
+        "tree of sequences",
+        1.0
+      ]
+    ],
+    "future and package model": [
+      [
+        "future continuations",
+        1.0
+      ],
+      [
+        "stlab::future",
+        1.0
+      ],
+      [
+        "packaged_task",
+        1.0
+      ],
+      [
+        "lazy future",
+        1.0
+      ]
+    ],
+    "ordered forest": [
+      [
+        "fullorder iterator",
+        1.0
+      ],
+      [
+        "tree of sequences",
+        1.0
+      ],
+      [
+        "stlab::forest",
+        1.0
+      ],
+      [
+        "forest container and fullorder traversal",
+        1.0
+      ]
+    ],
+    "executor separation": [
+      [
+        "execution library boundary",
+        1.0
+      ],
+      [
+        "execution abi boundary",
+        1.0
+      ],
+      [
+        "stlab-execution",
+        1.0
+      ]
+    ],
+    "serial queue execution": [
+      [
+        "serial dispatch",
+        1.0
+      ],
+      [
+        "stlab::serial_queue_t",
+        1.0
+      ],
+      [
+        "serial executor",
+        1.0
+      ],
+      [
+        "task serialization",
+        1.0
+      ]
+    ],
+    "channel and reactive pipelines": [
       [
         "stlab::receiver",
         1.0
@@ -3044,2309 +626,467 @@
         1.0
       ],
       [
-        "sender",
-        1.0
-      ],
-      [
-        "csp",
-        1.0
-      ],
-      [
-        "channel",
-        1.0
-      ],
-      [
         "csp channels",
         1.0
       ],
       [
-        "pipeline",
-        1.0
-      ],
-      [
-        "reactive",
-        1.0
-      ],
-      [
-        "receiver",
-        1.0
-      ],
-      [
-        "channel and reactive pipelines",
+        "stlab::channel",
         1.0
       ]
     ],
-    "packaged_task": [
+    "task serialization": [
       [
-        "cancellation",
+        "stlab::serial_queue_t",
         1.0
       ],
       [
-        "package",
+        "serial queue execution",
         1.0
       ],
       [
-        "stlab::future",
+        "serial dispatch",
         1.0
       ],
       [
-        "concurrency",
-        1.0
-      ],
-      [
-        "lazy future",
-        1.0
-      ],
-      [
-        "continuations",
-        1.0
-      ],
-      [
-        "future and package model",
-        1.0
-      ],
-      [
-        "future",
-        1.0
-      ],
-      [
-        "future continuations",
+        "serial executor",
         1.0
       ]
     ]
   },
   "provenance": {
-    "future|cancellation": [
+    "stlab::receiver|csp channels": [
+      "knowledge\\channel-and-reactive-pipelines.md"
+    ],
+    "await synchronization and invoke_waiting|invoke_waiting": [
+      "knowledge\\await-synchronization-and-invoke-waiting.md"
+    ],
+    "synchronous future wait|await synchronization and invoke_waiting": [
+      "knowledge\\await-synchronization-and-invoke-waiting.md"
+    ],
+    "installation|cpm": [
+      "knowledge\\cpm-shorthand-consumption-differs-from-bundled-installation.md"
+    ],
+    "stlab::sender|csp channels": [
+      "knowledge\\channel-and-reactive-pipelines.md"
+    ],
+    "cpm|extraction": [
+      "knowledge\\cpm-shorthand-consumption-differs-from-bundled-installation.md"
+    ],
+    "cmake|extraction": [
+      "knowledge\\cpm-shorthand-consumption-differs-from-bundled-installation.md"
+    ],
+    "future and package model|stlab::future": [
       "knowledge\\future-and-package-model.md"
     ],
-    "fullorder|iterator": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "debug-cpp20|doctest": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "invoke-waiting|stlab::await": [
+    "invoke_waiting|synchronous future wait": [
       "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "forest container and fullorder traversal|iterator": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "future and package model|lazy future": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "blocking|await": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "doctest test executables|ctest presets": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "synchronization|future blocking": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "fullorder iterator|container": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "cmake|cmake presets": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "stlab::future|future continuations": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "lazy future|future": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "executor separation|abi": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "stlab-execution|channel": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "execution abi boundary|architecture": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "invoke-waiting|future blocking": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "blocking|synchronous future wait": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "concurrency|architecture": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "container|forest container and fullorder traversal": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "blocking|invoke_waiting": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "ctest presets|doctest test executables": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "iterator|fullorder iterator": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "stlab concurrency architecture|architecture": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "future continuations|continuations": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "continuations|future continuations": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "future|lazy future": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "architecture|stlab-execution boundary": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "continuations|package": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "future|concurrency": [
-      "knowledge\\architecture-overview.md",
-      "knowledge\\future-and-package-model.md"
-    ],
-    "ctest presets|ctest": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "forest|stlab architecture": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "presets|ctest presets": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "continuations|stlab::future": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "architecture|executors": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "stlab::serial_queue_t|task-dispatch": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "ctest|ctest presets": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "channel|csp": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "task-dispatch|stlab::serial_queue_t": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "cmake|ctest presets": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "future|packaged_task": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "doctest test executables|doctest": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "stlab-execution boundary|stlab concurrency architecture": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "executors|architecture": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "boundary|stlab-execution": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "channel and reactive pipelines|sender": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "architecture|stlab concurrency architecture": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "concurrency|serial-queue": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "receiver|channel": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "stlab concurrency architecture|stlab": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "packaged_task|lazy future": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "reactive|sender": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "future|await": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "pipeline|stlab::sender": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "channel and reactive pipelines|stlab::receiver": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "receiver|csp channels": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "fullorder iterator|iterator": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "serialization|concurrency": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "stlab::serial_queue_t|serial queue execution": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "ctest presets|cmake": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "ordered forest|tree of sequences": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "future and package model|cancellation": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "csp|channel and reactive pipelines": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "task-dispatch|serial executor": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "future|stlab": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "architecture|architecture overview": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "stlab|forest": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "await|stlab::await": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "pipeline|channel": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "csp|reactive": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "architecture|channel": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "stlab::channel|sender": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "serialization|executor": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "synchronous future wait|stlab::await": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "invoke_waiting|invoke-waiting": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "channel and reactive pipelines|stlab::sender": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "cmake|testing": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "stlab::forest|iterator": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "invoke_waiting|await synchronization and invoke_waiting": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "architecture|abi": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "pipeline|receiver": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "channel|future": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "reactive|receiver": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "stlab::serial_queue_t|task serialization": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "serial dispatch|stlab::serial_queue_t": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "container|fullorder": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "stlab|channel": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "forest|tree of sequences": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "lazy future|package": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "tree of sequences|fullorder iterator": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "fullorder iterator|forest container and fullorder traversal": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "serial executor|executor": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "serial executor|serial queue execution": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "cmake presets|debug-cpp20": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "blocking|synchronization": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "future continuations|package": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "stlab-execution|forest": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "executor separation|boundary": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "future blocking|invoke_waiting": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "serial queue execution|serialization": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "stlab::forest|forest": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "task serialization|serial-queue": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "forest|future": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "serial queue execution|serial-queue": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "pipeline|stlab::receiver": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "presets|doctest": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "tree of sequences|container": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "csp|csp channels": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "stlab::receiver|csp": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "receiver|reactive": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "architecture|concurrency": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "pipeline|stlab::channel": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "stlab architecture|stlab-execution boundary": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "concurrency|packaged_task": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "architecture overview|future": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "executor|serialization": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "cmake presets|ctest presets": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "stlab::serial_queue_t|executor": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "csp|stlab::channel": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "debug-cpp20|ctest presets": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "channel and reactive pipelines|csp channels": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "reactive|stlab::receiver": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "ctest|cmake presets and testing layout": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "stlab architecture|future": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "cmake presets and testing layout|presets": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "package|continuations": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "reactive|channel and reactive pipelines": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "doctest|ninja": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "cmake presets and testing layout|ninja": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "concurrency|future continuations": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "stlab architecture|architecture overview": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "tree|container": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "cmake presets|doctest test executables": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "synchronization|blocking": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "doctest|cmake presets": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "ctest|testing": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "future blocking|synchronous future wait": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "stlab-execution boundary|forest": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "ninja|ctest presets": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "fullorder iterator|forest": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "stlab::serial_queue_t|serialization": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "invoke-waiting|synchronous future wait": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "serial dispatch|serial queue execution": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "fullorder|tree of sequences": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "stlab-execution|executors": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "debug-cpp20|testing": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "receiver|pipeline": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "architecture overview|stlab architecture": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "task-dispatch|serialization": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "debug-cpp20|cmake": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "doctest test executables|cmake": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "forest|stlab": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "continuations|future and package model": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "synchronization|future": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "forest container and fullorder traversal|container": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "ninja|cmake presets and testing layout": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "executor separation|architecture": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "architecture|executor separation": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "future continuations|packaged_task": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "receiver|stlab::channel": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "testing|ctest": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "invoke_waiting|future blocking": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "doctest test executables|testing": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "stlab::channel|channel": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "pipeline|csp channels": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "abi|execution library boundary": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "execution abi boundary|execution library boundary": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "stlab::channel|stlab::receiver": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "architecture overview|concurrency": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "debug-cpp20|presets": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "future|stlab::await": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "doctest test executables|debug-cpp20": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "csp channels|channel and reactive pipelines": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "serial queue execution|stlab::serial_queue_t": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "doctest|presets": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "debug-cpp20|cmake presets and testing layout": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "serial dispatch|concurrency": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "abi|execution abi boundary": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "forest|forest container and fullorder traversal": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "stlab::sender|pipeline": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "tree of sequences|fullorder": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "serial executor|concurrency": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "channel|stlab-execution": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "fullorder iterator|fullorder": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "channel and reactive pipelines|channel": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "ctest|debug-cpp20": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "channel|pipeline": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "executor|task serialization": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "await synchronization and invoke_waiting|future": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "stlab|stlab architecture": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "sender|reactive": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "future and package model|package": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "concurrency|task-dispatch": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "channel and reactive pipelines|stlab::channel": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "stlab::receiver|receiver": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "synchronous future wait|future": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "channel|stlab::receiver": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "task-dispatch|serial dispatch": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "channel and reactive pipelines|reactive": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "presets|cmake presets and testing layout": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "synchronous future wait|invoke-waiting": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "await|await synchronization and invoke_waiting": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "testing|cmake": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "future|stlab-execution boundary": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "concurrency|executor": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "invoke_waiting|blocking": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "packaged_task|future": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "package|lazy future": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "ctest|doctest": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "stlab concurrency architecture|architecture overview": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "concurrency|stlab-execution": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "stlab::await|blocking": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "ordered forest|tree": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "lazy future|stlab::future": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "cancellation|stlab::future": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "channel|stlab::channel": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "lazy future|future and package model": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "doctest|testing": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "await|synchronous future wait": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "forest|tree": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "stlab|architecture overview": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "stlab|stlab concurrency architecture": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "execution library boundary|executor separation": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "tree of sequences|forest": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "serial queue execution|serial dispatch": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "await synchronization and invoke_waiting|await": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "stlab::receiver|stlab::sender": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "stlab::await|future blocking": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "architecture overview|stlab-execution boundary": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "executors|stlab-execution": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "execution library boundary|boundary": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "reactive|csp": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "forest container and fullorder traversal|tree of sequences": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "iterator|tree": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "task-dispatch|executor": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "cancellation|concurrency": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "stlab-execution boundary|architecture overview": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "future|await synchronization and invoke_waiting": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "cmake|ctest": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "serial dispatch|serial-queue": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "reactive|stlab::channel": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "stlab::await|await": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "ctest presets|testing": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "stlab::future|cancellation": [
-      "knowledge\\future-and-package-model.md"
     ],
     "invoke_waiting|stlab::await": [
       "knowledge\\await-synchronization-and-invoke-waiting.md"
     ],
-    "task serialization|serial dispatch": [
+    "future blocking|synchronous future wait": [
+      "knowledge\\await-synchronization-and-invoke-waiting.md"
+    ],
+    "cmake|installation": [
+      "knowledge\\cpm-shorthand-consumption-differs-from-bundled-installation.md"
+    ],
+    "serial executor|serial queue execution": [
       "knowledge\\serial-queue-execution.md"
     ],
-    "channel|architecture": [
+    "architecture overview|stlab concurrency architecture": [
       "knowledge\\architecture-overview.md"
     ],
-    "ordered forest|stlab::forest": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "synchronous future wait|blocking": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "testing|presets": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "invoke-waiting|future": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "task serialization|serial queue execution": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "lazy future|packaged_task": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "task serialization|task-dispatch": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "future|synchronization": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "tree|fullorder": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "stlab-execution|boundary": [
+    "stlab-execution|executor separation": [
       "knowledge\\execution-library-boundary-and-ownership.md"
     ],
-    "cmake presets|ninja": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "ninja|debug-cpp20": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "ctest presets|presets": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "future continuations|future and package model": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "blocking|future": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "stlab|stlab-execution boundary": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "pipeline|csp": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "blocking|await synchronization and invoke_waiting": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "stlab::serial_queue_t|serial-queue": [
+    "task serialization|stlab::serial_queue_t": [
       "knowledge\\serial-queue-execution.md"
     ],
-    "cmake|ninja": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "testing|doctest test executables": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "iterator|fullorder": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "presets|ninja": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "testing|debug-cpp20": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "receiver|csp": [
+    "stlab::receiver|channel and reactive pipelines": [
       "knowledge\\channel-and-reactive-pipelines.md"
     ],
-    "stlab::receiver|pipeline": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "stlab-execution|architecture": [
-      "knowledge\\architecture-overview.md",
+    "executor separation|execution library boundary": [
       "knowledge\\execution-library-boundary-and-ownership.md"
     ],
-    "serial queue execution|concurrency": [
-      "knowledge\\serial-queue-execution.md"
+    "synchronous future wait|future blocking": [
+      "knowledge\\await-synchronization-and-invoke-waiting.md"
     ],
-    "cmake|presets": [
-      "procedures\\cmake-presets-and-testing-layout.md"
+    "stlab::channel|channel and reactive pipelines": [
+      "knowledge\\channel-and-reactive-pipelines.md"
     ],
-    "channel|concurrency": [
-      "knowledge\\architecture-overview.md"
+    "cpm|dependencies": [
+      "knowledge\\cpm-shorthand-consumption-differs-from-bundled-installation.md"
     ],
     "future continuations|stlab::future": [
       "knowledge\\future-and-package-model.md"
     ],
-    "execution library boundary|stlab-execution": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
+    "lazy future|packaged_task": [
+      "knowledge\\future-and-package-model.md"
     ],
-    "serial executor|serial-queue": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "forest|stlab-execution boundary": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "execution library boundary|abi": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "stlab::channel|reactive": [
+    "csp channels|stlab::sender": [
       "knowledge\\channel-and-reactive-pipelines.md"
     ],
-    "stlab-execution|architecture overview": [
+    "await synchronization and invoke_waiting|stlab::await": [
+      "knowledge\\await-synchronization-and-invoke-waiting.md"
+    ],
+    "serial dispatch|stlab::serial_queue_t": [
+      "knowledge\\serial-queue-execution.md"
+    ],
+    "stlab::serial_queue_t|serial dispatch": [
+      "knowledge\\serial-queue-execution.md"
+    ],
+    "installation|dependencies": [
+      "knowledge\\cpm-shorthand-consumption-differs-from-bundled-installation.md"
+    ],
+    "execution abi boundary|stlab-execution": [
+      "knowledge\\execution-library-boundary-and-ownership.md"
+    ],
+    "invoke_waiting|future blocking": [
+      "knowledge\\await-synchronization-and-invoke-waiting.md"
+    ],
+    "await synchronization and invoke_waiting|future blocking": [
+      "knowledge\\await-synchronization-and-invoke-waiting.md"
+    ],
+    "synchronous future wait|stlab::await": [
+      "knowledge\\await-synchronization-and-invoke-waiting.md"
+    ],
+    "ordered forest|tree of sequences": [
+      "knowledge\\forest-container-and-fullorder-traversal.md"
+    ],
+    "extraction|cpm": [
+      "knowledge\\cpm-shorthand-consumption-differs-from-bundled-installation.md"
+    ],
+    "fullorder iterator|ordered forest": [
+      "knowledge\\forest-container-and-fullorder-traversal.md"
+    ],
+    "extraction|installation": [
+      "knowledge\\cpm-shorthand-consumption-differs-from-bundled-installation.md"
+    ],
+    "tree of sequences|fullorder iterator": [
+      "knowledge\\forest-container-and-fullorder-traversal.md"
+    ],
+    "stlab concurrency architecture|architecture overview": [
       "knowledge\\architecture-overview.md"
     ],
     "executor separation|stlab-execution": [
       "knowledge\\execution-library-boundary-and-ownership.md"
     ],
-    "stlab-execution boundary|stlab": [
+    "stlab architecture|stlab-execution boundary": [
       "knowledge\\architecture-overview.md"
     ],
-    "future|package": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "executor separation|execution abi boundary": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "fullorder|container": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "presets|cmake presets": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "serial dispatch|serial executor": [
+    "serial queue execution|stlab::serial_queue_t": [
       "knowledge\\serial-queue-execution.md"
     ],
-    "cmake presets and testing layout|cmake": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "ctest|ninja": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "forest|architecture": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "receiver|sender": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "concurrency|lazy future": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "stlab|architecture": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "stlab::receiver|channel": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "future|invoke_waiting": [
+    "synchronous future wait|invoke_waiting": [
       "knowledge\\await-synchronization-and-invoke-waiting.md"
     ],
-    "stlab architecture|forest": [
+    "stlab concurrency architecture|stlab architecture": [
       "knowledge\\architecture-overview.md"
     ],
-    "task serialization|stlab::serial_queue_t": [
+    "dependencies|cpm": [
+      "knowledge\\cpm-shorthand-consumption-differs-from-bundled-installation.md"
+    ],
+    "stlab::serial_queue_t|serial executor": [
       "knowledge\\serial-queue-execution.md"
     ],
-    "stlab::future|concurrency": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "tree|ordered forest": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "future continuations|lazy future": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "stlab::receiver|reactive": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "stlab::future|package": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "container|iterator": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "cancellation|lazy future": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "stlab-execution|stlab concurrency architecture": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "future|stlab::future": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "testing|ctest presets": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "serial-queue|serial queue execution": [
+    "task serialization|serial executor": [
       "knowledge\\serial-queue-execution.md"
-    ],
-    "packaged_task|cancellation": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "testing|cmake presets": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "forest|stlab concurrency architecture": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "blocking|future blocking": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "architecture overview|stlab": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "stlab::sender|channel and reactive pipelines": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "future blocking|synchronization": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "csp channels|stlab::sender": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "invoke_waiting|future": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "stlab::await|future": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "forest|ordered forest": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "synchronization|invoke-waiting": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "debug-cpp20|doctest test executables": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "blocking|invoke-waiting": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "debug-cpp20|ninja": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "cmake|doctest test executables": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "concurrency|stlab architecture": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "channel|stlab architecture": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "executor|serial executor": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "execution abi boundary|stlab-execution": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "concurrency|package": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "stlab::future|lazy future": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "stlab|concurrency": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "tree of sequences|iterator": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "stlab::receiver|sender": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "future blocking|invoke-waiting": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "serialization|stlab::serial_queue_t": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "execution abi boundary|executors": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "task-dispatch|concurrency": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "cmake presets and testing layout|doctest": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "cmake presets and testing layout|ctest presets": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "sender|stlab::receiver": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "stlab-execution boundary|stlab-execution": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "forest container and fullorder traversal|fullorder": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "invoke-waiting|invoke_waiting": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "serial-queue|serial dispatch": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "stlab::channel|csp": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "cmake presets|doctest": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "forest|stlab::forest": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "stlab-execution|stlab": [
-      "knowledge\\architecture-overview.md"
     ],
     "stlab::future|future and package model": [
       "knowledge\\future-and-package-model.md"
     ],
-    "cmake presets and testing layout|cmake presets": [
-      "procedures\\cmake-presets-and-testing-layout.md"
+    "future and package model|future continuations": [
+      "knowledge\\future-and-package-model.md"
     ],
-    "fullorder iterator|tree of sequences": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "ordered forest|forest container and fullorder traversal": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "serial executor|serialization": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "stlab concurrency architecture|future": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "cmake|debug-cpp20": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "stlab architecture|channel": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "ninja|ctest": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "csp channels|reactive": [
+    "channel and reactive pipelines|stlab::receiver": [
       "knowledge\\channel-and-reactive-pipelines.md"
     ],
-    "ordered forest|iterator": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "pipeline|channel and reactive pipelines": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "concurrency|architecture overview": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "fullorder|fullorder iterator": [
+    "forest container and fullorder traversal|stlab::forest": [
       "knowledge\\forest-container-and-fullorder-traversal.md"
     ],
     "stlab::forest|ordered forest": [
       "knowledge\\forest-container-and-fullorder-traversal.md"
     ],
-    "fullorder|ordered forest": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "await|synchronization": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "lazy future|cancellation": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "execution library boundary|architecture": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "channel and reactive pipelines|csp": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "synchronous future wait|synchronization": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "future|future and package model": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "future continuations|cancellation": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "task-dispatch|serial-queue": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "serial executor|task serialization": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "future|channel": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "stlab::serial_queue_t|concurrency": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "ninja|doctest test executables": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "task serialization|serialization": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "sender|stlab::channel": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "synchronization|await synchronization and invoke_waiting": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "stlab-execution|concurrency": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "invoke_waiting|synchronous future wait": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "pipeline|sender": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "architecture|forest": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "package|cancellation": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "future|stlab-execution": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "forest container and fullorder traversal|forest": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "tree of sequences|stlab::forest": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "cmake|doctest": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "container|ordered forest": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "stlab::sender|csp": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "doctest|ctest presets": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "stlab::forest|container": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "future|invoke-waiting": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "csp channels|sender": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "invoke_waiting|synchronization": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "await|future": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "future blocking|await": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "tree|forest": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "sender|stlab::sender": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "future|architecture": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "execution abi boundary|abi": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "continuations|future": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "stlab concurrency architecture|channel": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "stlab::forest|fullorder": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "serial-queue|stlab::serial_queue_t": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "concurrency|serialization": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "task-dispatch|task serialization": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "forest|fullorder iterator": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "csp|stlab::receiver": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "serialization|task serialization": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "doctest test executables|ctest": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "tree|forest container and fullorder traversal": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "abi|architecture": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "channel|architecture overview": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "sender|csp channels": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "stlab concurrency architecture|stlab-execution boundary": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "stlab::channel|pipeline": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "packaged_task|continuations": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "invoke-waiting|await synchronization and invoke_waiting": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "stlab-execution|execution abi boundary": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "execution library boundary|executors": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "concurrency|future": [
-      "knowledge\\architecture-overview.md",
-      "knowledge\\future-and-package-model.md"
-    ],
-    "executor|serial queue execution": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "iterator|tree of sequences": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "continuations|cancellation": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "ctest|cmake presets": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "stlab concurrency architecture|concurrency": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "stlab architecture|concurrency": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "csp channels|stlab::channel": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "await synchronization and invoke_waiting|invoke-waiting": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "stlab-execution boundary|stlab architecture": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "sender|csp": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "architecture overview|forest": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "await|invoke_waiting": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "csp channels|channel": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "ctest|cmake": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "stlab::forest|forest container and fullorder traversal": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "future blocking|blocking": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "boundary|architecture": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "stlab-execution|executor separation": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "serial-queue|serialization": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "stlab-execution|stlab-execution boundary": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "executor|task-dispatch": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "forest container and fullorder traversal|fullorder iterator": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "ctest|doctest test executables": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "executor|serial-queue": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "invoke-waiting|blocking": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "lazy future|future continuations": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "channel|reactive": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "ordered forest|container": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "future continuations|future": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "serial queue execution|serial executor": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "stlab architecture|stlab concurrency architecture": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "serial executor|serial dispatch": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "serial-queue|task-dispatch": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "container|stlab::forest": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "stlab concurrency architecture|stlab architecture": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "ctest presets|cmake presets": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "doctest|ctest": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "stlab::receiver|csp channels": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "execution abi boundary|executor separation": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "stlab::serial_queue_t|serial executor": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "concurrency|serial executor": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "iterator|ordered forest": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "forest|channel": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "container|forest": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "stlab::serial_queue_t|serial dispatch": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "stlab-execution boundary|future": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "serial-queue|executor": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "future|synchronous future wait": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "synchronization|invoke_waiting": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "package|packaged_task": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "stlab architecture|stlab-execution": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "future|continuations": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "ninja|cmake presets": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "forest|iterator": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
     "stlab::future|packaged_task": [
       "knowledge\\future-and-package-model.md"
     ],
-    "channel|stlab": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "boundary|execution abi boundary": [
+    "execution abi boundary|execution library boundary": [
       "knowledge\\execution-library-boundary-and-ownership.md"
     ],
-    "cancellation|future continuations": [
+    "installation|cmake": [
+      "knowledge\\cpm-shorthand-consumption-differs-from-bundled-installation.md"
+    ],
+    "future continuations|future and package model": [
       "knowledge\\future-and-package-model.md"
-    ],
-    "future|architecture overview": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "concurrency|stlab::serial_queue_t": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "receiver|channel and reactive pipelines": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "continuations|packaged_task": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "ninja|doctest": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "csp|stlab::sender": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "cmake presets and testing layout|testing": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "serial executor|stlab::serial_queue_t": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "invoke-waiting|synchronization": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "future|blocking": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "executors|execution library boundary": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "cancellation|continuations": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "tree|fullorder iterator": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "future and package model|packaged_task": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "architecture overview|stlab concurrency architecture": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "presets|testing": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "reactive|stlab::sender": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "stlab::await|invoke_waiting": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "serialization|serial-queue": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "serial dispatch|task-dispatch": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "stlab|stlab-execution": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "ctest|presets": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "abi|boundary": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "csp|sender": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "channel|stlab::sender": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "future|future continuations": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "serial dispatch|executor": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "cmake presets|ctest": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "synchronous future wait|await synchronization and invoke_waiting": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "doctest|doctest test executables": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "doctest test executables|cmake presets": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "stlab::forest|tree": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "architecture|stlab-execution": [
-      "knowledge\\architecture-overview.md",
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "stlab-execution|execution library boundary": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "future and package model|future continuations": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "debug-cpp20|ctest": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "concurrency|serial queue execution": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "presets|debug-cpp20": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "executors|executor separation": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "sender|pipeline": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "presets|doctest test executables": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "container|fullorder iterator": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "concurrency|continuations": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "ninja|presets": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "synchronization|await": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "lazy future|concurrency": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "task-dispatch|serial queue execution": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "stlab::future|continuations": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "channel and reactive pipelines|receiver": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "execution library boundary|execution abi boundary": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "future blocking|await synchronization and invoke_waiting": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "stlab::await|synchronous future wait": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "cmake presets and testing layout|debug-cpp20": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "stlab::channel|csp channels": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "blocking|stlab::await": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "future|future blocking": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "forest|stlab-execution": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "doctest|debug-cpp20": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "package|future and package model": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "cmake presets and testing layout|ctest": [
-      "procedures\\cmake-presets-and-testing-layout.md"
     ],
     "stlab::sender|stlab::receiver": [
       "knowledge\\channel-and-reactive-pipelines.md"
     ],
-    "abi|executors": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
+    "architecture overview|stlab architecture": [
+      "knowledge\\architecture-overview.md"
     ],
-    "csp channels|csp": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "package|stlab::future": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "continuations|concurrency": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "serial executor|task-dispatch": [
+    "serial executor|task serialization": [
       "knowledge\\serial-queue-execution.md"
     ],
-    "serialization|serial dispatch": [
+    "serial executor|stlab::serial_queue_t": [
       "knowledge\\serial-queue-execution.md"
     ],
-    "stlab::channel|channel and reactive pipelines": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "future and package model|continuations": [
+    "future continuations|lazy future": [
       "knowledge\\future-and-package-model.md"
     ],
-    "lazy future|continuations": [
-      "knowledge\\future-and-package-model.md"
+    "stlab::forest|forest container and fullorder traversal": [
+      "knowledge\\forest-container-and-fullorder-traversal.md"
     ],
-    "stlab::sender|reactive": [
-      "knowledge\\channel-and-reactive-pipelines.md"
+    "future blocking|invoke_waiting": [
+      "knowledge\\await-synchronization-and-invoke-waiting.md"
     ],
-    "cmake presets|presets": [
-      "procedures\\cmake-presets-and-testing-layout.md"
+    "dependencies|installation": [
+      "knowledge\\cpm-shorthand-consumption-differs-from-bundled-installation.md"
     ],
-    "stlab::sender|receiver": [
-      "knowledge\\channel-and-reactive-pipelines.md"
+    "cpm|cmake": [
+      "knowledge\\cpm-shorthand-consumption-differs-from-bundled-installation.md"
     ],
     "tree of sequences|ordered forest": [
       "knowledge\\forest-container-and-fullorder-traversal.md"
     ],
-    "forest|fullorder": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "concurrency|task serialization": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "serial queue execution|executor": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "stlab-execution|abi": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "executor separation|execution library boundary": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "fullorder iterator|ordered forest": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "cmake presets and testing layout|doctest test executables": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "executors|execution abi boundary": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "testing|doctest": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "architecture overview|stlab-execution": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "channel|forest": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "iterator|forest container and fullorder traversal": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "await synchronization and invoke_waiting|future blocking": [
+    "stlab::await|invoke_waiting": [
       "knowledge\\await-synchronization-and-invoke-waiting.md"
     ],
-    "future|forest": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "fullorder|forest": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "doctest|cmake presets and testing layout": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "packaged_task|package": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "cancellation|package": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "sender|channel": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "forest|architecture overview": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "channel|receiver": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "ordered forest|forest": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "doctest test executables|presets": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "tree|iterator": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "package|concurrency": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "executor|concurrency": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "serial dispatch|task serialization": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "cancellation|packaged_task": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "testing|ninja": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "executors|boundary": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "serial dispatch|serialization": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "future and package model|future": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "fullorder iterator|tree": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "tree of sequences|forest container and fullorder traversal": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "stlab-execution boundary|channel": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "stlab::await|invoke-waiting": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "concurrency|forest": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "channel|stlab-execution boundary": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "stlab architecture|stlab": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "future|stlab concurrency architecture": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "stlab::channel|receiver": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "execution abi boundary|boundary": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "concurrency|stlab::future": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "executor|serial dispatch": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "serialization|task-dispatch": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "stlab::sender|stlab::channel": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "concurrency|stlab": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "forest|concurrency": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "architecture|boundary": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "stlab::sender|csp channels": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "stlab::channel|stlab::sender": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "ninja|testing": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "boundary|abi": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "stlab-execution|future": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "ninja|cmake": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "stlab::sender|sender": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "packaged_task|future continuations": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "serial queue execution|task serialization": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "doctest test executables|ninja": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "future blocking|future": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "reactive|pipeline": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "await|invoke-waiting": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "csp|pipeline": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "iterator|container": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "channel|stlab concurrency architecture": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "abi|executor separation": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "future blocking|stlab::await": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "synchronous future wait|await": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "forest|container": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "boundary|executors": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "presets|cmake": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "forest container and fullorder traversal|tree": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "concurrency|stlab concurrency architecture": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "architecture overview|architecture": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "ctest presets|doctest": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "package|future": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "stlab|future": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "stlab-execution boundary|concurrency": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "reactive|channel": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "architecture|future": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "container|tree": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "await|future blocking": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "await synchronization and invoke_waiting|stlab::await": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "channel|sender": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "cancellation|future and package model": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "boundary|execution library boundary": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "synchronization|stlab::await": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "packaged_task|stlab::future": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "stlab-execution|stlab architecture": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "architecture|stlab": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "stlab::sender|channel": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "serial-queue|serial executor": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "invoke_waiting|await": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "channel|channel and reactive pipelines": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "cmake presets|testing": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "await synchronization and invoke_waiting|synchronous future wait": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "future and package model|stlab::future": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "stlab concurrency architecture|forest": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "receiver|stlab::sender": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "forest container and fullorder traversal|ordered forest": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "ordered forest|fullorder iterator": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "invoke-waiting|await": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "container|tree of sequences": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "stlab::receiver|channel and reactive pipelines": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "cmake presets|cmake": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "tree|tree of sequences": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "fullorder|stlab::forest": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "concurrency|serial dispatch": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "await|blocking": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "reactive|csp channels": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "future and package model|concurrency": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "tree|stlab::forest": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "boundary|executor separation": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "executor separation|executors": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "serialization|serial executor": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "testing|cmake presets and testing layout": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "await synchronization and invoke_waiting|invoke_waiting": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "concurrency|cancellation": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "stlab::await|synchronization": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "task serialization|concurrency": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "architecture|stlab architecture": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "csp|receiver": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "fullorder iterator|stlab::forest": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "future continuations|concurrency": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "tree of sequences|tree": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "packaged_task|concurrency": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "cancellation|future": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "executors|abi": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "csp channels|pipeline": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "cmake|cmake presets and testing layout": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "serial-queue|task serialization": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "stlab::await|await synchronization and invoke_waiting": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "doctest test executables|cmake presets and testing layout": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "fullorder|tree": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "executor|stlab::serial_queue_t": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "stlab::future|future": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "concurrency|stlab-execution boundary": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "architecture|execution library boundary": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
-    ],
-    "synchronous future wait|invoke_waiting": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "stlab::receiver|stlab::channel": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "future|stlab architecture": [
+    "architecture overview|stlab-execution boundary": [
       "knowledge\\architecture-overview.md"
     ],
     "csp channels|stlab::receiver": [
       "knowledge\\channel-and-reactive-pipelines.md"
     ],
-    "channel|csp channels": [
+    "stlab::future|lazy future": [
+      "knowledge\\future-and-package-model.md"
+    ],
+    "stlab::serial_queue_t|task serialization": [
+      "knowledge\\serial-queue-execution.md"
+    ],
+    "stlab::receiver|stlab::channel": [
       "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "serial queue execution|task-dispatch": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "serialization|serial queue execution": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "synchronization|synchronous future wait": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "task serialization|executor": [
-      "knowledge\\serial-queue-execution.md"
-    ],
-    "ordered forest|fullorder": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "presets|ctest": [
-      "procedures\\cmake-presets-and-testing-layout.md"
     ],
     "stlab::forest|fullorder iterator": [
       "knowledge\\forest-container-and-fullorder-traversal.md"
     ],
-    "channel and reactive pipelines|pipeline": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "concurrency|channel": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "await synchronization and invoke_waiting|synchronization": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "sender|channel and reactive pipelines": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "serial-queue|concurrency": [
+    "serial queue execution|task serialization": [
       "knowledge\\serial-queue-execution.md"
-    ],
-    "stlab concurrency architecture|stlab-execution": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "synchronous future wait|future blocking": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "ctest presets|ninja": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "iterator|forest": [
-      "knowledge\\forest-container-and-fullorder-traversal.md"
-    ],
-    "architecture|execution abi boundary": [
-      "knowledge\\execution-library-boundary-and-ownership.md"
     ],
     "packaged_task|future and package model": [
       "knowledge\\future-and-package-model.md"
     ],
-    "cmake presets|cmake presets and testing layout": [
-      "procedures\\cmake-presets-and-testing-layout.md"
+    "extraction|dependencies": [
+      "knowledge\\cpm-shorthand-consumption-differs-from-bundled-installation.md"
     ],
-    "sender|receiver": [
+    "execution library boundary|stlab-execution": [
+      "knowledge\\execution-library-boundary-and-ownership.md"
+    ],
+    "forest container and fullorder traversal|ordered forest": [
+      "knowledge\\forest-container-and-fullorder-traversal.md"
+    ],
+    "stlab::sender|stlab::channel": [
       "knowledge\\channel-and-reactive-pipelines.md"
     ],
-    "task serialization|serial executor": [
+    "csp channels|stlab::channel": [
+      "knowledge\\channel-and-reactive-pipelines.md"
+    ],
+    "stlab::serial_queue_t|serial queue execution": [
       "knowledge\\serial-queue-execution.md"
     ],
-    "fullorder|forest container and fullorder traversal": [
+    "serial executor|serial dispatch": [
+      "knowledge\\serial-queue-execution.md"
+    ],
+    "serial dispatch|serial executor": [
+      "knowledge\\serial-queue-execution.md"
+    ],
+    "csp channels|channel and reactive pipelines": [
+      "knowledge\\channel-and-reactive-pipelines.md"
+    ],
+    "fullorder iterator|forest container and fullorder traversal": [
       "knowledge\\forest-container-and-fullorder-traversal.md"
+    ],
+    "tree of sequences|forest container and fullorder traversal": [
+      "knowledge\\forest-container-and-fullorder-traversal.md"
+    ],
+    "channel and reactive pipelines|stlab::sender": [
+      "knowledge\\channel-and-reactive-pipelines.md"
+    ],
+    "stlab::channel|stlab::sender": [
+      "knowledge\\channel-and-reactive-pipelines.md"
+    ],
+    "stlab architecture|architecture overview": [
+      "knowledge\\architecture-overview.md"
+    ],
+    "extraction|cmake": [
+      "knowledge\\cpm-shorthand-consumption-differs-from-bundled-installation.md"
+    ],
+    "stlab-execution boundary|architecture overview": [
+      "knowledge\\architecture-overview.md"
+    ],
+    "serial queue execution|serial executor": [
+      "knowledge\\serial-queue-execution.md"
+    ],
+    "stlab::channel|stlab::receiver": [
+      "knowledge\\channel-and-reactive-pipelines.md"
+    ],
+    "packaged_task|future continuations": [
+      "knowledge\\future-and-package-model.md"
+    ],
+    "ordered forest|stlab::forest": [
+      "knowledge\\forest-container-and-fullorder-traversal.md"
+    ],
+    "execution abi boundary|executor separation": [
+      "knowledge\\execution-library-boundary-and-ownership.md"
+    ],
+    "channel and reactive pipelines|csp channels": [
+      "knowledge\\channel-and-reactive-pipelines.md"
+    ],
+    "packaged_task|stlab::future": [
+      "knowledge\\future-and-package-model.md"
+    ],
+    "invoke_waiting|await synchronization and invoke_waiting": [
+      "knowledge\\await-synchronization-and-invoke-waiting.md"
+    ],
+    "future blocking|stlab::await": [
+      "knowledge\\await-synchronization-and-invoke-waiting.md"
+    ],
+    "dependencies|cmake": [
+      "knowledge\\cpm-shorthand-consumption-differs-from-bundled-installation.md"
+    ],
+    "executor separation|execution abi boundary": [
+      "knowledge\\execution-library-boundary-and-ownership.md"
+    ],
+    "stlab architecture|stlab concurrency architecture": [
+      "knowledge\\architecture-overview.md"
+    ],
+    "await synchronization and invoke_waiting|synchronous future wait": [
+      "knowledge\\await-synchronization-and-invoke-waiting.md"
+    ],
+    "ordered forest|fullorder iterator": [
+      "knowledge\\forest-container-and-fullorder-traversal.md"
+    ],
+    "cmake|cpm": [
+      "knowledge\\cpm-shorthand-consumption-differs-from-bundled-installation.md"
+    ],
+    "tree of sequences|stlab::forest": [
+      "knowledge\\forest-container-and-fullorder-traversal.md"
+    ],
+    "execution library boundary|execution abi boundary": [
+      "knowledge\\execution-library-boundary-and-ownership.md"
+    ],
+    "future and package model|lazy future": [
+      "knowledge\\future-and-package-model.md"
+    ],
+    "forest container and fullorder traversal|fullorder iterator": [
+      "knowledge\\forest-container-and-fullorder-traversal.md"
+    ],
+    "channel and reactive pipelines|stlab::channel": [
+      "knowledge\\channel-and-reactive-pipelines.md"
+    ],
+    "future blocking|await synchronization and invoke_waiting": [
+      "knowledge\\await-synchronization-and-invoke-waiting.md"
+    ],
+    "packaged_task|lazy future": [
+      "knowledge\\future-and-package-model.md"
+    ],
+    "cmake|dependencies": [
+      "knowledge\\cpm-shorthand-consumption-differs-from-bundled-installation.md"
+    ],
+    "serial dispatch|serial queue execution": [
+      "knowledge\\serial-queue-execution.md"
+    ],
+    "stlab::receiver|stlab::sender": [
+      "knowledge\\channel-and-reactive-pipelines.md"
+    ],
+    "stlab::channel|csp channels": [
+      "knowledge\\channel-and-reactive-pipelines.md"
+    ],
+    "lazy future|stlab::future": [
+      "knowledge\\future-and-package-model.md"
+    ],
+    "cpm|installation": [
+      "knowledge\\cpm-shorthand-consumption-differs-from-bundled-installation.md"
+    ],
+    "stlab-execution|execution abi boundary": [
+      "knowledge\\execution-library-boundary-and-ownership.md"
+    ],
+    "stlab::await|future blocking": [
+      "knowledge\\await-synchronization-and-invoke-waiting.md"
+    ],
+    "installation|extraction": [
+      "knowledge\\cpm-shorthand-consumption-differs-from-bundled-installation.md"
+    ],
+    "future continuations|packaged_task": [
+      "knowledge\\future-and-package-model.md"
     ],
     "stlab::forest|tree of sequences": [
       "knowledge\\forest-container-and-fullorder-traversal.md"
     ],
-    "ctest presets|debug-cpp20": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "package|future continuations": [
+    "lazy future|future continuations": [
       "knowledge\\future-and-package-model.md"
     ],
-    "await synchronization and invoke_waiting|blocking": [
-      "knowledge\\await-synchronization-and-invoke-waiting.md"
-    ],
-    "stlab architecture|architecture": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "concurrency|future and package model": [
-      "knowledge\\future-and-package-model.md"
-    ],
-    "forest container and fullorder traversal|stlab::forest": [
+    "fullorder iterator|tree of sequences": [
       "knowledge\\forest-container-and-fullorder-traversal.md"
     ],
-    "doctest|cmake": [
-      "procedures\\cmake-presets-and-testing-layout.md"
+    "stlab concurrency architecture|stlab-execution boundary": [
+      "knowledge\\architecture-overview.md"
     ],
-    "receiver|stlab::receiver": [
-      "knowledge\\channel-and-reactive-pipelines.md"
+    "serial queue execution|serial dispatch": [
+      "knowledge\\serial-queue-execution.md"
     ],
-    "iterator|stlab::forest": [
+    "forest container and fullorder traversal|tree of sequences": [
       "knowledge\\forest-container-and-fullorder-traversal.md"
     ],
-    "ctest presets|cmake presets and testing layout": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "architecture overview|channel": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "stlab-execution boundary|architecture": [
-      "knowledge\\architecture-overview.md"
-    ],
-    "pipeline|reactive": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "debug-cpp20|cmake presets": [
-      "procedures\\cmake-presets-and-testing-layout.md"
-    ],
-    "csp channels|receiver": [
-      "knowledge\\channel-and-reactive-pipelines.md"
-    ],
-    "abi|stlab-execution": [
+    "stlab-execution|execution library boundary": [
       "knowledge\\execution-library-boundary-and-ownership.md"
     ],
-    "continuations|lazy future": [
+    "future and package model|packaged_task": [
       "knowledge\\future-and-package-model.md"
     ],
-    "csp|channel": [
+    "serial dispatch|task serialization": [
+      "knowledge\\serial-queue-execution.md"
+    ],
+    "execution library boundary|executor separation": [
+      "knowledge\\execution-library-boundary-and-ownership.md"
+    ],
+    "stlab-execution boundary|stlab architecture": [
+      "knowledge\\architecture-overview.md"
+    ],
+    "stlab::sender|channel and reactive pipelines": [
       "knowledge\\channel-and-reactive-pipelines.md"
+    ],
+    "stlab::future|future continuations": [
+      "knowledge\\future-and-package-model.md"
+    ],
+    "task serialization|serial queue execution": [
+      "knowledge\\serial-queue-execution.md"
+    ],
+    "task serialization|serial dispatch": [
+      "knowledge\\serial-queue-execution.md"
+    ],
+    "stlab::await|synchronous future wait": [
+      "knowledge\\await-synchronization-and-invoke-waiting.md"
+    ],
+    "lazy future|future and package model": [
+      "knowledge\\future-and-package-model.md"
+    ],
+    "stlab-execution boundary|stlab concurrency architecture": [
+      "knowledge\\architecture-overview.md"
+    ],
+    "fullorder iterator|stlab::forest": [
+      "knowledge\\forest-container-and-fullorder-traversal.md"
+    ],
+    "stlab::await|await synchronization and invoke_waiting": [
+      "knowledge\\await-synchronization-and-invoke-waiting.md"
+    ],
+    "dependencies|extraction": [
+      "knowledge\\cpm-shorthand-consumption-differs-from-bundled-installation.md"
+    ],
+    "ordered forest|forest container and fullorder traversal": [
+      "knowledge\\forest-container-and-fullorder-traversal.md"
     ]
   },
   "entries_processed": 8,
-  "built_at": "2026-10-14T21:53:18.528720800+00:00"
+  "built_at": "2026-11-03T22:44:37.361854300+00:00"
 }
